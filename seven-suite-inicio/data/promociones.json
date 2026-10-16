@@ -1,0 +1,26 @@
+[
+  {
+    "titulo": "¿Ya entraste a Seven Academy?",
+    "texto": "16 cursos disponibles para aprender a usar cada módulo a tu ritmo, en español, inglés y portugués.",
+    "boton": "Entrar a Seven Academy",
+    "enlace": "",
+    "imagen": "",
+    "fondo": "#1F2A26"
+  },
+  {
+    "titulo": "Facturación electrónica 4.4",
+    "texto": "Recibos electrónicos de pago, facturas de compra y el nuevo catálogo CABYS ya están en Digital Invoices.",
+    "boton": "Ver novedades",
+    "enlace": "",
+    "imagen": "",
+    "fondo": "#1F4F57"
+  },
+  {
+    "titulo": "Soporte cuando lo necesites",
+    "texto": "Nuestro equipo te acompaña en la implementación y en el día a día de tu hotel.",
+    "boton": "",
+    "enlace": "",
+    "imagen": "",
+    "fondo": "#3A1E1C"
+  }
+]

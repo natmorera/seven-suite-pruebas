@@ -1,0 +1,86 @@
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/500.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/montserrat/700.css";
+@import "tailwindcss";
+
+:root {
+  --brand:        #A77600;
+  --brand-dark:   #8A6200;
+  --brand-bg:     #FFF8EC;
+  --brand-border: #EED89A;
+  --n900: #0F0F0F;
+  --n700: #757575;
+  --n500: #ECECEC;
+  --n200: #F9F9F9;
+  --n000: #FFFFFF;
+  --success: #4CAF50;
+  --error:   #F44336;
+  --warning: #EEB300;
+  --info:    #2196F3;
+}
+
+* { font-family: 'Montserrat', sans-serif; box-sizing: border-box; }
+html, body, #__next { height: 100%; margin: 0; }
+body { background: var(--n200); color: var(--n900); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--n500); border-radius: 4px; }
+
+/* Grilla de permisos (Usuarios y permisos) - columnas fijas por breakpoint,
+   no fluidas: con minmax/auto-fit el número de columnas seguía creciendo en
+   pantallas anchas (2000px+ ya daba 6-7 columnas apretadas, que es
+   exactamente lo que no queríamos en una laptop). Con columnas fijas el
+   máximo queda realmente acotado - 2-3 en laptop, más solo en monitores
+   bien grandes.
+   Importante: es un layout de MULTI-COLUMNA (column-count), no CSS Grid.
+   Con Grid cada fila se estira a la altura del ítem más alto de esa fila -
+   como los permisos tienen alturas muy distintas (uno con sub-opciones
+   desplegadas o descripción larga al lado de uno corto de una sola línea),
+   eso dejaba huecos enormes debajo de los ítems cortos y la grilla se veía
+   desordenada. Con column-count cada ítem se acomoda según su propia altura,
+   sin depender de sus vecinos. */
+.perm-leaf-grid {
+  column-gap: 10px;
+  column-count: 1;
+  /* Separador entre columnas - ayuda a que se lean como columnas a propósito
+     en vez de texto que "quedó como pudo". Ver auditoría de permisos. */
+  column-rule: 1px solid #F0F0F0;
+}
+.perm-leaf-grid > div {
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  /* Altura mínima pareja tenga o no descripción, para que los permisos
+     cortos (2-3 palabras, sin descripción) no queden huérfanos y chiquitos
+     al lado de los que sí tienen texto de ayuda. */
+  min-height: 34px;
+  box-sizing: border-box;
+}
+@media (min-width: 700px) {
+  .perm-leaf-grid { column-count: 2; }
+}
+@media (min-width: 1400px) {
+  .perm-leaf-grid { column-count: 3; }
+}
+@media (min-width: 2400px) {
+  .perm-leaf-grid { column-count: 4; }
+}
+
+/* Listas desplegables: flecha propia con espacio a la derecha (la del
+   navegador queda pegada al borde) */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23757575' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 4.5l3 3 3-3'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 12px 12px !important;
+  padding-right: 34px !important;
+}
+select:not([multiple]):not([size]):disabled { opacity: .6; }

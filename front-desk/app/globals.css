@@ -1,0 +1,111 @@
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/500.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/montserrat/700.css";
+@import "tailwindcss";
+
+/* Mismos tokens generales que el resto de la suite; el único bloque propio
+   de este módulo (Front Desk) es --brand / --brand-dark / --brand-bg / --brand-border. */
+:root {
+  --brand: #213c89;
+  --brand-dark: #1a306e;
+  --brand-bg: #f2f3f8;
+  --brand-border: #c1c8de;
+  --brand-on-dark: #8fa3dc; /* ítem activo del menú oscuro */
+
+  --n900: #0f0f0f;
+  --n700: #757575;
+  --n500: #ececec;
+  --n200: #f9f9f9;
+  --n000: #ffffff;
+
+  --success: #4caf50;
+  --error: #f44336;
+  --warning: #eeb300;
+  --info: #2196f3;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-border: var(--brand-border);
+
+  --color-n900: var(--n900);
+  --color-n700: var(--n700);
+  --color-n500: var(--n500);
+  --color-n200: var(--n200);
+  --color-n000: var(--n000);
+
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --color-background: var(--n200);
+  --color-foreground: var(--n900);
+  --font-sans: "Montserrat", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--n200);
+  color: var(--n900);
+  font-family: "Montserrat", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--n500);
+  border-radius: 4px;
+}
+
+/* Impresión (tarifario, catálogos, bitácora): solo se imprime el contenido */
+@media print {
+  .suite-shell aside, .suite-shell nav, .suite-shell footer, .no-print, header { display: none !important; }
+  body, html { height: auto !important; overflow: visible !important; }
+  main, main * { overflow: visible !important; height: auto !important; max-height: none !important; }
+}
+
+/* Reportes impresos (usePrint): solo se imprime el área del reporte */
+#area-impresion { display: none; }
+@media print {
+  body.imprimiendo > *:not(#area-impresion) { display: none !important; }
+  body.imprimiendo #area-impresion { display: block !important; }
+  body.imprimiendo, html:has(body.imprimiendo) { background: #fff !important; }
+  @page { margin: 14mm; }
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* Barra de acciones masivas (oscura): una acción que no aplica a la selección
+   se ve atenuada sobre el fondo oscuro en lugar de un bloque gris. */
+.barra-masiva button:disabled {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Ama de llaves · vista de camarera: en el teléfono ocupa toda la pantalla (sin el menú de escritorio). */
+@media (max-width: 720px) {
+  .vista-camarera { position: fixed; inset: 0; z-index: 900; overflow-y: auto; padding: 0 !important; align-items: flex-start; }
+  .vista-camarera > div { max-width: none !important; min-height: 100%; }
+}
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.tabla-config > tbody > tr:last-child { border-bottom: 0 !important; }
