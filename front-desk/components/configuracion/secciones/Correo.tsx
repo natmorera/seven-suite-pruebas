@@ -4,34 +4,59 @@ import { BotonExportar, exportarCSV } from '@/components/hotel/ui';
 import { useMemo, useState } from 'react';
 import { C, FONT, fmtDate, radius } from '@/components/suite/tokens';
 import { Button, Checkbox, Input, Select, StatusBadge, Switch } from '@/components/suite/ui';
-import { useDato } from '../store';
+import { useDato, usePatch } from '../store';
 import {
-  Buscador, Campo, Celda, ConfigCard, Fila, FilaVacia, Grid, IcCheckLine, IcEdit, IcTrash, IconButton, ItemMaestro, Paginacion,
-  SubCard, Tabla, norm, uid, useConfirmar, usePaginado,
+  Buscador, CabeceraDetalle, CardTabs, MaestroDetalle, Campo, Celda, ConfigCard, Fila, FilaVacia, Grid, IcCheckLine, IcEdit, ItemMaestro, Paginacion,
+  Tabla, norm, uid, useConfirmar, usePaginado,
 } from '../kit';
 import type { CorreoEspecial, CuentaCorreo } from '../datos';
 
-const TABS = ['Cuenta', 'Correos especiales', 'Histórico de correos enviados'] as const;
+const TABS = ['Cuenta', 'Correos especiales', 'Notificaciones', 'Histórico de correos enviados'] as const;
+
+/** El título de la tarjeta es la pestaña (no se repite «Correo electrónico»). */
+const AYUDA: Record<(typeof TABS)[number], string> = {
+  'Cuenta': 'Cuentas desde las que el sistema envía confirmaciones, facturas y avisos.',
+  'Correos especiales': 'Correos automáticos que se envían al huésped en momentos clave de la estancia.',
+  'Notificaciones': 'Quién recibe los avisos automáticos de cada proceso.',
+  'Histórico de correos enviados': 'Registro de todos los correos que envió el sistema.',
+};
 
 export default function Correo() {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Cuenta');
   return (
-    <ConfigCard title="Correo electrónico">
+    <ConfigCard title={tab} subtitle={AYUDA[tab]}>
       <TabsEnBarra items={TABS} activo={tab} onChange={setTab} />
       {tab === 'Cuenta' && <Cuentas />}
       {tab === 'Correos especiales' && <Especiales />}
+      {tab === 'Notificaciones' && <Notificaciones />}
       {tab === 'Histórico de correos enviados' && <Historico />}
     </ConfigCard>
   );
 }
 
-function Maestro({ children, lista }: { children: React.ReactNode; lista: React.ReactNode }) {
+/** Correos que reciben los avisos automáticos de cada proceso. Se admiten varios separados por coma. */
+function Notificaciones() {
+  const [g, patch] = usePatch('general');
+  const invalido = (v: string) => v.split(',').map(x => x.trim()).filter(Boolean).some(x => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x));
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '220px minmax(0,1fr)', gap: 20, alignItems: 'start' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderRight: `1px solid ${C.n500}`, paddingRight: 16, minHeight: 300 }}>{lista}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>{children}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <p style={{ margin: 0, fontSize: 12.5, color: C.n700 }}>Para varios destinatarios, sepáralos con coma.</p>
+      <Grid cols={2}>
+        {Object.entries(g.alertas).map(([k, v]) => (
+          <Campo key={k} label={k} error={invalido(v) ? 'Revisa el formato del correo.' : undefined}>
+            <Input type="text" value={v} placeholder="correo@hotel.com" onChange={x => patch({ alertas: { ...g.alertas, [k]: x } })} />
+          </Campo>
+        ))}
+      </Grid>
     </div>
   );
+}
+
+/** Maestro-detalle estándar del kit (misma lista y recuadro que Producción, Servicios y Contratos). */
+const PEST_CUENTA = ['Servidor', 'Datos predefinidos', 'Otros'] as const;
+
+function Maestro({ children, lista, titulo, contador }: { children: React.ReactNode; lista: React.ReactNode; titulo: string; contador?: number }) {
+  return <MaestroDetalle titulo={titulo} contador={contador} lista={lista} anchoLista={250}>{children}</MaestroDetalle>;
 }
 
 /** Editor «Predefinir datos» (Responder a / Copiar a / Asunto / Cuerpo). */
@@ -59,6 +84,7 @@ function Cuentas() {
   const [selId, setSelId] = useState(cuentas[0]?.id ?? '');
   const [q, setQ] = useState('');
   const [editar, setEditar] = useState(false);
+  const [pest, setPest] = useState<(typeof PEST_CUENTA)[number]>('Servidor');
   const [verif, setVerif] = useState<{ ok: boolean; msg: string } | null>(null);
   const { pedir, dialogo } = useConfirmar();
   const sel = cuentas.find(c => c.id === selId) ?? cuentas[0];
@@ -81,7 +107,7 @@ function Cuentas() {
   );
 
   return (
-    <Maestro lista={<>
+    <Maestro titulo="Cuentas de correo" contador={filtradas.length} lista={<>
       <BarraSeccion filtros={<Buscador value={q} onChange={setQ} placeholder="Buscar correo" width={240} />}
         acciones={<><BotonExportar disabled={!filtradas.length} titulo="Cuentas de correo" onCSV={() => exportarCSV('cuentas-correo', ['Título', 'Correo', 'Descripción'], filtradas.map(c => [c.titulo, c.correo, c.descripcion ?? '']))} /><Button onClick={nuevo}>Nuevo correo</Button></>}
         derecha={<span style={{ fontSize: 12, color: C.n700 }}>{filtradas.length} cuentas</span>} />
@@ -92,21 +118,16 @@ function Cuentas() {
       </div>
     </>}>
       {sel ? <>
-        <SubCard>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              {editar
-                ? <Grid cols={2}><Campo label="Título"><Input value={sel.titulo} onChange={v => set({ titulo: v })} /></Campo><Campo label="Correo"><Input type="email" value={sel.correo} onChange={v => set({ correo: v })} /></Campo></Grid>
-                : <><p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{sel.titulo}</p><p style={{ fontSize: 12, color: C.n700, margin: '3px 0 0' }}>{sel.descripcion || sel.correo}</p></>}
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant="secondary" icon={<IcCheckLine />} onClick={verificar} style={{ color: C.brand, borderColor: C.brandBd }}>Verificar correo</Button>
-              <Button variant="secondary" icon={<IcEdit />} onClick={() => setEditar(e => !e)}>{editar ? 'Terminar edición' : 'Editar información'}</Button>
-              <IconButton label={`Eliminar ${sel.correo}`} tono="peligro" disabled={cuentas.length <= 1}
-                onClick={() => pedir('Eliminar cuenta', `¿Eliminar la cuenta ${sel.correo}?`, () => { setCuentas(cs => cs.filter(c => c.id !== sel.id)); setSelId(''); })}><IcTrash /></IconButton>
-            </div>
-          </div>
-          {verif && <div role="status" style={{ fontSize: 12, padding: '8px 12px', borderRadius: radius.control, background: verif.ok ? 'rgba(76,175,80,.08)' : 'rgba(244,67,54,.06)', color: verif.ok ? '#2E7D32' : '#C62828' }}>{verif.msg}</div>}
+        <CabeceraDetalle titulo={editar ? 'Editar cuenta' : sel.titulo} sub={editar ? undefined : sel.descripcion || sel.correo}
+          acciones={<>
+            <Button variant="secondary" icon={<IcCheckLine />} onClick={verificar}>Verificar correo</Button>
+            <Button variant="secondary" icon={<IcEdit />} onClick={() => setEditar(e => !e)}>{editar ? 'Terminar edición' : 'Editar información'}</Button>
+          </>}
+          onEliminar={cuentas.length <= 1 ? undefined : () => pedir('Eliminar cuenta', `¿Eliminar la cuenta ${sel.correo}?`, () => { setCuentas(cs => cs.filter(c => c.id !== sel.id)); setSelId(''); })} />
+        {editar && <Grid cols={2}><Campo label="Título"><Input value={sel.titulo} onChange={v => set({ titulo: v })} /></Campo><Campo label="Correo"><Input type="email" value={sel.correo} onChange={v => set({ correo: v })} /></Campo></Grid>}
+        {verif && <div role="status" style={{ fontSize: 12, padding: '8px 12px', borderRadius: radius.control, background: verif.ok ? 'rgba(76,175,80,.08)' : 'rgba(244,67,54,.06)', color: verif.ok ? '#2E7D32' : '#C62828' }}>{verif.msg}</div>}
+        <CardTabs tabs={PEST_CUENTA} active={pest} onChange={setPest} />
+        {pest === 'Servidor' && <>
           <Grid cols={3}>
             {inp('servidor', 'Servidor SMTP')}{inp('remitente', 'Remitente')}{inp('usuario', 'Usuario')}
             {inp('contrasena', 'Contraseña', 'password')}{inp('puerto', 'Puerto', 'number')}{inp('firma', 'Firma')}
@@ -116,11 +137,9 @@ function Cuentas() {
               <Checkbox key={k} checked={sel[k]} onChange={b => !dis && set({ [k]: b })} label={l} />)}
           </div>
           {sel.oauth && <Grid cols={3}>{inp('cuenta', 'Cuenta')}{inp('clienteId', 'ID de Cliente')}{inp('secreto', 'Secreto del Cliente', 'password')}</Grid>}
-        </SubCard>
-        <SubCard title="Predefinir datos"><Predefinir v={sel} set={set} disabled={dis} /></SubCard>
-        <SubCard title="Otros">
-          <Campo label="Asunto correo de reserva"><Input value={sel.asuntoReserva} onChange={v => set({ asuntoReserva: v })} disabled={dis} placeholder="Ingresa el asunto" /></Campo>
-        </SubCard>
+        </>}
+        {pest === 'Datos predefinidos' && <Predefinir v={sel} set={set} disabled={dis} />}
+        {pest === 'Otros' && <Campo label="Asunto correo de reserva"><Input value={sel.asuntoReserva} onChange={v => set({ asuntoReserva: v })} disabled={dis} placeholder="Ingresa el asunto" /></Campo>}
       </> : <p style={{ fontSize: 12, color: C.n700 }}>Agrega una cuenta de correo con «Nuevo correo».</p>}
       {dialogo}
     </Maestro>
@@ -134,17 +153,16 @@ function Especiales() {
   const sel = lista.find(c => c.id === selId) ?? lista[0];
   const set = (p: Partial<CorreoEspecial>) => sel && setLista(ls => ls.map(c => (c.id === sel.id ? { ...c, ...p } : c)));
   return (
-    <Maestro lista={lista.map(c => (
+    <Maestro titulo="Correos especiales" contador={lista.length} lista={lista.map(c => (
       <ItemMaestro key={c.id} titulo={c.nombre} detalle={c.activo ? c.disparador : 'Desactivado'} activo={c.id === sel?.id} onClick={() => setSelId(c.id)} />
     ))}>
       {sel && <>
-        <SubCard title={sel.nombre} hint={`Se envía: ${sel.disparador.toLowerCase()}.`} actions={<Switch checked={sel.activo} onChange={b => set({ activo: b })} label={sel.activo ? 'Activo' : 'Inactivo'} />}>
+        <CabeceraDetalle titulo={sel.nombre} sub={`Se envía: ${sel.disparador.toLowerCase()}.`} acciones={<Switch checked={sel.activo} onChange={b => set({ activo: b })} label={sel.activo ? 'Activo' : 'Inactivo'} />} />
           <Campo label="Enviar desde">
             <Select value={sel.remitente} onChange={v => set({ remitente: v })} options={cuentas.map(c => ({ value: c.correo, label: c.correo }))} />
           </Campo>
           <Predefinir v={sel} set={set} />
           <p style={{ fontSize: 11, color: C.n700, margin: 0 }}>Variables disponibles: {'{huesped}'}, {'{numero}'}, {'{llegada}'}, {'{salida}'}, {'{factura}'}.</p>
-        </SubCard>
       </>}
     </Maestro>
   );
@@ -155,7 +173,7 @@ function Historico() {
   const [q, setQ] = useState('');
   const [estado, setEstado] = useState('');
   const filtradas = useMemo(() => hist.filter(h => (!estado || h.estado === estado) && norm(`${h.correo} ${h.remitente} ${h.mensaje}`).includes(norm(q))), [hist, q, estado]);
-  const { pagina, total, setPagina, visibles } = usePaginado(filtradas);
+  const { pagina, total, setPagina, visibles, filas: nFilas, tam } = usePaginado(filtradas);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <BarraSeccion
@@ -171,7 +189,7 @@ function Historico() {
           </Fila>
         ))}
       </Tabla>
-      <Paginacion pagina={pagina} total={total} onChange={setPagina} />
+      <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
     </div>
   );
 }

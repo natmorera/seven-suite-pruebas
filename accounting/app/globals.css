@@ -79,11 +79,16 @@ body { background: var(--n200); color: var(--n900); }
 .tabla > tbody > tr { height: 44px; }
 .tabla > tbody > tr > td { vertical-align: middle; }
 
-/* ── Checkbox único ─────────────────────────────────────────────────────────
-   Un solo checkbox en toda la app (selección de filas, acciones masivas,
-   filtros, formularios): borde Neutro/500, radio 4, marcado en color principal.
-   Reemplaza el checkbox nativo del navegador (accentColor), que se veía
-   distinto en cada pantalla y en cada sistema operativo. */
+/* Por debajo del ancho de diseño (1440 px) las celdas de las tablas de
+   pantalla reducen su margen lateral para que entren más columnas. */
+@media (max-width: 1439px) {
+  .tabla th, .tabla td { padding-left: 8px !important; padding-right: 8px !important; }
+}
+
+
+/* Checkbox único en toda la app (selección de filas, acciones masivas, filtros, formularios):
+   borde Neutro/500, radio 4 y marcado en color principal. Se ve igual en todos los navegadores
+   y sistemas operativos. */
 input[type="checkbox"] {
   -webkit-appearance: none;
   appearance: none;

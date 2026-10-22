@@ -1,5 +1,5 @@
-import { fechaVencimiento, diasVencidos } from '../../../ui/formato';
-import { FONT } from '../../../ui/tokens';
+import { fechaVencimiento, diasVencidos } from '@/components/ui/formato';
+import { FONT } from '@/components/ui/tokens';
 
 export const F = FONT;
 export const BRAND = '#A77600';
@@ -10,7 +10,7 @@ export function fmt(n: number) {
   const s = abs.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
   return n < 0 ? `(${s})` : s;
 }
-// Issue #10: en el histórico solo se debe mostrar el ID auxiliar (último
+// en el histórico solo se debe mostrar el ID auxiliar (último
 // segmento del código de cuenta), no el código completo con los prefijos
 // de mayor/sub mayor/detalle.
 export function soloIdAux(id: string): string {
@@ -28,7 +28,7 @@ export function fmtFechaHora() {
   const min = String(d.getMinutes()).padStart(2,'0');
   return `${dd}/${mm}/${yyyy} ${String(h).padStart(2,'0')}:${min} ${ampm}`;
 }
-// ── Mock data ─────────────────────────────────────────────────────────────────
+// ── Datos de ejemplo ─────────────────────────────────────────────────────────────────
 export const CLIENTES_EC = [
   { id:'13201009', nombre:'ARA Agencia de Viajes Internacional', periodo:'Mayo 2026', moneda:'COL - Colón',
     saldoPendiente:-3241889.74, ultimaOp:'30/04/2025', diasVencido:398,
@@ -77,13 +77,12 @@ export interface CuentaCP {
 }
 export interface RangoCP { desde: string; hasta: string }
 // "Hoy" de referencia para todo el módulo de antigüedad de saldos (mock)
-export const HOY_ANTIGUEDAD = new Date(2026, 5, 2);
+const HOY_ANTIGUEDAD = new Date(2026, 5, 2);
  // 02/06/2026
 
-// Issue #14: cada documento ahora guarda su fecha de factura y los días de
-// crédito reales (no montos ya repartidos a mano por rango) - el rango de
-// antigüedad y la fecha de vencimiento se calculan con fechaVencimiento()/
-// diasVencidos() en bucketizeDoc(), igual que se calcularía con datos reales.
+// Cada documento guarda su fecha de factura y los días de crédito; el rango de antigüedad y la
+// fecha de vencimiento se calculan con fechaVencimiento() y diasVencidos() en bucketizeDoc(),
+// igual que con datos reales.
 export const AGING_DATA = [
   { id:'13201009', nombre:'ARA Agencia de Viajes Internacional',
     docs:[
@@ -101,8 +100,8 @@ export const AGING_DATA = [
     ]
   },
 ];
-// Calcula a qué rango de antigüedad cae un documento, a partir de su factura y
-// días de crédito - reemplaza la asignación manual de rango por cálculo real.
+// Calcula a qué rango de antigüedad cae un documento, a partir de su factura y sus días de
+// crédito.
 export function bucketizeDoc(d: { doc:string; fechaFactura:string; diasCredito:number; monto:number }, hoy: Date = HOY_ANTIGUEDAD) {
   const venceDate = fechaVencimiento(d.fechaFactura, d.diasCredito);
   const vence = `${String(venceDate.getDate()).padStart(2,'0')}/${String(venceDate.getMonth()+1).padStart(2,'0')}/${venceDate.getFullYear()}`;

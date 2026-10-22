@@ -9,7 +9,7 @@ interface Slide { titulo: string; texto: string; boton: string; enlace: string; 
 // Prototipo: un solo usuario, «seven» con contraseña «1»
 const USUARIO = { nombre: 'seven', correo: 'seven@mysevensuite.com', rol: 'Superusuario' };
 const CREDENCIALES = { usuario: 'seven', clave: '1' };
-const VERSION = 'v1.0.1';
+const VERSION = 'v1.0.3';
 const nada = () => () => {};
 const leer = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const guardarUltimo = (id: string) => { try { localStorage.setItem('ultimo-modulo', id); } catch { /* sin almacenamiento */ } };

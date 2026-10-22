@@ -17,13 +17,13 @@ import { createPortal } from 'react-dom';
 import { C, FONT, PAGE_PAD, SIDEBAR, SIZE } from '@/components/suite/tokens';
 import { FilterBar, Page, PageBody, PageHeader, TabBar, type TabItem } from '@/components/suite/ui';
 
-export interface TabsPantalla<T extends string> { items: readonly (T | { id: T; label?: string; count?: number })[]; activo: T; onChange: (t: T) => void }
+export interface TabsPantalla<T extends string> { items: readonly (T | { id: T; label?: string; count?: number })[]; activo: T; onChange: (t: T) => void; /** Texto o acciones a la derecha de las pestañas (estado de la caja…). */ derecha?: ReactNode }
 export interface SeleccionPantalla { n: number; acciones: ReactNode; onLimpiar: () => void; etiqueta?: string }
 
 // Ranuras: un componente hijo (p. ej. el contenido de una pestaña) puede poner
 // sus filtros en la barra de filtros de la pantalla y su Exportar en el header,
 // sin crear una segunda barra.
-interface CtxRanuras { filtros: HTMLElement | null; acciones: HTMLElement | null; tabs: HTMLElement | null; masivas: HTMLElement | null; dueno: string | null; reclamar: (id: string | null, libre?: string) => void; usar: (d: number) => void }
+interface CtxRanuras { filtros: HTMLElement | null; acciones: HTMLElement | null; tabs: HTMLElement | null; masivas: HTMLElement | null; pie?: HTMLElement | null; dueno: string | null; reclamar: (id: string | null, libre?: string) => void; usar: (d: number) => void }
 const Ranuras = createContext<CtxRanuras>({ filtros: null, acciones: null, tabs: null, masivas: null, dueno: null, reclamar: () => {}, usar: () => {} });
 /**
  * Para componentes que pueden aparecer varias veces en una pantalla (p. ej. un
@@ -57,6 +57,8 @@ export function FiltrosEnBarra({ children }: { children: ReactNode }) {
   useEffect(() => { usar(1); return () => usar(-1); }, [usar]);
   return r.filtros ? createPortal(children, r.filtros) : null;
 }
+/** Contenedor fijo al pie de la pantalla (paginación y totales; ver suite/Paginacion · PieFijo). */
+export function usePiePantalla() { return useContext(Ranuras).pie ?? null; }
 /** Renderiza acciones del hijo (p. ej. Exportar lo visible) en el header de la pantalla. */
 export function AccionesEnHeader({ children }: { children: ReactNode }) {
   const r = useContext(Ranuras);
@@ -81,6 +83,7 @@ export function Pantalla<T extends string>({ titulo, izquierda, acciones, tabs, 
   const items: TabItem[] = (tabs?.items ?? []).map(t => (typeof t === 'string' ? { label: t } : { label: t.label ?? t.id, count: t.count }));
   const ids = (tabs?.items ?? []).map(t => (typeof t === 'string' ? t : t.id)) as T[];
   const [rm, setRm] = useState<HTMLElement | null>(null);
+  const [rp, setRp] = useState<HTMLElement | null>(null);
   const derecha = filtrosDerecha;
   return (
     <Page>
@@ -96,14 +99,15 @@ export function Pantalla<T extends string>({ titulo, izquierda, acciones, tabs, 
             {(acciones || conRanuras) && <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>{conRanuras && <span ref={setRa} style={contenidos} />}{acciones}</div>}
           </div>
         )}
-      {tabs && <TabBar tabs={items} active={Math.max(0, ids.indexOf(tabs.activo))} onChange={i => tabs.onChange(ids[i])} />}
+      {tabs && <TabBar tabs={items} active={Math.max(0, ids.indexOf(tabs.activo))} onChange={i => tabs.onChange(ids[i])} actions={tabs.derecha} />}
       {conRanuras && !tabs && <div ref={setRt} style={contenidos} />}
       {(filtros || derecha || conRanuras) && <div style={filtros || derecha || nUsos > 0 ? contenidos : { display: 'none' }}><FilterBar right={derecha}>{filtros}{conRanuras && <span ref={setRf} style={contenidos} />}</FilterBar></div>}
       {seleccion && seleccion.n > 0 && <BarraMasiva n={seleccion.n} etiqueta={seleccion.etiqueta} onLimpiar={seleccion.onLimpiar}>{seleccion.acciones}</BarraMasiva>}
       {conRanuras && <div ref={setRm} style={contenidos} />}
       <PageBody style={{ display: 'flex', flexDirection: 'column', gap: 16, ...(sinPadding ? { padding: 0 } : {}), ...cuerpoStyle }}>
-        <Ranuras.Provider value={{ filtros: rf, acciones: ra, tabs: rt, masivas: rm, dueno, reclamar, usar }}>{children}</Ranuras.Provider>
+        <Ranuras.Provider value={{ filtros: rf, acciones: ra, tabs: rt, masivas: rm, pie: rp, dueno, reclamar, usar }}>{children}</Ranuras.Provider>
       </PageBody>
+      <div ref={setRp} style={{ flexShrink: 0 }} />
       {pie && <div className="no-print" style={{ flexShrink: 0, background: C.n000, borderTop: `1px solid ${C.n500}`, padding: `10px ${PAGE_PAD}px`, display: 'flex', justifyContent: 'flex-end', gap: 10, fontFamily: FONT }}>{pie}</div>}
     </Page>
   );

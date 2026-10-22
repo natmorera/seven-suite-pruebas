@@ -2,7 +2,7 @@
 import { BRAND, type Cheque, F, fmtN } from './datos';
 import { ModalShell } from './modales';
 
-// ── Modal Ver cheque (lectura) ──────────────────────────────────────────────────
+// ── Modal para ver un cheque (lectura) ──────────────────────────────────────────────────
 export function ModalVerCheque({ cheque, onClose, onVerRetencion }:{ cheque:Cheque; onClose:()=>void; onVerRetencion:()=>void }) {
   const importeNeto = cheque.totalDoc - cheque.retencion;
   const filas: [string,string][] = [
@@ -29,7 +29,7 @@ export function ModalVerCheque({ cheque, onClose, onVerRetencion }:{ cheque:Cheq
       <div style={{ padding:20,display:'grid',gridTemplateColumns:'1fr 1fr',gap:14 }}>
         {filas.map(([l,v])=>(
           <div key={l}>
-            <p style={{ fontSize:10,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
+            <p style={{ fontSize:10.5,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
             <p style={{ fontSize:13,fontWeight:500,color:'#0F0F0F',margin:0,fontFamily:F }}>{v}</p>
           </div>
         ))}

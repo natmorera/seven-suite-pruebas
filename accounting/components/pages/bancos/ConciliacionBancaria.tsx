@@ -1,19 +1,19 @@
 'use client';
 import { useState } from 'react';
-import { Toast, PageHeader } from '../../ui/primitives';
-import { C, USUARIO_ACTUAL, PAGE_PAD, radius, TABLA } from '../../ui/tokens';
-import { fmtNum, fmtDate } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '../../ui/montos';
-import { SearchInput, FilterDropdown } from '../../ui/filtros';
+import { Toast, PageHeader } from '@/components/ui/primitives';
+import { C, USUARIO_ACTUAL, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum, fmtDate } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '@/components/ui/montos';
+import { SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { DetalleConciliacion } from './conciliacionBancaria/DetalleConciliacion';
 import { VistaPreviaModal } from './conciliacionBancaria/VistaPreviaModal';
 import { BRAND, CONCILIACIONES_INIT, type Conciliacion, ESTADO_CON_STYLE, F, fmt2, sym } from './conciliacionBancaria/datos';
 import { NuevaConciliacionModal } from './conciliacionBancaria/modales';
 import { Pill } from './conciliacionBancaria/piezas';
 
-// ── Main: Lista ───────────────────────────────────────────────────────────────
+// ── Pantalla principal: lista ───────────────────────────────────────────────────────────────
 export default function ConciliacionBancaria() {
   const [cons, setCons]     = useState<Conciliacion[]>(CONCILIACIONES_INIT);
   const [selectedId, setSelectedId] = useState<number|null>(null);
@@ -101,7 +101,7 @@ export default function ConciliacionBancaria() {
         <FilterDropdown label="Usuario" options={['jperez','sblandon','yader']} selected={filtUsuario} onApply={setFiltUsuario} onClear={()=>setFiltUsuario(new Set())}/>
       </div>
 
-      {/* Table */}
+      {/* Tabla */}
       <div style={{ flex:1, overflowY:'auto', background:'#FFFFFF', padding:`0 ${PAGE_PAD-12}px` }}>
         <table className="tabla" style={TABLA.table}>
           <thead style={{ position:'sticky', top:0, background:'#FFFFFF', zIndex:2 }}>
@@ -131,7 +131,7 @@ export default function ConciliacionBancaria() {
                   <td style={{ padding:'8px 12px', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={`${c.cuentaCode} ${c.cuentaBancaria}`}>{c.cuentaCode} {c.cuentaBancaria}</td>
                   <td style={{ padding:'8px 12px' }}>{c.desde}</td>
                   <td style={{ padding:'8px 12px' }}>{c.hasta}</td>
-                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{c.moneda} {s}</span></td>
+                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10.5, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{c.moneda} {s}</span></td>
                   <MoneyCells sym={s} value={c.saldoBanco > 0 ? fmt2(c.saldoBanco) : '-'}/>
                   <MoneyCells sym={s} value={c.saldoLibros > 0 ? fmt2(c.saldoLibros) : '-'}/>
                   <MoneyCells sym={s} value={c.saldoBanco > 0 ? fmt2(c.diferencia) : '-'} color={c.saldoBanco>0?difColor:undefined}/>

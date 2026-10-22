@@ -1,23 +1,14 @@
 'use client';
-import { useEffect, useRef, useState, ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { IcSearch } from './icons';
 import { C, FONT, PAGE_PAD, radius, shadow } from './tokens';
 
-// ── Barra de acciones masivas ────────────────────────────────────────────────
-// Aparece flotando sobre la tabla cuando hay filas seleccionadas por checkbox.
-// Mismo patrón en toda la app: fondo oscuro, "N seleccionados" a la izquierda,
-// botones de acción a la derecha.
-// ── FilterDropdown ────────────────────────────────────────────────────────────
-// Issue: este desplegable de filtro (botón + panel con checkboxes) estaba
-// duplicado a mano en ~10 pantallas distintas (Cheques, Transferencias,
-// Conciliación, Depósitos, Gestión de tarjetas, Cobros/Pagos, Analítico de
-// cuentas, Bandeja de asientos, Detalle de asiento...), cada una con pequeñas
-// diferencias de tamaño/color. Se centraliza acá según la spec de diseño:
-// título Semibold 12px, "Seleccionar todos" arriba, fila seleccionada con
-// fondo color principal al 5%, checkbox sin marcar en #ECECEC, botones de
-// 28px con 4px de radio, y "Limpiar" como link abajo a la izquierda (solo si
-// hay algo seleccionado).
-export interface FilterOption { value: string; label: string; icon?: ReactNode; count?: number }
+// ── Barra de acciones masivas ── Aparece sobre la tabla cuando hay filas seleccionadas: fondo
+// oscuro, «N seleccionados» a la izquierda y acciones a la derecha. ── FilterDropdown ──
+// Desplegable de filtro de toda la app: título Semibold 12px, «Seleccionar todos» arriba, fila
+// seleccionada con fondo color principal al 5 %, botones de 28px con radio 4 y «Limpiar» abajo
+// a la izquierda cuando hay algo seleccionado.
+interface FilterOption { value: string; label: string; icon?: ReactNode; count?: number }
 export function FilterDropdown({ label, options, selected, onApply, onClear }: {
   label: string; options: (string | FilterOption)[]; selected: Set<string>;
   onApply: (s: Set<string>) => void; onClear: () => void;
@@ -35,7 +26,7 @@ export function FilterDropdown({ label, options, selected, onApply, onClear }: {
     return () => { document.removeEventListener('mousedown', onClickFuera); document.removeEventListener('keydown', onEsc); };
   }, [open]);
 
-  function toggle(v: string) { setLocal(s => { const n = new Set(s); n.has(v) ? n.delete(v) : n.add(v); return n; }); }
+  function toggle(v: string) { setLocal(s => { const n = new Set(s); if (n.has(v)) n.delete(v); else n.add(v); return n; }); }
   function seleccionarTodos() { setLocal(new Set(items.map(i => i.value))); }
 
   return (
@@ -98,15 +89,8 @@ export function BulkActionBar({ count, actions, onClose }: {
 }) {
   if (count === 0) return null;
   const F = FONT;
-  // Issues corregidos acá:
-  // 1) Los botones de acción usaban fontWeight 600 (semibold) - la regla del
-  //    proyecto es que ningún botón use más que Medium (500).
-  // 2) El orden ya era "seleccionados a la izquierda, acciones a la derecha",
-  //    pero el "×" para deseleccionar no era claro - se cambia por el texto
-  //    "Deseleccionar".
-  // 3) Tenía margin y border-radius que la despegaban de los bordes de la
-  //    pantalla - ahora va de punta a punta (como el header y la barra de
-  //    filtros), sin redondeo.
+  // Botones en Medium (500), «Deseleccionar» como texto y la barra de punta a punta, sin margen
+  // ni redondeo, como el encabezado y la barra de filtros.
   return (
     <div style={{ position:'sticky', top:0, zIndex:5, background:'#0F0F0F', color:'#FFFFFF',
       padding:`10px ${PAGE_PAD}px`, display:'flex', alignItems:'center', justifyContent:'space-between',
@@ -129,13 +113,8 @@ export function BulkActionBar({ count, actions, onClose }: {
     </div>
   );
 }
-// ── SearchInput ───────────────────────────────────────────────────────────────
-// Issue: cada barra de filtros reinventaba el buscador a mano - alturas (28 o
-// 32), radios (4, 6, 7...), tamaños de letra (11 o 12) y hasta los puntos
-// suspensivos ("..." vs "…") variaban de pantalla a pantalla sin ninguna razón
-// funcional. Este átomo fija un único look para "buscar" en toda la app;
-// `width` es opcional por si una pantalla puntual necesita un ancho fijo
-// (por defecto ocupa el espacio disponible, como la mayoría ya hacía).
+// ── SearchInput ── Buscador único de las barras de filtros. `width` es opcional; por defecto
+// ocupa el espacio disponible.
 export function SearchInput({ value, onChange, placeholder = 'Buscar…', width, autoFocus, disabled }: {
   value: string; onChange: (v: string) => void; placeholder?: string; width?: number | string; autoFocus?: boolean; disabled?: boolean;
 }) {
@@ -144,7 +123,7 @@ export function SearchInput({ value, onChange, placeholder = 'Buscar…', width,
       <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: C.n700, display: 'flex', pointerEvents: 'none' }}>
         <IcSearch className="w-4 h-4" />
       </span>
-      <input autoFocus={autoFocus} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
+      <input autoFocus={autoFocus} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} aria-label={placeholder ?? 'Buscar'} disabled={disabled}
         style={{ height: 32, width: width ?? 200, padding: '0 12px 0 34px', border: `1px solid ${C.n500}`, borderRadius: 4,
           fontSize: 12, fontFamily: FONT, outline: 'none', boxSizing: 'border-box', background: disabled ? C.n200 : C.n000, color: C.n900 }}
         onFocus={e => { e.target.style.borderColor = C.brand; }}
@@ -152,11 +131,7 @@ export function SearchInput({ value, onChange, placeholder = 'Buscar…', width,
     </div>
   );
 }
-// ── Chip ──────────────────────────────────────────────────────────────────────
-// Antes vivía como componente propio dentro de estadosCommon.tsx (solo
-// disponible para las 4 pantallas de estados financieros) mientras que
-// bancos/reportes/Dashboard reimplementaban el mismo patrón "pill con ×" a
-// mano cada uno. Ahora es un átomo del foundation, usable en cualquier pantalla.
+// ── Chip ── Pastilla con × para quitar un filtro, usable en cualquier pantalla.
 export function Chip({ label, onClear }: { label: string; onClear: () => void }) {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 4, height: 24, padding: '0 8px', borderRadius: radius.pill,
@@ -164,48 +139,5 @@ export function Chip({ label, onClear }: { label: string; onClear: () => void })
       {label}
       <button onClick={onClear} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.brand, fontSize: 13, padding: 0, lineHeight: 1 }}>×</button>
     </span>
-  );
-}
-// ── Dropdown ──────────────────────────────────────────────────────────────────
-// Generaliza el patrón "botón que abre un panel flotante" que cada pantalla
-// reimplementaba con su propio position:relative + position:absolute a mano
-// (filtros, menú de usuario, selector de idioma, "más opciones"...). Se cierra
-// solo al hacer click afuera. El trigger y el contenido del panel quedan
-// completamente a cargo de quien lo usa.
-export function Dropdown({ trigger, open, onOpenChange, children, align = 'left', width }: {
-  trigger: ReactNode; open: boolean; onOpenChange: (v: boolean) => void; children: ReactNode;
-  align?: 'left' | 'right'; width?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onOpenChange(false);
-    }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [open, onOpenChange]);
-
-  return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
-      <div onClick={() => onOpenChange(!open)}>{trigger}</div>
-      {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', [align]: 0, zIndex: 300,
-          background: C.n000, border: `1px solid ${C.n500}`, borderRadius: radius.md,
-          boxShadow: shadow.panel, minWidth: width ?? 180, overflow: 'hidden', fontFamily: FONT,
-        }}>
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-export function DropdownItem({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
-  return (
-    <button onClick={onClick} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px',
-      fontSize: 12, border: 'none', background: 'none', cursor: 'pointer', fontFamily: FONT, color: C.n900 }}>
-      {children}
-    </button>
   );
 }

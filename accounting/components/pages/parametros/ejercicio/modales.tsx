@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, FormField, Input } from '../../../ui/formulario';
+import { Modal } from '@/components/ui/primitives';
+import { Button, FormField, Input } from '@/components/ui/formulario';
 import { type Ejercicio } from './datos';
 
 // ── Editar datos generales del ejercicio ─────────────────────────────────────

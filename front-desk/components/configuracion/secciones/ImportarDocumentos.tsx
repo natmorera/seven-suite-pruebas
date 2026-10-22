@@ -1,8 +1,9 @@
 'use client';
+// Importación de catálogos maestros desde plantillas CSV (modal que se abre desde el header de Empresa).
 import { useRef, useState } from 'react';
 import { C, radius } from '@/components/suite/tokens';
-import { Button, StatusBadge } from '@/components/suite/ui';
-import { Aviso, ConfigCard, Grid, descargarCSV, leerCSV } from '../kit';
+import { Button, Modal, StatusBadge } from '@/components/suite/ui';
+import { Aviso, Grid, descargarCSV, leerCSV } from '../kit';
 
 const TIPOS = [
   { id: 'tipos-hab', titulo: 'Tipos de habitación', sub: 'Tipos y características', cols: ['Código', 'Descripción', 'Características (separadas por |)'] },
@@ -16,7 +17,7 @@ const TIPOS = [
 
 type Resultado = { archivo: string; filas: number; errores: string[] };
 
-export default function ImportarDocumentos() {
+export default function ImportarDocumentos({ onClose }: { onClose: () => void }) {
   const [res, setRes] = useState<Record<string, Resultado>>({});
   const [activo, setActivo] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -24,7 +25,7 @@ export default function ImportarDocumentos() {
   const procesar = async (id: string, f: File) => {
     const tipo = TIPOS.find(t => t.id === id)!;
     if (!/\.(csv)$/i.test(f.name)) {
-      setRes(r => ({ ...r, [id]: { archivo: f.name, filas: 0, errores: ['Guardá la plantilla como CSV (Excel → Guardar como → CSV UTF-8) e importala de nuevo.'] } }));
+      setRes(r => ({ ...r, [id]: { archivo: f.name, filas: 0, errores: ['Guarda la plantilla como CSV (Excel → Guardar como → CSV UTF-8) e impórtala de nuevo.'] } }));
       return;
     }
     const [cab, ...filas] = await leerCSV(f);
@@ -35,8 +36,9 @@ export default function ImportarDocumentos() {
   };
 
   return (
-    <ConfigCard title="Importar documentos" subtitle="Carga masiva desde Excel para catálogos maestros del PMS">
-      <Aviso>Descargá la plantilla, completá los datos y cargá el archivo. Los registros existentes no se sobrescriben automáticamente.</Aviso>
+    <Modal open title="Importar datos" onClose={onClose} width={860} footer={<Button variant="secondary" onClick={onClose}>Cerrar</Button>}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <Aviso>Descarga la plantilla, completa los datos y carga el archivo en CSV. Los registros existentes no se sobrescriben automáticamente.</Aviso>
       <Grid cols={3}>
         {TIPOS.map(t => {
           const r = res[t.id];
@@ -64,6 +66,7 @@ export default function ImportarDocumentos() {
       </Grid>
       <input ref={input} type="file" accept=".csv,.xlsx,.xls" hidden
         onChange={e => { const f = e.target.files?.[0]; if (f && activo) procesar(activo, f); e.target.value = ''; }} />
-    </ConfigCard>
+      </div>
+    </Modal>
   );
 }

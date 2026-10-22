@@ -1,11 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, FormField, Input, Select, Checkbox } from '../../../ui/formulario';
-import { radius } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
-import { REPORTES_FIRMABLES, type Firma, type FormatoFirmaLinea } from '../../config/firmasConfig';
-import { USUARIOS_INIT } from '../../config/permissionsData';
+import { Modal } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select, Checkbox } from '@/components/ui/formulario';
+import { radius , C } from '@/components/ui/tokens';
+import { REPORTES_FIRMABLES, type Firma, type FormatoFirmaLinea } from '@/components/pages/config/firmasConfig';
+import { USUARIOS_INIT } from '@/components/pages/config/permissionsData';
 import { F, FORMATO_OPCIONES } from './datos';
 
 export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma; firmas: Firma[]; onClose:()=>void; onGuardar:(f:Firma)=>void }) {
@@ -25,23 +24,19 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
   function setOrden(key: string, orden: number) {
     setForm(f => ({ ...f, reportes: f.reportes.map(r=>r.reporteKey===key?{...r,orden}:r) }));
   }
-  // Issue: avisar en el momento (no solo corregir en silencio al guardar)
+  // avisar en el momento (no solo corregir en silencio al guardar)
   // cuando el orden que se está escribiendo ya lo tiene otra firma en ese
   // mismo reporte.
   function firmaConEseOrden(key: string, orden: number): Firma | undefined {
     return firmas.find(f => f.id !== form.id && f.reportes.some(r => r.reporteKey === key && r.orden === orden));
   }
 
-  // Issue #1: un usuario del sistema no debería tener más de una firma - antes
-  // solo se avisaba en rojo pero se dejaba guardar igual, lo que terminaba
-  // dejando usuarios con dos firmas enlazadas. Ahora bloquea el guardado.
+  // Un usuario no puede tener más de una firma: se bloquea el guardado.
   const usuarioYaEnlazado = form.usuarioId
     ? firmas.find(f => f.usuarioId === form.usuarioId && f.id !== form.id)
     : undefined;
   const usuarioSel = USUARIOS_INIT.find(u => u.id === form.usuarioId);
-  // Issue: se podían destildar "Nombre"/"Número de identificación"/"Puesto"
-  // los tres a la vez y la firma quedaba impresa solo con la imagen (o
-  // totalmente en blanco si tampoco tenía imagen) - se exige al menos uno.
+  // La firma debe mostrar al menos uno de Nombre, Número de identificación o Puesto.
   const sinFormato = form.formato.length === 0;
 
   const valido = !!form.usuarioId && !!form.nombre.trim() && !!form.documento.trim() && !usuarioYaEnlazado && !sinFormato;
@@ -53,11 +48,8 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
         <Button onClick={()=>valido && onGuardar(form)}>Guardar</Button>
       </div>}>
       <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-        {/* Issue #1 y #12: primero se elige el usuario - es el punto de
-            partida del flujo. Del usuario solo tenemos su nombre (descripcion)
-            disponible para precargar; el sistema de usuarios todavía no
-            guarda número de identificación ni puesto, así que esos dos campos
-            se siguen completando a mano por ahora. */}
+        {/* Primero se elige el usuario. Del usuario se precarga el nombre; el número de
+            identificación y el puesto se completan a mano. */}
         <FormField label="Usuario del sistema" required hint="La persona que va a firmar. Precarga el nombre; el resto se completa a mano.">
           <Select
             value={form.usuarioId ? String(form.usuarioId) : ''}
@@ -95,8 +87,9 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
           <div style={{ display:'flex', alignItems:'center', gap:14 }}>
             <div style={{ width:160, height:60, border:'1px dashed #ECECEC', borderRadius:radius.md, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', background:'#F9F9F9' }}>
               {form.imagenFirma
+                // eslint-disable-next-line @next/next/no-img-element -- imagen de la firma cargada por el usuario (data URL), no pasa por next/image
                 ? <img src={form.imagenFirma} alt="" style={{ maxWidth:'100%', maxHeight:'100%', objectFit:'contain' }}/>
-                : <span style={{ fontSize:10, color:C.n700 }}>Sin imagen</span>}
+                : <span style={{ fontSize:10.5, color:C.n700 }}>Sin imagen</span>}
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               <label style={{ height:30, padding:'0 12px', border:'1px solid #ECECEC', borderRadius:radius.sm, background:'#FFFFFF', cursor:'pointer', fontSize:11, fontFamily:F, color:C.n900, display:'inline-flex', alignItems:'center', justifyContent:'center' }}>
@@ -133,16 +126,14 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
           )}
         </div>
 
-        {/* Issue #14: los reportes ahora aparecen agrupados igual que en el
-            menú (Reportes / Estados financieros), sin las 3 pantallas que no
-            existen todavía. */}
+        {/* Reportes agrupados igual que en el menú (Reportes / Estados financieros). */}
         <div>
           <p style={{ fontSize:12, fontWeight:600, color:C.n900, margin:'0 0 4px' }}>Reportes asociados</p>
           <p style={{ fontSize:11, color:C.n700, margin:'0 0 8px' }}>El orden define la posición de esta firma entre las demás firmas de ese reporte específico.</p>
           <div style={{ display:'flex', flexDirection:'column', gap:14, border:'1px solid #ECECEC', borderRadius:radius.md, padding:12 }}>
             {(['reportes','estadosfin'] as const).map(grupo=>(
               <div key={grupo}>
-                <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.03em', margin:'0 0 6px' }}>
+                <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.03em', margin:'0 0 6px' }}>
                   {grupo==='reportes' ? 'Reportes' : 'Estados financieros'}
                 </p>
                 <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
@@ -156,7 +147,7 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
                           {rel && (
                             <div style={{ display:'flex', alignItems:'center', gap:6, marginLeft:'auto' }}>
                               <span style={{ fontSize:11, color:C.n700 }}>Orden</span>
-                              {/* Issue: la única forma de reordenar era escribir el número a
+                              {/* la única forma de reordenar era escribir el número a
                                   mano - con varias firmas en un mismo reporte es incómodo. Se
                                   agregan flechas para subir/bajar de a 1 sin tener que calcular
                                   el número manualmente. */}
@@ -164,7 +155,7 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
                                 style={{ width:20, height:20, border:'1px solid #ECECEC', borderRadius:4, background:'#FFFFFF', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:C.n700, padding:0 }}>
                                 <svg width="9" height="9" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 9L7 5L11 9"/></svg>
                               </button>
-                              <input type="number" min={1} value={rel.orden} onChange={e=>setOrden(r.key, parseInt(e.target.value,10)||1)}
+                              <input aria-label="Orden" type="number" min={1} value={rel.orden} onChange={e=>setOrden(r.key, parseInt(e.target.value,10)||1)}
                                 style={{ width:42, height:26, padding:'0 4px', border:`1px solid ${choque ? C.error : '#ECECEC'}`, borderRadius:4, fontSize:12, fontFamily:F, textAlign:'center' }}/>
                               <button type="button" title="Bajar" onClick={()=>setOrden(r.key, rel.orden+1)}
                                 style={{ width:20, height:20, border:'1px solid #ECECEC', borderRadius:4, background:'#FFFFFF', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:C.n700, padding:0 }}>
@@ -175,7 +166,7 @@ export function ModalFirma({ firma, firmas, onClose, onGuardar }: { firma: Firma
                         </div>
                         {choque && (
                           <p style={{ fontSize:10.5, color:C.error, margin:'0 0 0 26px' }}>
-                            El orden {rel!.orden} de "{r.label}" ya lo tiene {choque.nombre}. Si guardás, {choque.nombre} pasa al siguiente número libre.
+                            El orden {rel!.orden} de &quot;{r.label}&quot; ya lo tiene {choque.nombre}. Si guardás, {choque.nombre} pasa al siguiente número libre.
                           </p>
                         )}
                       </div>

@@ -1,9 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button } from '../../../ui/formulario';
-import { radius } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
+import { Modal } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/formulario';
+import { radius , C } from '@/components/ui/tokens';
 import { BRAND, F } from './datos';
 
 // ── Modales ───────────────────────────────────────────────────────────────────
@@ -35,7 +34,7 @@ export function ModalExIm({ onClose }: { onClose:()=>void }) {
                 </div>
               : <label style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7, padding:28, border:`2px dashed ${C.n500}`, borderRadius:radius.md, cursor:'pointer', background:C.n200 }}>
                   <span style={{ fontSize:12, fontWeight:500, color:C.n900, fontFamily:F }}>Arrastrá tu archivo acá</span>
-                  <span style={{ fontSize:10, color:C.n700, fontFamily:F }}>Solo .xlsx</span>
+                  <span style={{ fontSize:10.5, color:C.n700, fontFamily:F }}>Solo .xlsx</span>
                   <input type="file" accept=".xlsx" style={{ display:'none' }} onChange={e=>setFile(e.target.files?.[0]?.name||'')}/>
                 </label>
             }
@@ -59,12 +58,12 @@ export function ModalEstructura({ onClose }: { onClose:()=>void }) {
           { nivel:'4. ID auxiliar', ejemplo:'100-001-0001-CLI0001', color:'#EEEDFE', text:'#3C3489', seg:'CLI/PRO-XXXX', nota:'Solo cuentas con rol 02 o 04' },
         ].map(r=>(
           <div key={r.nivel} style={{ display:'flex', alignItems:'center', gap:10, padding:10, borderRadius:radius.md, border:`1px solid ${C.n500}` }}>
-            <span style={{ background:r.color, color:r.text, fontSize:9, fontWeight:600, fontFamily:F, padding:'3px 9px', borderRadius:4, minWidth:90, textAlign:'center', flexShrink:0 }}>{r.nivel}</span>
+            <span style={{ background:r.color, color:r.text, fontSize:10.5, fontWeight:600, fontFamily:F, padding:'3px 9px', borderRadius:4, minWidth:90, textAlign:'center', flexShrink:0 }}>{r.nivel}</span>
             <div style={{ flex:1 }}>
               <span style={{ fontSize:11, fontFamily:F, color:C.n900 }}>{r.ejemplo}</span>
-              {(r as any).nota&&<p style={{ fontSize:9, color:C.n700, margin:'2px 0 0', fontFamily:F }}>{(r as any).nota}</p>}
+              {'nota' in r && <p style={{ fontSize:10.5, color:C.n700, margin:'2px 0 0', fontFamily:F }}>{r.nota}</p>}
             </div>
-            <span style={{ fontSize:10, color:C.n700, fontFamily:F, flexShrink:0 }}>{r.seg}</span>
+            <span style={{ fontSize:10.5, color:C.n700, fontFamily:F, flexShrink:0 }}>{r.seg}</span>
           </div>
         ))}
       </div>

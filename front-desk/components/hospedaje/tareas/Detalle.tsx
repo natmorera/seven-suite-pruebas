@@ -56,7 +56,7 @@ export function DetalleTarea({ id, onClose, onEditar, onBloqueo, onAnular, onEli
           </section>
           <section style={{ border: `1px solid ${C.n500}`, borderRadius: radius.md, padding: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
             <b style={{ fontSize: 12.5, fontWeight: 600 }}>Recordatorio</b>
-            {t.recordatorio ? <span style={{ fontSize: 12.5 }}>{t.recordatorio.cuando} del vencimiento · a {t.recordatorio.enviarA.toLowerCase()} · {[t.recordatorio.canales.sistema && 'sistema', t.recordatorio.canales.email && 'email', t.recordatorio.canales.whatsapp && 'WhatsApp'].filter(Boolean).join(', ')}</span>
+            {t.recordatorio ? <span style={{ fontSize: 12.5 }}>{t.recordatorio.cuando} del vencimiento · a {t.recordatorio.enviarA.toLowerCase()} · {[t.recordatorio.canales.sistema && 'sistema', t.recordatorio.canales.email && 'correo electrónico'].filter(Boolean).join(', ')}</span>
               : <span style={{ fontSize: 12, color: C.n700 }}>Sin recordatorio.</span>}
           </section>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

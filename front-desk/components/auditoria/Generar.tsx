@@ -121,7 +121,7 @@ export function GenerarAuditoria({ onSalir }: { onSalir: (ok: boolean) => void }
             <button type="button" aria-label="Quitar correo" onClick={() => setCorreos(correos.filter(x => x.id !== c.id))} style={{ border: 'none', background: 'none', color: C.error, cursor: 'pointer' }}><IcTrash /></button>
           </div>
         ))}
-        <span><Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setCorreos([...correos, { id: nuevoId('ca'), email: '', reportes: correos[0]?.reportes ?? POR_DEFECTO }])}>+ Crear nuevo correo</Button></span>
+        <span><Button variant="secondary" onClick={() => setCorreos([...correos, { id: nuevoId('ca'), email: '', reportes: correos[0]?.reportes ?? POR_DEFECTO }])}>+ Crear nuevo correo</Button></span>
         <span style={{ fontSize: 12, color: C.n700 }}>Se generarán {reportes.length || POR_DEFECTO.length} reportes: {(reportes.length ? reportes : POR_DEFECTO).join(', ')}.</span>
         {error && <span role="alert" style={{ fontSize: 12, color: C.error }}>{error}</span>}
         {hoyAuditado && <div role="alert" style={{ marginTop: 'auto', display: 'flex', gap: 8, background: 'rgba(244,67,54,.06)', border: '1px solid rgba(244,67,54,.25)', color: C.error, borderRadius: radius.md, padding: '10px 12px', fontSize: 12 }}>

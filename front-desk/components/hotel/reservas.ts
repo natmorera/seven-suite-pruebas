@@ -13,6 +13,8 @@ import {
 // ── Tipos ───────────────────────────────────────────────────────────────────
 export interface EventoRes { id: string; fecha: string; usuario: string; accion: string; antes: string; despues: string }
 export interface MensajeRes { id: string; fecha: string; remitente: string; destinatario: string; cuerpo: string }
+/** Tramo de una estancia dividida: el huésped ocupa `habitacion` desde `desde` hasta `hasta` (salida). */
+export interface Tramo { desde: string; hasta: string; tipo: string; habitacion: string; precio: number }
 export interface Preasignacion { id: string; habitacion: string; desde: string; hasta: string; descripcion: string }
 export interface DatosReservas {
   /** Bitácora manual por reserva (clave = grupo o id). La bitácora base se deriva de los datos. */
@@ -49,7 +51,7 @@ export const bloqueaHabitacion = (r: Reserva) => r.estado === 'Solicitada' || r.
 export const cuentaOcupacion = (r: Reserva) => r.estado === 'Confirmada' || r.estado === 'In-House' || r.estado === 'Completada';
 /** Clave de la reserva (varias líneas = un grupo). */
 export const claveDe = (r: Reserva) => r.grupo ?? r.id;
-/** Número visible de la reserva (sin prefijo ni sufijo de línea): RD-4400_2 → 4400. */
+/** Número visible de la reserva (sin prefijo ni sufijo de línea): RE-4400_2 → 4400. */
 export const numeroDe = (r: Reserva) => r.numero.replace(/_\d+$/, '').replace(/^\D+-?/, '');
 export const esAgencia = (r: Reserva) => r.cliente === 'Agencia de Viajes';
 /** Uso de la habitación según ocupación (SGL, DBL, TPL, CPL). */
@@ -149,7 +151,7 @@ export function ajustarSemilla(s: { reservas: Reserva[]; habitaciones: Habitacio
   // No-show de los últimos días
   const pasadas = reservas.filter(x => x.estado === 'Completada' && x.entrada >= sumarDias(HOY, -6) && x.entrada < sumarDias(HOY, -1));
   pasadas.slice(0, 2).forEach((x, i) => {
-    reservas.push({ ...x, id: `rns${i}`, numero: `RD-${4390 + i}`, estado: 'No-Show', checkinEn: null, checkoutEn: null, pagado: 0, perfilId: null, nombre: ['MARK STEVENSON', 'LUCÍA FERNÁNDEZ'][i],
+    reservas.push({ ...x, id: `rns${i}`, numero: `RE-${4390 + i}`, estado: 'No-Show', checkinEn: null, checkoutEn: null, pagado: 0, perfilId: null, nombre: ['MARK STEVENSON', 'LUCÍA FERNÁNDEZ'][i],
       nacionalidad: ['USA', 'ESP'][i], identificacion: '', email: '', telefono: '', vip: false, cuentas: [{ id: `rns${i}c1`, nombre: 'Cuenta 1', saldo: 0, consumos: 0 }], depGarantia: 0, cargos: [], adicionales: [] });
   });
 
@@ -163,7 +165,7 @@ export function ajustarSemilla(s: { reservas: Reserva[]; habitaciones: Habitacio
       const id = `rg${base}_${i + 1}`;
       const precio = precioTarifa(tipo, plantilla.tarifa ?? 'DIR');
       reservas.push({
-        id, numero: `RD-${base}_${i + 1}`, rooming: false, perfilId: null, nombre: nombres[i], empresa: '', cliente: 'Huésped Individual', habitacion: hab?.numero ?? '', tipo, entrada, salida,
+        id, numero: `RE-${base}_${i + 1}`, rooming: false, perfilId: null, nombre: nombres[i], empresa: '', cliente: 'Huésped Individual', habitacion: hab?.numero ?? '', tipo, entrada, salida,
         adultos: 2, ninos: i === 0 ? 1 : 0, tarifa: 'DIR', precio, regimen: '1.BB', moneda: 'USD', estado, pagado: 0, depGarantia: 0, credito: false, condiciones: [], observaciones: '', observacionesInternas: '',
         nacionalidad: 'CRI', identificacion: '', email: '', telefono: '', vip: false, tarjetaLista: false, checkinEn: null, checkoutEn: null,
         cuentas: [{ id: id + 'c1', nombre: 'Cuenta 1', saldo: Math.round(precio * noches(entrada, salida) * 100) / 100, consumos: 0 }], cargos: [], adicionales: [], descuento: 0,
@@ -178,7 +180,7 @@ export function ajustarSemilla(s: { reservas: Reserva[]; habitaciones: Habitacio
   crearGrupo(4401, HOY, sumarDias(HOY, 2), 2, { tarifa: 'BOOKING', cliente: 'Agencia de Viajes', empresa: 'Booking.com', idExterno: '4028411752', tarjetaLista: true, modalidad: 'individual' }, ['STD', 'SUP', 'FAM'], 'Confirmada');
   crearGrupo(4402, sumarDias(HOY, 15), sumarDias(HOY, 18), 2, { tarifa: 'DIR', regimen: 'MP', modalidad: 'individual' }, ['FAM', 'JRS'], 'Solicitada');
   // Llegadas de hoy aún sin habitación (se asignan desde el Mapa, arrastrándolas)
-  [['rsh1', 'RD-4405', 'VALENTINA ROJAS MÉNDEZ', 'STD', 2, 'MEX'], ['rsh2', 'RD-4406', 'THOMAS WEBER', 'DLX', 1, 'DEU']].forEach(([id, numero, nombre, tipo, ad, nac]) => {
+  [['rsh1', 'RE-4405', 'VALENTINA ROJAS MÉNDEZ', 'STD', 2, 'MEX'], ['rsh2', 'RE-4406', 'THOMAS WEBER', 'DLX', 1, 'DEU']].forEach(([id, numero, nombre, tipo, ad, nac]) => {
     const precio = precioTarifa(tipo as string, 'DIR');
     reservas.push({ id: id as string, numero: numero as string, rooming: false, perfilId: null, nombre: nombre as string, empresa: '', cliente: 'Huésped Individual', habitacion: '', tipo: tipo as string, entrada: HOY, salida: sumarDias(HOY, 3),
       adultos: ad as number, ninos: 0, tarifa: 'DIR', precio, regimen: '1.BB', moneda: 'USD', estado: 'Confirmada', pagado: 0, depGarantia: 0, credito: false, condiciones: [], observaciones: '', observacionesInternas: '',
@@ -264,6 +266,43 @@ export function accionesReservas(mut: Mut) {
       const p = lineas[0];
       return log({ ...x, reservas, habitaciones, seqReserva: x.seqReserva + 1 }, claveDe(p), evento, '-', `Reserva: #${numeroDe(p)} | Estado: ${p.estado}`);
     }),
+    /** Divide la estancia en tramos por habitación (desde el check-in). La reserva queda con el primer tramo
+     *  y cada tramo siguiente es una línea nueva del mismo grupo: confirmada, con la habitación asignada,
+     *  la tarjeta de registro ya lista y todo en una sola factura con la original. */
+    dividirEstancia: (id: string, tramos: Tramo[]) => mut(x => {
+      const r = x.reservas.find(y => y.id === id);
+      if (!r || tramos.length < 2) return x;
+      const clave = claveDe(r);
+      const base = r.numero.replace(/_\d+$/, '');
+      let n = Math.max(1, ...x.reservas.filter(y => claveDe(y) === clave).map(y => Number(/_(\d+)$/.exec(y.numero)?.[1] ?? 1)));
+      const [t0, ...resto] = tramos;
+      let previa = r.id;
+      const nuevas: Reserva[] = resto.map(t => {
+        const nid = uid('r'); n += 1;
+        const linea: Reserva = {
+          ...r, id: nid, numero: `${base}_${n}`, grupo: clave, continuaDe: previa, entrada: t.desde, salida: t.hasta, tipo: t.tipo, habitacion: t.habitacion, precio: t.precio,
+          estado: 'Confirmada', pagado: 0, depGarantia: 0, checkinEn: null, checkoutEn: null, tarjetaLista: true, anulacion: undefined, modalidad: 'individual', facturaUnica: true,
+          cuentas: [{ id: `${nid}c1`, nombre: 'Cuenta 1', saldo: t.precio * noches(t.desde, t.hasta), consumos: 0 }],
+          // Los cargos automáticos siguen al huésped: cada tramo se queda con los días que le tocan
+          cargos: r.cargos.filter(c => c.desde < t.hasta && c.hasta > t.desde).map(c => ({ ...c, id: uid('cg'), desde: c.desde > t.desde ? c.desde : t.desde, hasta: c.hasta < t.hasta ? c.hasta : t.hasta })),
+          adicionales: r.adicionales.map(a => ({ ...a, id: uid('ad') })),
+        };
+        previa = nid;
+        return linea;
+      });
+      const movido = r.precio * noches(t0.hasta, r.salida);
+      const reservas = [
+        ...x.reservas.map(y => (y.id !== id ? y : {
+          ...y, grupo: clave, salida: t0.hasta, tipo: t0.tipo, habitacion: t0.habitacion, precio: t0.precio, modalidad: y.modalidad ?? 'individual' as const, facturaUnica: true,
+          cargos: y.cargos.filter(c => c.desde < t0.hasta).map(c => ({ ...c, hasta: c.hasta < t0.hasta ? c.hasta : t0.hasta })),
+          cuentas: y.cuentas.map((c, i) => (i === 0 ? { ...c, saldo: Math.max(0, c.saldo - movido) } : c)),
+        })),
+        ...nuevas,
+      ];
+      const habitaciones = refrescarHabs(x.habitaciones, reservas, [r.habitacion, ...tramos.map(t => t.habitacion)]);
+      return log({ ...x, reservas, habitaciones }, clave, 'Estancia dividida en el check-in', `Hab. ${r.habitacion || '—'} · ${r.entrada} → ${r.salida}`,
+        tramos.map(t => `Hab. ${t.habitacion} del ${t.desde} al ${t.hasta}`).join(' | '));
+    }),
     /** Agrega líneas a una reserva existente (solo Solicitada). */
     agregarLineas: (clave: string, lineas: Reserva[]) => mut(x => {
       const reservas = [...x.reservas.map(r => (r.id === clave && !r.grupo ? { ...r, grupo: clave } : r)), ...lineas];
@@ -281,15 +320,15 @@ export function accionesReservas(mut: Mut) {
   };
 }
 
-// ── Contratos: cupos y release por tipo de habitación ───────────────────────
-/** Cupo contratado por tipo de habitación y días de release (0 = sin cupo / sin release). */
-export const CUPOS: Record<string, { grupo: string; cupos: number; release: number }> = {
-  BOOKING: { grupo: 'OTA´s', cupos: 2, release: 2 },
-  EXPEDIA: { grupo: 'OTA´s', cupos: 2, release: 3 },
-  DESPEGAR: { grupo: 'Agencias', cupos: 1, release: 7 },
-  HOTELBEDS: { grupo: 'Agencias', cupos: 1, release: 14 },
-  CORP: { grupo: 'Corporativo', cupos: 2, release: 0 },
-  DIR: { grupo: 'Directo', cupos: 0, release: 0 },
+// ── Contratos: cupos por tipo de habitación ─────────────────────────────────
+/** Cupo contratado por tipo de habitación (0 = sin cupo). */
+export const CUPOS: Record<string, { grupo: string; cupos: number }> = {
+  BOOKING: { grupo: 'OTA´s', cupos: 2 },
+  EXPEDIA: { grupo: 'OTA´s', cupos: 2 },
+  DESPEGAR: { grupo: 'Agencias', cupos: 1 },
+  HOTELBEDS: { grupo: 'Agencias', cupos: 1 },
+  CORP: { grupo: 'Corporativo', cupos: 2 },
+  DIR: { grupo: 'Directo', cupos: 0 },
 };
 /** Grupos de disponibilidad (agrupan tipos de habitación). */
 export const GRUPOS_DISP = [

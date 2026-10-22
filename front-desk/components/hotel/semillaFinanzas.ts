@@ -231,9 +231,9 @@ export function crearFinanzas(reservas: Reserva[], perfiles: Perfil[]): Finanzas
 
   // Saldos de apertura de los turnos de hoy (fondo variable: hereda el efectivo del anterior)
   const carlosMovs: [string, string, string, string, Metodo, Mon, number, 'Ingreso' | 'Egreso'][] = [
-    ['01:20', 'Reserva directa / Habitación 104', 'RD-4190', 'Juan Campos - 104', 'Efectivo', 'CRC', 185000, 'Ingreso'],
+    ['01:20', 'Reserva directa / Habitación 104', 'RE-4190', 'Juan Campos - 104', 'Efectivo', 'CRC', 185000, 'Ingreso'],
     ['03:40', 'Bar canopy bebidas', 'POS-2210', 'Hab 301', 'Tarjeta', 'USD', 64, 'Ingreso'],
-    ['05:03', 'Reserva directa / Habitación 104', 'RD-4190', 'Juan Campos - 104', 'Efectivo', 'USD', 120, 'Ingreso'],
+    ['05:03', 'Reserva directa / Habitación 104', 'RE-4190', 'Juan Campos - 104', 'Efectivo', 'USD', 120, 'Ingreso'],
     ['05:30', 'Devolución depósito', 'DG-41470', 'Laura Ortiz - 207', 'Efectivo', 'USD', 80, 'Egreso'],
   ];
   carlosMovs.forEach(([hora, c, ref, cli, met, mon, imp, tipo]) => caja(tCarlos, hora, c, ref, cli, met, mon, imp, tipo, met === 'Tarjeta' ? TERMINALES[0] : ''));

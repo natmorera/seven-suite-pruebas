@@ -1,40 +1,13 @@
 'use client';
-// Piezas visuales del Dashboard: selector de rango, leyendas, barras, KPIs y gráfico de ingresos.
+// Piezas visuales del Dashboard: barras, rótulos, KPIs, paginación y gráfico de ingresos.
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { C, FONT, fmtNum, radius, SIZE } from '@/components/suite/tokens';
-import { Button, Input } from '@/components/suite/ui';
-import { Popover } from '@/components/configuracion/kit';
 import { Progreso } from '@/components/hotel/ui';
-import { type Rango, type RangoSel } from './datos';
-
-export function Rangos({ valor, onChange, label }: { valor: RangoSel; onChange: (v: RangoSel) => void; label: string }) {
-  const [open, setOpen] = useState(false);
-  const [p, setP] = useState({ desde: valor.desde, hasta: valor.hasta });
-  const chip = (r: Rango, on: boolean, onClick: () => void) => (
-    <button key={r} type="button" aria-pressed={on} onClick={onClick}
-      style={{ height: 28, minWidth: 36, padding: '0 10px', border: `1px solid ${on ? C.brand : C.n500}`, background: on ? C.brand : C.n000, color: on ? '#fff' : C.n700, borderRadius: radius.control, fontSize: 12, fontFamily: FONT, cursor: 'pointer' }}>{r}</button>
-  );
-  return (
-    <span role="group" aria-label={label} style={{ position: 'relative', display: 'inline-flex', gap: 6 }}>
-      {(['1D', '7D', '1M', '1Y'] as const).map(r => chip(r, valor.r === r, () => onChange({ ...valor, r })))}
-      {chip('Custom', valor.r === 'Custom', () => { setP({ desde: valor.desde, hasta: valor.hasta }); setOpen(o => !o); })}
-      <Popover open={open} onClose={() => setOpen(false)} width={280} align="right">
-        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 8, fontFamily: FONT }}>
-          <span style={{ fontSize: 12, fontWeight: 500 }}>Rango personalizado</span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <Input type="date" value={p.desde} max={p.hasta} onChange={v => setP({ ...p, desde: v })} aria-label="Desde" />
-            <Input type="date" value={p.hasta} min={p.desde} onChange={v => setP({ ...p, hasta: v })} aria-label="Hasta" />
-          </div>
-          <Button disabled={!p.desde || !p.hasta || p.hasta < p.desde} onClick={() => { onChange({ r: 'Custom', ...p }); setOpen(false); }}>Aplicar</Button>
-        </div>
-      </Popover>
-    </span>
-  );
-}
 
 // ── Piezas visuales comunes ─────────────────────────────────────────────────
-export const VERDE = '#12A877', VERDE_OSC = '#0B4F3A', ROJO = '#E53935', ROJO_CLARO = '#F8A5A8', MORADO = '#6366F1', NARANJA = '#F59E0B', AZUL = '#3B82F6';
+// Colores de estado de la suite (tokens): éxito, error, aviso e información, con su tono claro.
+export const VERDE = C.success, VERDE_OSC = C.successDk, ROJO = C.error, ROJO_CLARO = '#F9B4AE', MORADO = '#7E57C2', NARANJA = C.warning, AZUL = C.info;
 /** Botón de pie de tarjeta, a lo ancho (Check-In →, Mapa de habitaciones ↗…). */
 export function Pie({ children, onClick, href }: { children: ReactNode; onClick?: () => void; href?: string }) {
   const st: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: SIZE.control + 4, border: `1px solid ${C.n500}`, borderRadius: radius.control, background: C.n000, color: C.n900, fontSize: 12.5, fontFamily: FONT, textDecoration: 'none', cursor: 'pointer', width: '100%' };
@@ -47,12 +20,6 @@ export const Bandera = ({ color }: { color: string }) => <svg width="14" height=
 export const Punto = ({ color, size = 8 }: { color: string; size?: number }) => <span aria-hidden style={{ width: size, height: size, borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />;
 export const Seccion = ({ children }: { children: ReactNode }) => <h2 style={{ margin: '4px 0 -4px', fontSize: 15, fontWeight: 500, color: C.n900 }}>{children}</h2>;
 // ── Operativo ───────────────────────────────────────────────────────────────
-export function Leyenda({ items }: { items: { label: string; valor: number; color: string; texto?: string }[] }) {
-  return <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>{items.map(i => (
-    <div key={i.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-      <Punto color={i.color} /><span style={{ color: C.n900 }}>{i.label}</span><b style={{ color: i.texto ?? i.color, fontWeight: 600, fontSize: 16 }}>{i.valor}</b>
-    </div>))}</div>;
-}
 export function FilaBarra({ label, valor, total, color }: { label: string; valor: number; total: number; color: string }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px minmax(80px, 1.6fr)', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
@@ -63,9 +30,9 @@ export function FilaBarra({ label, valor, total, color }: { label: string; valor
   );
 }
 export const Rotulo = ({ children }: { children: ReactNode }) => <span style={{ fontSize: 11, fontWeight: 500, color: C.n700, letterSpacing: '.06em' }}>{children}</span>;
-export const TINTE: Record<string, { bg: string; color: string }> = {
+export const TINTE: Record<string, { bg: string; color: string; texto?: string }> = {
   Anulado: { bg: '#F2F2F2', color: '#9E9E9E' },
-  Pendiente: { bg: '#F2F2F4', color: '#5F6068' }, 'En proceso': { bg: '#EEF1FA', color: C.brand }, Atrasado: { bg: '#FDEDED', color: ROJO }, Completado: { bg: '#E8F6EF', color: VERDE },
+  Pendiente: { bg: '#F2F2F4', color: '#9DA1AB', texto: '#5F6068' }, 'En proceso': { bg: '#EEF1FA', color: C.brand }, Atrasado: { bg: '#FDEDED', color: ROJO }, Completado: { bg: '#E8F6EF', color: VERDE },
 };
 
 /** Pie de tabla del diseño: «1 de 2» a la izquierda y páginas numeradas a la derecha. */

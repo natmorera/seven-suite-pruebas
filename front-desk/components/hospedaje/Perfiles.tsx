@@ -8,7 +8,7 @@ import { Buscador, norm } from '@/components/configuracion/kit';
 import { useHotel } from '@/components/hotel/store';
 import { perfilVacio, type Perfil } from '@/components/hotel/datos';
 import { BotonExportar, FiltroChecks, MenuBoton, exportarCSV } from '@/components/hotel/ui';
-import { NuevaReservaModal } from './NuevaReserva';
+import { useRouter } from 'next/navigation';
 import { FormPerfil, digitos } from './perfiles/FormPerfil';
 import { Avatar, CabeceraPerfil, EnviarMensaje, Historial, ResumenPerfil, type Vista } from './perfiles/Detalle';
 
@@ -21,7 +21,7 @@ export default function Perfiles() {
   const [modo, setModo] = useState<'ver' | 'editar' | 'crear'>('ver');
   const [nuevoTipo, setNuevoTipo] = useState<'cliente' | 'empresa'>('cliente');
   const [vista, setVista] = useState<Vista>('Resumen');
-  const [reservar, setReservar] = useState(false);
+  const router = useRouter();
   const [mensaje, setMensaje] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   // ?id=… abre directamente un perfil (enlaces desde Facturación)
@@ -103,9 +103,9 @@ export default function Perfiles() {
           )}
           {modo !== 'crear' && sel && (
             <>
-              <CabeceraPerfil p={sel} vista={vista} setVista={v => { setVista(v); if (v !== 'Información') setModo('ver'); }} onReservar={() => setReservar(true)} onMensaje={() => setMensaje(true)}
+              <CabeceraPerfil p={sel} vista={vista} setVista={v => { setVista(v); if (v !== 'Información') setModo('ver'); }} onReservar={() => router.push(`/reservaciones/reservas?nueva=1&perfil=${sel.id}`)} onMensaje={() => setMensaje(true)}
                 onEditar={() => { setVista('Información'); setModo('editar'); }} />
-              {vista === 'Resumen' && <ResumenPerfil p={sel} onVer={() => setVista('Historial de reservas')} />}
+              {vista === 'Resumen' && <ResumenPerfil p={sel} />}
               {vista === 'Información' && <FormPerfil key={sel.id + modo} inicial={sel} modo={modo} onEditar={() => setModo('editar')} onCancelar={() => setModo('ver')}
                 onGuardar={p => { h.guardarPerfil(p); setModo('ver'); setToast('Cambios del perfil guardados'); }} />}
               {vista === 'Historial de reservas' && <Historial p={sel} />}
@@ -120,7 +120,6 @@ export default function Perfiles() {
         </div>
       </div>
 
-      {reservar && sel && <NuevaReservaModal perfilId={sel.id} onClose={() => setReservar(false)} onListo={t => { setReservar(false); setToast(t); }} />}
       {mensaje && sel && <EnviarMensaje p={sel} onClose={() => setMensaje(false)} onListo={t => { setMensaje(false); setToast(t); }} />}
       {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
     </Pantalla>

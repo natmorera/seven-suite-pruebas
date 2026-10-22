@@ -9,6 +9,7 @@ import { HOY, TIPOS, fmtF } from '@/components/hotel/datos';
 import { usoDe } from '@/components/hotel/reservas';
 import { codigoTipo } from '@/components/pronostico/PronosticoTipo';
 import { PantallaReporte } from '@/components/reportes/Reporte';
+import { IndiceReportes } from '@/components/reportes/Indice';
 import { useFiltros, type DefFiltro } from '@/components/reportes/filtros';
 import { datosDeAud, type DocAud } from './motor';
 
@@ -21,7 +22,22 @@ type Rep = (typeof REPORTES_AUDITORIA)[number]['id'];
 const ABREV: Record<string, string> = { Solicitada: 'So', Confirmada: 'Co', 'Lista de espera': 'LE', 'In-House': 'IH' };
 
 export default function ReportesAuditoria() {
-  return <Suspense fallback={null}><Pantalla /></Suspense>;
+  return <Suspense fallback={null}><Entrada /></Suspense>;
+}
+
+const RUTA = '/auditoria/reportes';
+const DESC: Record<Rep, string> = {
+  checkin: 'Reservas con check-in iniciado que no se completó antes de la auditoría.',
+  incorrectas: 'Reservas con una habitación que no corresponde al tipo reservado.',
+  cm: 'Cambios de disponibilidad enviados (o pendientes) al channel manager.',
+};
+/** Sin ?r= se muestra el índice de reportes del módulo. */
+function Entrada() {
+  const r = useSearchParams().get('r');
+  if (REPORTES_AUDITORIA.some(x => x.id === r)) return <Pantalla />;
+  return <IndiceReportes titulo="Reportes de auditoría" grupos={[
+    { titulo: 'Auditoría nocturna', items: REPORTES_AUDITORIA.map(x => ({ label: x.label, descripcion: DESC[x.id], href: `${RUTA}?r=${x.id}` })) },
+  ]} />;
 }
 
 const DEFS: Record<Rep, DefFiltro[]> = {
@@ -70,7 +86,7 @@ function Pantalla() {
 
   return (
     <PantallaReporte titulo={titulo} archivo={`auditoria-${rep}`} filtros={f} periodo={fmtF(HOY)} datos={datosDeAud(d)} vacio={d.vacio}
-      reportes={{ lista: REPORTES_AUDITORIA, actual: rep, onCambiar: id => router.replace(`/auditoria/reportes?r=${id}`) }}
+      reportes={{ lista: REPORTES_AUDITORIA, actual: rep, onCambiar: id => router.replace(`${RUTA}?r=${id}`), volver: RUTA }}
       contadores={[{ valor: d.registros, label: 'Registros' }, ...(rep === 'cm' ? [{ valor: h.syncCM.filter(x => !x.sinc).length, label: 'Pendientes' }] : rep === 'checkin' ? [{ valor: h.reservas.filter(r => r.estado === 'Confirmada' && r.entrada === HOY && !r.habitacion).length, label: 'Sin habitación' }] : [])]} />
   );
 }

@@ -43,9 +43,10 @@ const num = (n: number, d = 2) => {
 export const fmtN = num;
 /** «$ 1,234.00», «₡ 50,000.00», «-$ 15.00» */
 export const fmtMon = (n: number, m: string = 'USD') => `${n < 0 && Math.abs(n) >= 0.005 ? '-' : ''}${simbolo(m)} ${num(Math.abs(n))}`;
-/** «$1,985.00», sin espacio (KPIs de caja). */
-export const fmtUSD = (n: number, signo = false) => `${n < 0 && Math.abs(n) >= 0.005 ? '−' : signo && n > 0 ? '+' : ''}$${num(Math.abs(n))}`;
-export const fmtCRC = (n: number) => `₡${num(n, 0)}`;
+/** «$ 1,985.00» (KPIs de caja); con `signo`, «+$ 10.00» para entradas. */
+export const fmtUSD = (n: number, signo = false) => `${n < 0 && Math.abs(n) >= 0.005 ? '-' : signo && n > 0 ? '+' : ''}$ ${num(Math.abs(n))}`;
+/** «₡ 1,985.00», siempre con 2 decimales. */
+export const fmtCRC = (n: number) => `₡ ${num(n)}`;
 
 // ── Conceptos de cargo (código, grupo de producción e impuesto) ──────────────
 export interface ConceptoFact { codigo: string; descripcion: string; grupo: string; iva: number }
@@ -207,7 +208,7 @@ export const TIPOS_REFERENCIA = ['Factura electrónica', 'Nota de crédito elect
 export const TIPOS_EXONERACION = INICIAL.exoneraciones.map(e => e.descripcion);
 export const DESCUENTOS_PAGO = INICIAL.descuentos.map(d => ({ id: d.id, nombre: d.descripcion, pct: d.porcentaje }));
 
-/** Número de folio de una reserva: «7» + número de la reserva (RD-4181 → 74181). */
+/** Número de folio de una reserva: «7» + número de la reserva (RE-4181 → 74181). */
 export const folioDeReserva = (r: Reserva) => `7${r.numero.replace(/\D/g, '')}`;
 export const saldoFolio = (f: { movs: MovFolio[]; pagos: PagoFolio[] }) =>
   r2(f.movs.filter(m => !m.historico).reduce((s, m) => s + m.importe, 0) - f.pagos.filter(p => !p.historico).reduce((s, p) => s + p.montoFacturado, 0));

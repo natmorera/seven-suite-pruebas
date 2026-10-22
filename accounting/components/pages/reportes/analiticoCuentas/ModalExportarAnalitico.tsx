@@ -1,15 +1,13 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { C, radius, shadow } from '../../../ui/tokens';
-import { useFirmasConfig, firmasParaReporte, EncabezadoAlternativoBloque, FirmasBloque } from '../../config/firmasConfig';
+import { C, radius, shadow } from '@/components/ui/tokens';
+import { useFirmasConfig, firmasParaReporte, EncabezadoAlternativoBloque, FirmasBloque } from '@/components/pages/config/firmasConfig';
 import { BRAND, F, type FilaResumen, type Movimiento, TIPO_LIBRO_OPTIONS, type TipoLibro, csvEscapeAnalitico, fmt2 } from './datos';
 import { IcPrint } from './piezas';
 
-// ── Modal: Exportar listado del analítico (Issue #18 - reemplaza Libros contables + Exportar/Imprimir) ──
-// La vista (Diario general / resumen / por libro) ya no se elige acá - se elige en la
-// pantalla principal de Analítico ("Ver como"), y este modal solo exporta lo que esté
-// en pantalla en ese momento, en el formato (PDF/Excel) que se elija.
+// ── Modal: Exportar listado del analítico ── Exporta lo que está en pantalla, con la vista
+// elegida en «Ver como» (Diario general / resumen / por libro), en PDF o Excel.
 export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaLabel, saldoInicial, saldoFinal, sym, filtrosResumen, onClose }: {
   rows: Movimiento[]; filasResumen: FilaResumen[] | null; tipoActivo: TipoLibro;
   cuentaLabel: string|null; saldoInicial: number|null; saldoFinal: number|null; sym: string;
@@ -23,7 +21,7 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
   const tituloReporte = TIPO_LIBRO_OPTIONS.find(o => o.value === tipoActivo)?.label ?? 'Diario general';
   const { firmas } = useFirmasConfig();
   const mostrarOpcionEncabezado = true;
-  // Issue: se volvió al modelo centralizado - "Incluir firma(s)" muestra
+  // se volvió al modelo centralizado - "Incluir firma(s)" muestra
   // TODAS las firmas configuradas para "analitico" en Parámetros generales >
   // Firmas, en el orden que se definió ahí.
   const firmasDelReporte = firmasParaReporte(firmas, 'analitico');
@@ -61,7 +59,7 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
     URL.revokeObjectURL(url);
   }
 
-  function handleDescargar() { formato==='csv' ? descargarCSV() : window.print(); }
+  function handleDescargar() { if (formato==='csv') descargarCSV(); else window.print(); }
 
   const toggleBtn = (active: boolean): React.CSSProperties => ({
     flex:1, height:32, borderRadius:radius.md, border:`1px solid ${active?BRAND:C.n500}`,
@@ -82,7 +80,7 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
           position:static !important; overflow:visible !important; height:auto !important;
           max-height:none !important; width:auto !important; display:block !important; box-shadow:none !important;
         }
-        /* Issue: el encabezado de columnas solo salía en la primera página del
+        /* el encabezado de columnas solo salía en la primera página del
            PDF - repetirlo en cada página con display:table-header-group. */
         #export-print-area-analitico table thead { display: table-header-group; }
         #export-print-area-analitico table tr { page-break-inside: avoid; }
@@ -98,7 +96,7 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
 
         <div style={{ padding:'16px 24px', borderBottom:`1px solid ${C.n500}`, display:'flex', gap:24, flexShrink:0, flexWrap:'wrap' }}>
           <div>
-            <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Formato de descarga</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Formato de descarga</p>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={()=>setFormato('pdf')} style={toggleBtn(formato==='pdf')}>PDF</button>
               <button onClick={()=>setFormato('csv')} style={toggleBtn(formato==='csv')}>Excel (CSV)</button>
@@ -106,7 +104,7 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
           </div>
           {filtrosResumen.length > 0 && (
             <div style={{ flex:1, minWidth:220 }}>
-              <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Filtros aplicados</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Filtros aplicados</p>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                 {filtrosResumen.map((f,i)=>(
                   <span key={i} style={{ fontSize:11, padding:'3px 9px', borderRadius:radius.pill, background:C.brandBg, color:BRAND, border:`1px solid ${C.brandBd}` }}>{f}</span>
@@ -116,22 +114,22 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
           )}
           {(mostrarOpcionEncabezado || mostrarOpcionFirmas) && (
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Opciones</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Opciones</p>
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 {mostrarOpcionEncabezado && (
                   <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:12, fontFamily:F, color:'#0F0F0F' }}>
-                    <input type="checkbox" checked={encabezadoAlt} onChange={e=>setEncabezadoAlt(e.target.checked)} style={{ accentColor:BRAND }} />
+                    <input type="checkbox" aria-label="Seleccionar" checked={encabezadoAlt} onChange={e=>setEncabezadoAlt(e.target.checked)} style={{ accentColor:BRAND }} />
                     Encabezado alternativo
                   </label>
                 )}
                 {mostrarOpcionFirmas && (
                   firmasDelReporte.length > 0 ? (
                     <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:12, fontFamily:F, color:'#0F0F0F' }}>
-                      <input type="checkbox" checked={incluirFirmas} onChange={e=>setIncluirFirmas(e.target.checked)} style={{ accentColor:BRAND }} />
+                      <input type="checkbox" aria-label="Seleccionar" checked={incluirFirmas} onChange={e=>setIncluirFirmas(e.target.checked)} style={{ accentColor:BRAND }} />
                       Incluir firma{firmasDelReporte.length > 1 ? `s (${firmasDelReporte.length})` : ''}
                     </label>
                   ) : (
-                    // Issue: todavía no hay ninguna firma configurada para este
+                    // todavía no hay ninguna firma configurada para este
                     // reporte en Parámetros generales > Firmas.
                     <div style={{ fontSize:11.5, color:C.n700, fontFamily:F, lineHeight:1.5, maxWidth:260 }}>
                       No hay firmas configuradas para este reporte.{' '}
@@ -147,9 +145,8 @@ export function ModalExportarAnalitico({ rows, filasResumen, tipoActivo, cuentaL
           )}
         </div>
 
-        {/* La elección de "Diario general / resumen / por libro" ahora vive en la
-            pantalla de Analítico ("Ver como"), no acá - este modal solo exporta
-            lo que ya está en pantalla. */}
+        {/* La vista se elige en la pantalla de Analítico («Ver como»); este modal exporta lo
+            que está en pantalla. */}
 
         <div className="export-modal-scroll" style={{ flex:1, overflowY:'auto', padding:'16px 24px', background:'#F9F9F9' }}>
           <div id="export-print-area-analitico" style={{ background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:radius.md, padding:24 }}>

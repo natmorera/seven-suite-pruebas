@@ -1,17 +1,17 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
 
 export const F = FONT;
 export const BRAND = C.brand;
 export function fmt2(n: number) { return fmtNum(n, 2); }
 // Tipo de cambio de referencia (mock) usado cuando origen y destino están en monedas distintas.
-export const FX_USD_CRC = 545.00;
+const FX_USD_CRC = 545.00;
 export function tipoCambio(monedaOrigen: 'CRC'|'USD', monedaDestino: 'CRC'|'USD'): number {
   if (monedaOrigen === monedaDestino) return 1;
   return monedaOrigen === 'USD' ? FX_USD_CRC : 1 / FX_USD_CRC;
 }
-export type EstadoTrf = 'Pendiente' | 'Contabilizado' | 'Anulados';
+type EstadoTrf = 'Pendiente' | 'Contabilizado' | 'Anulados';
 export interface Transferencia {
   id: number; consecutivo: string; fecha: string; estado: EstadoTrf;
   cuentaOrigen: string; monedaOrigen: 'CRC'|'USD'; importeOrigen: number;

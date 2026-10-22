@@ -1,12 +1,11 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
 
 export const F = FONT;
-// ── Modal: Nueva transferencia ─────────────────────────────────────────────────
 export const BRAND = C.brand;
 export function fmt2(n: number) { return fmtNum(n, 2); }
-export type EstadoDep = 'Pendiente' | 'Contabilizada' | 'Anulados';
+type EstadoDep = 'Pendiente' | 'Contabilizada' | 'Anulados';
 export interface Partida {
   id: string;
   comprobante: string;

@@ -10,8 +10,10 @@ import { Button } from '@/components/suite/ui';
 // Misma forma que el Modal de la suite (barra de título 14/500, cuerpo con
 // padding 20, pie con acciones a la derecha), dibujado en un portal para que
 // las confirmaciones y visores queden siempre encima de otros modales.
-export function ModalBase({ open = true, titulo, onClose, children, pie, ancho = 520, rol = 'dialog', capa = 0, cuerpoStyle, cabecera }: {
+export function ModalBase({ open = true, titulo, onClose, children, pie, ancho = 520, rol = 'dialog', capa = 0, cuerpoStyle, cabecera, altoMax = '90vh' }: {
   open?: boolean; titulo: ReactNode; onClose: () => void; children?: ReactNode; pie?: ReactNode; ancho?: number | string; rol?: 'dialog' | 'alertdialog'; capa?: number; cuerpoStyle?: CSSProperties; cabecera?: ReactNode;
+  /** Alto máximo del modal (por defecto 90 % de la ventana). */
+  altoMax?: string;
 }) {
   const cerrar = useRef(onClose);
   useEffect(() => { cerrar.current = onClose; });
@@ -25,7 +27,7 @@ export function ModalBase({ open = true, titulo, onClose, children, pie, ancho =
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 1000 + capa, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={onClose}>
       <div role={rol} aria-modal aria-label={typeof titulo === 'string' ? titulo : 'Diálogo'} onClick={e => e.stopPropagation()}
-        style={{ background: C.n000, borderRadius: radius.card, width: ancho, maxWidth: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 16px 48px rgba(0,0,0,.2)', fontFamily: FONT }}>
+        style={{ background: C.n000, borderRadius: radius.card, width: ancho, maxWidth: '100%', maxHeight: altoMax, display: 'flex', flexDirection: 'column', boxShadow: '0 16px 48px rgba(0,0,0,.2)', fontFamily: FONT }}>
         <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.n500}`, display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <span style={{ fontSize: 14, fontWeight: 500, color: C.n900, marginRight: 'auto' }}>{titulo}</span>
           {cabecera}

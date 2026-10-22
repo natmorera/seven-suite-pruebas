@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
 import { MontoInput } from './PaginationFooter';
 import { csvEscape } from './csvEscape';
 import { BRAND, F, type LineaAsiento, MONEDAS, MON_SYM, type Moneda, type Plantilla, fmt2 } from './datos';
@@ -10,7 +10,7 @@ import { CuentaLineaSelect, IcCopy, IcPlus } from './piezas';
 export function EditPlantillaModal({ plantilla, onSave, onClose }: { plantilla:Plantilla; onSave:(nombre:string,moneda:Moneda,lineas:LineaAsiento[])=>void; onClose:()=>void }) {
   const [nombre, setNombre] = useState(plantilla.nombre);
   const [moneda, setMoneda] = useState<Moneda>(plantilla.moneda);
-  const [lineas, setLineas] = useState<LineaAsiento[]>(plantilla.lineas.length ? plantilla.lineas : [{ id:Date.now(), cuenta:'', descripcion:'', cCostos:'', debe:0, haber:0 }]);
+  const [lineas, setLineas] = useState<LineaAsiento[]>(() => plantilla.lineas.length ? plantilla.lineas : [{ id:1, cuenta:'', descripcion:'', cCostos:'', debe:0, haber:0 }]);
 
   function setL(id: number, k: keyof LineaAsiento, v: string|number) { setLineas(p=>p.map(l=>l.id===id?{...l,[k]:v}:l)); }
   function addLinea() { setLineas(p=>[...p,{ id:Date.now(), cuenta:'', descripcion:'', cCostos:'', debe:0, haber:0 }]); }
@@ -30,7 +30,7 @@ export function EditPlantillaModal({ plantilla, onSave, onClose }: { plantilla:P
           <div style={{ display:'grid', gridTemplateColumns:'1fr 160px', gap:12, marginBottom:16 }}>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:4 }}>Nombre</label>
-              <input value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+              <input aria-label="Nombre" value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:4 }}>Moneda</label>
@@ -64,11 +64,11 @@ export function EditPlantillaModal({ plantilla, onSave, onClose }: { plantilla:P
                 <tr key={l.id}>
                   <td style={{ padding:'8px 12px' }}><CuentaLineaSelect value={l.cuenta} onChange={v=>setL(l.id,'cuenta',v)}/></td>
                   <td style={{ padding:'4px 12px' }}>
-                    <input value={l.descripcion} onChange={e=>setL(l.id,'descripcion',e.target.value)} placeholder="Descripción…"
+                    <input value={l.descripcion} onChange={e=>setL(l.id,'descripcion',e.target.value)} placeholder="Descripción…" aria-label="Descripción…"
                       style={{ width:'100%', height:30, padding:'0 7px', border:`1px solid ${C.n500}`, borderRadius:5, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                   </td>
                   <td style={{ padding:'4px 12px' }}>
-                    <input value={l.cCostos} onChange={e=>setL(l.id,'cCostos',e.target.value)} placeholder="-"
+                    <input value={l.cCostos} onChange={e=>setL(l.id,'cCostos',e.target.value)} placeholder="-" aria-label="-"
                       style={{ width:'100%', height:30, padding:'0 7px', border:`1px solid ${C.n500}`, borderRadius:5, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                   </td>
                   <td style={{ padding:'8px 12px' }}>
@@ -102,7 +102,7 @@ export function EditPlantillaModal({ plantilla, onSave, onClose }: { plantilla:P
     </div>
   );
 }
-// ── Modal: Importar asiento ────────────────────────────────────────────────────
+// ── Modal: importar asiento ────────────────────────────────────────────────────
 export function ImportarAsientoModal({ onClose }: { onClose:()=>void }) {
   const [file, setFile] = useState<string|null>(null);
   return (

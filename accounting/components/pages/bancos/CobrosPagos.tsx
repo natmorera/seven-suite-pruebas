@@ -1,11 +1,14 @@
 'use client';
+import ComprobanteOperacionModal from '@/components/ui/documento/ComprobanteOperacion';
+import { useEmpresaDoc } from '@/components/ui/documento/useEmpresaDoc';
+import { comprobantesDeOp } from './cobrosPagos/comprobante';
 import { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, PAGE_PAD, radius, shadow, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { BulkActionBar, SearchInput, FilterDropdown } from '../../ui/filtros';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { BulkActionBar, SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { AnticipoModal } from './cobrosPagos/AnticipoModal';
 import { GestionModal } from './cobrosPagos/GestionModal';
 import { PagoMasivoModal } from './cobrosPagos/PagoMasivoModal';
@@ -15,12 +18,13 @@ import { ActIcon, CobrosFechasFilter, Pill } from './cobrosPagos/piezas';
 export default function CobrosPagos() {
   const [ops, setOps] = useState<Operacion[]>(OPS_INIT);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  function toggleSel(id:number) { setSelected(p=>{ const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; }); }
+  function toggleSel(id:number) { setSelected(p=>{ const n=new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
   function toggleSelAll(ids:number[]) { setSelected(p=> p.size===ids.length && ids.length>0 ? new Set() : new Set(ids)); }
   const [modalOp, setModalOp] = useState<Operacion | null>(null);
+  const [comprobanteOp, setComprobanteOp] = useState<Operacion | null>(null);
+  const empresaDoc = useEmpresaDoc();
   const [modalMasivo, setModalMasivo] = useState(false);
   const [modalAnticipo, setModalAnticipo] = useState(false);
-  const [newTipo, setNewTipo] = useState<'cobro'|'pago'|'masivo'|'anticipo'|null>(null);
   const [searchQ, setSearch] = useState('');
 
   const [filtTipo,      setFiltTipo]      = useState<Set<string>>(new Set());
@@ -49,7 +53,7 @@ export default function CobrosPagos() {
   function openNew(tipo: 'cobro'|'pago'|'masivo'|'anticipo') {
     if (tipo === 'masivo')   { setModalMasivo(true); return; }
     if (tipo === 'anticipo') { setModalAnticipo(true); return; }
-    const id = Date.now();
+    const id = Math.max(0, ...ops.map(o => o.id)) + 1;
     const base: Operacion = {
       id, tipo: tipo === 'cobro' ? 'Cobro' : 'Pago',
       estado: 'Pendiente', consecutivo: id % 1000,
@@ -59,7 +63,6 @@ export default function CobrosPagos() {
       lineasAjuste: [{ id:1, cuenta:'', documento:'', moneda:'¢ CRC', monto:0, tipoMovimiento:'', justificacion:'' }],
     };
     setModalOp(base);
-    setNewTipo(null);
   }
 
   const [dropNueva, setDropNueva] = useState(false);
@@ -71,7 +74,7 @@ export default function CobrosPagos() {
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', overflow:'hidden', fontFamily:F, background:'#F9F9F9' }}>
 
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Cobros / Pagos">
         <BotonExportarUnico onClick={()=>setShowExportar(true)}/>
         <div style={{ position:'relative' }}>
@@ -97,8 +100,8 @@ export default function CobrosPagos() {
                 ['cobro',    'GC', 'Gestión de cobro',              'Recuperación de cartera de clientes'],
                 ['pago',     'GP', 'Gestión de pago',               'Pago a proveedores con o sin archivo bancario'],
                 ['anticipo', 'AC AP', 'Anticipo clientes / proveedores','Anticipos emitidos y recibidos'],
-              ] as [string, string, string, string][]).map(([tipo, sigla, nombre, desc]) => (
-                <button key={tipo} onClick={() => { setDropNueva(false); openNew(tipo as any); }}
+              ] as [string, string, string, string][]).map(([tipo, , nombre, desc]) => (
+                <button key={tipo} onClick={() => { setDropNueva(false); openNew(tipo as 'cobro'|'pago'|'masivo'|'anticipo'); }}
                   style={{ display:'block', width:'100%', textAlign:'left', padding:'12px 16px',
                     background:'none', border:'none', cursor:'pointer', borderBottom:`1px solid ${C.n500}` }}
                   onMouseEnter={e=>(e.currentTarget.style.background=C.brandBg)}
@@ -139,13 +142,13 @@ export default function CobrosPagos() {
         { label:'Aplicar', onClick:()=>{ setOps(p=>p.map(o=>selected.has(o.id)?{...o,estado:'Aplicado'}:o)); setSelected(new Set()); } },
       ]}/>
 
-      {/* Table */}
+      {/* Tabla */}
       <div style={{ flex:1, overflowY:'auto', background:'#FFFFFF', padding:`0 ${PAGE_PAD-12}px` }}>
         <table className="tabla" style={TABLA.table}>
           <thead style={{ position:'sticky', top:0, background:'#FFFFFF', zIndex:2 }}>
             <tr style={TABLA.headRow}>
               <th style={{ ...TABLA.th, width:36 }}>
-                <input type="checkbox" checked={selected.size>0 && selected.size===paginated.length} onChange={()=>toggleSelAll(paginated.map(o=>o.id))} style={{ width:13, height:13, accentColor:BRAND, cursor:'pointer' }}/>
+                <input type="checkbox" aria-label="Seleccionar" checked={selected.size>0 && selected.size===paginated.length} onChange={()=>toggleSelAll(paginated.map(o=>o.id))} style={{ width:13, height:13, accentColor:BRAND, cursor:'pointer' }}/>
               </th>
               {['Consecutivo','Cliente / Proveedor','Fecha','Moneda','Importe','Banco','Estado','Acciones'].map(h => (
                 <th key={h} style={{ ...TABLA.th, textAlign:h==='Importe'?'right':'left' }}>{h}</th>
@@ -160,16 +163,13 @@ export default function CobrosPagos() {
             ) : paginated.map(op => {
               const [stColor, stBg] = ESTADO_STYLE[op.estado];
               const sym = op.moneda === 'USD' ? '$' : '₡';
-              const tipoBg  = op.tipo==='Cobro' ? 'rgba(29,158,117,.12)'  : 'rgba(167,118,0,.12)';
-              const tipoCl  = op.tipo==='Cobro' ? C.success                : BRAND;
-              const tipoSig = op.tipo==='Cobro' ? 'GC' : 'GP';
               return (
                 <tr key={op.id} style={{ borderBottom:'1px solid #ECECEC', cursor:'pointer', background:selected.has(op.id)?C.brandBg:'#FFFFFF' }}
                   onClick={() => setModalOp(op)}
                   onMouseEnter={e => { if(!selected.has(op.id)) e.currentTarget.style.background=C.n200; }}
                   onMouseLeave={e => { e.currentTarget.style.background=selected.has(op.id)?'#FFFBF0':'#FFFFFF'; }}>
                   <td onClick={e=>e.stopPropagation()} style={{ padding:'8px 12px' }}>
-                    <input type="checkbox" checked={selected.has(op.id)} onChange={()=>toggleSel(op.id)} style={{ width:13, height:13, accentColor:BRAND, cursor:'pointer' }}/>
+                    <input type="checkbox" aria-label="Seleccionar" checked={selected.has(op.id)} onChange={()=>toggleSel(op.id)} style={{ width:13, height:13, accentColor:BRAND, cursor:'pointer' }}/>
                   </td>
                   <td style={{ padding:'8px 12px' }}>
                     <button onClick={e=>{e.stopPropagation(); setModalOp(op);}}
@@ -179,7 +179,7 @@ export default function CobrosPagos() {
                   </td>
                   <td style={{ padding:'8px 12px' }}>
                     <p style={{ fontSize:12, fontWeight:500, color:'#0F0F0F', margin:0 }}>{op.nombreAux}</p>
-                    <p style={{ fontSize:10, color:C.n700, margin:0, fontFamily:F }}>{op.cuentaContable}</p>
+                    <p style={{ fontSize:10.5, color:C.n700, margin:0, fontFamily:F }}>{op.cuentaContable}</p>
                   </td>
                   <td style={{ padding:'8px 12px', whiteSpace:'nowrap' }}>
                     {op.fecha ? op.fecha.split('-').reverse().join('/') : '00/00/0000'}
@@ -220,10 +220,10 @@ export default function CobrosPagos() {
                         <ActIcon label="Archivos adjuntos">
                           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><path d="M11.5 6.5L6 12a3.5 3.5 0 01-5-5l5.5-5.5a2 2 0 012.8 2.8L4 9.5a.5.5 0 01-.7-.7L8.5 3.5"/></svg>
                         </ActIcon>
-                        <ActIcon label="Vista previa">
+                        <ActIcon label="Ver comprobante" onClick={()=>setComprobanteOp(op)}>
                           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><rect x="2" y="2" width="10" height="10" rx="1.5"/><path d="M5 6h4M5 8.5h2" strokeLinecap="round"/></svg>
                         </ActIcon>
-                        <ActIcon label="Imprimir">
+                        <ActIcon label="Imprimir" onClick={()=>setComprobanteOp(op)}>
                           <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><rect x="3" y="1" width="8" height="4" rx="0.5"/><path d="M3 5H2a1 1 0 00-1 1v4a1 1 0 001 1h1"/><path d="M11 5h1a1 1 0 011 1v4a1 1 0 01-1 1h-1"/><rect x="3" y="8" width="8" height="4" rx="0.5"/></svg>
                         </ActIcon>
                         <ActIcon label="Ver asiento">
@@ -272,11 +272,13 @@ export default function CobrosPagos() {
         </table>
       </div>
 
-      {/* Footer */}
+      {/* Pie */}
       <div style={{ background:'#FFFFFF', borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0 }}>
         <Pagination page={paginaActual} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>
 
+      {comprobanteOp && <ComprobanteOperacionModal titulo={`Comprobante · ${comprobanteOp.titulo}`} comprobantes={comprobantesDeOp(comprobanteOp, empresaDoc)}
+        archivo={`comprobante-${comprobanteOp.tipo.toLowerCase()}-${comprobanteOp.consecutivo}`} onClose={() => setComprobanteOp(null)} marca={C.brand} />}
       {modalOp      && <GestionModal op={modalOp} onClose={() => setModalOp(null)} onSave={updated => { setOps(p => p.some(o=>o.id===updated.id) ? p.map(o=>o.id===updated.id?updated:o) : [...p,updated]); setModalOp(null); }}/>}
       {modalMasivo  && <PagoMasivoModal  onClose={() => setModalMasivo(false)}/>}
       {modalAnticipo && <AnticipoModal   onClose={() => setModalAnticipo(false)}/>}

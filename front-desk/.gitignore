@@ -39,9 +39,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-#protección
-**/node_modules/
-**/.next/
-**/.vercel/
-*/.env
-**/next-env.d.ts

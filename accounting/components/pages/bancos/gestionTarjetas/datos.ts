@@ -1,12 +1,12 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
 
 export const F = FONT;
 export const BRAND = C.brand;
 export function fmt2(n: number) { return fmtNum(n, 2); }
 // ── Types ─────────────────────────────────────────────────────────────────────
-export type EstadoLiq = 'Pendiente' | 'Contabilizada' | 'Anulada';
+type EstadoLiq = 'Pendiente' | 'Contabilizada' | 'Anulada';
 export interface Liquidacion {
   id: number;
   consecutivo: string;
@@ -29,7 +29,7 @@ export interface Voucher {
   bruto: number;
   neto: number;
 }
-// ── Mock ──────────────────────────────────────────────────────────────────────
+// ── Datos de ejemplo ──────────────────────────────────────────────────────────────────────
 export const AFILIADOS = [
   { code:'AFI-001', label:'AFI-001 · BAC Visa/Master - Terminal 4654897', comision:1.85, retFuente:2.0, retIVA:1.0 },
   { code:'AFI-002', label:'AFI-002 · BAC Amex - Terminal 4654898',        comision:2.10, retFuente:2.0, retIVA:1.0 },

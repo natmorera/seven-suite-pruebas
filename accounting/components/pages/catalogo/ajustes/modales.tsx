@@ -1,17 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, FormField, Input } from '../../../ui/formulario';
-import { C } from '../../../ui/tokens';
-import { EnlaceAjuste } from '../datos/ajustes';
+import { Modal } from '@/components/ui/primitives';
+import { Button, FormField, Input } from '@/components/ui/formulario';
+import { C } from '@/components/ui/tokens';
+import { type EnlaceAjuste } from '../datos/ajustes';
 import { CUENTAS_DETALLE, F } from './datos';
 import { AccountPicker, OperacionesPicker } from './piezas';
 
-// ── Modal: agregar / editar un movimiento de ajuste (Issue #1) ─────────────
-// Antes se editaba directo en la tabla con selectores flotando adentro de un
-// contenedor con scroll, así que en las últimas filas el dropdown quedaba
-// cortado por el borde de la tabla (Issue #4). Con todo en un modal, ese
-// problema desaparece solo: el modal no tiene ese scroll contenedor.
+// ── Modal: agregar / editar un movimiento de ajuste ── Se edita en un modal para que los
+// selectores no queden cortados por el scroll de la tabla.
 export function ModalMovimientoAjuste({ enlace, onClose, onGuardar }: {
   enlace: EnlaceAjuste; onClose:()=>void; onGuardar:(e:EnlaceAjuste)=>void;
 }) {
@@ -50,7 +47,7 @@ export function ModalMovimientoAjuste({ enlace, onClose, onGuardar }: {
           </FormField>
           <FormField label="% (opcional)" hint="Siempre es un porcentaje, se calcula sobre el total de la operación.">
             <div style={{ position:'relative' }}>
-              <input type="number" min={0} max={100} step={0.01} value={form.porcentaje ?? ''} placeholder="Ej. 2"
+              <input type="number" min={0} max={100} step={0.01} value={form.porcentaje ?? ''} placeholder="Ej. 2" aria-label="Ej. 2"
                 onChange={e=>patch({ porcentaje: e.target.value==='' ? undefined : Math.min(100, Math.max(0, +e.target.value)) })}
                 style={{ height:30, width:'100%', padding:'0 24px 0 8px', border:`1px solid ${C.n500}`, borderRadius:4, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               <span style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', fontSize:11, color:C.n700 }}>%</span>

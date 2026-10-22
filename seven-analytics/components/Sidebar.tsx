@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useDashboard } from "@/lib/dashboard-context";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const F = "var(--font-montserrat), sans-serif";
 // Morado claro (lavanda) para el estado activo/acento sobre fondo negro. El
@@ -25,6 +27,14 @@ function IcBell({ className = "w-[14px] h-[14px]" }: { className?: string }) {
       <path d="M8.01 1.94C5.81 1.94 4.01 3.73 4.01 5.94V7.87C4.01 8.27 3.84 8.89 3.63 9.24L2.87 10.51C2.39 11.3 2.72 12.17 3.59 12.47C6.46 13.43 9.56 13.43 12.43 12.47C13.24 12.2 13.59 11.25 13.15 10.51L12.39 9.24C12.19 8.89 12.01 8.27 12.01 7.87V5.94C12.01 3.74 10.21 1.94 8.01 1.94Z" />
       <path d="M9.25 2.13C9.04 2.07 8.83 2.03 8.61 2C7.97 1.92 7.35 1.97 6.78 2.13C6.97 1.64 7.45 1.29 8.01 1.29C8.57 1.29 9.05 1.64 9.25 2.13Z" />
       <path d="M10.01 12.71C10.01 13.81 9.11 14.71 8.01 14.71C7.47 14.71 6.96 14.48 6.6 14.12C6.24 13.76 6.01 13.25 6.01 12.71" />
+    </svg>
+  );
+}
+function IcSettings({ className = "w-[14px] h-[14px]" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="8" cy="8" r="2" />
+      <path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1" />
     </svg>
   );
 }
@@ -204,6 +214,7 @@ function SidebarBody({
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("Español");
   const [companyOpen, setCompanyOpen] = useState(false);
+  const ruta = usePathname() ?? "/";
   const companyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -295,10 +306,14 @@ function SidebarBody({
 
       {/* Nav */}
       <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "8px 4px" }}>
-        <div style={row(true, !open)} title={!open ? "Dashboard" : undefined}>
+        <Link href="/" style={row(ruta === "/", !open)} title={!open ? "Dashboard" : undefined}>
           <IcDashboard className="w-[14px] h-[14px]" />
           {open && "Dashboard"}
-        </div>
+        </Link>
+        <Link href="/configuracion" style={row(ruta.startsWith("/configuracion"), !open)} title={!open ? "Configuración" : undefined}>
+          <IcSettings className="w-[14px] h-[14px]" />
+          {open && "Configuración"}
+        </Link>
       </nav>
 
       {/* Footer: idioma + notificaciones + cerrar sesión. Misma función row()

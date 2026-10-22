@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { Toast } from '../../../ui/primitives';
-import { C, radius, TABLA } from '../../../ui/tokens';
+import { Toast } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
 import { VistaPreviaModal } from './VistaPreviaModal';
 import { BRAND, type Conciliacion, ESTADO_CON_STYLE, type EstadoMov, F, MOVIMIENTOS_MOCK, fmt2, sym } from './datos';
 import { CerrarConciliacionModal, CorteSaldoModal, ImportarArchivoModal } from './modales';
@@ -83,7 +83,7 @@ export function DetalleConciliacion({ con, onBack, onCerrar, onUpdate }: {
 
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', fontFamily:F, background:'#FFFFFF' }}>
-      {/* Header */}
+      {/* Encabezado */}
       <div style={{ padding:'12px 24px 14px', borderBottom:`1px solid ${C.n500}`, flexShrink:0 }}>
         {/* Breadcrumb */}
         <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:10 }}>
@@ -158,12 +158,12 @@ export function DetalleConciliacion({ con, onBack, onCerrar, onUpdate }: {
       {/* Estado sin saldo */}
       {con.estado === 'Sin saldo' || (enProceso && con.movimientos.length === 0) ? (
         <div style={{ flex:1, overflowY:'auto', padding:'20px 24px' }}>
-          {/* Saldo según banco input */}
+          {/* Campo de saldo según banco */}
           <div style={{ background:C.brandBg, border:`1px solid ${C.brandBd}`, borderRadius:10, padding:'14px 18px', marginBottom:20 }}>
             <div style={{ display:'flex', alignItems:'center', gap:16 }}>
               <div>
                 <p style={{ fontSize:12, color:'#0F0F0F', fontWeight:500, margin:'0 0 6px' }}>Saldo según banco</p>
-                <input type="number" step="0.01" value={cargaSaldo} onChange={e=>{setCargaSaldo(e.target.value);setCargaErr(false);}}
+                <input aria-label="Saldo según banco" type="number" step="0.01" value={cargaSaldo} onChange={e=>{setCargaSaldo(e.target.value);setCargaErr(false);}}
                   style={{ height:36, padding:'0 10px', border:`1px solid ${cargaErr&&!cargaSaldo?C.error:C.n500}`, borderRadius:radius.md, fontSize:13, fontFamily:F, outline:'none', width:160 }}/>
               </div>
               <p style={{ fontSize:12, color:C.n700, marginTop:22, fontFamily:F }}>Ingresá el saldo del estado de cuenta del banco para este período</p>
@@ -173,19 +173,19 @@ export function DetalleConciliacion({ con, onBack, onCerrar, onUpdate }: {
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto auto auto auto', gap:12, alignItems:'end', marginBottom:20 }}>
             <div>
               <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px' }}>Cuenta bancaria</p>
-              <input readOnly value={`${con.cuentaCode} – ${con.cuentaBancaria}`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', background:C.n200, boxSizing:'border-box' }}/>
+              <input aria-label="Cuenta bancaria" readOnly value={`${con.cuentaCode} – ${con.cuentaBancaria}`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', background:C.n200, boxSizing:'border-box' }}/>
             </div>
             <div>
               <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px' }}>Desde <span style={{ color:C.error }}>*</span></p>
-              <input type="date" value={cargaDesde} onChange={e=>{setCargaDesde(e.target.value);setCargaErr(false);}} style={{ height:36, padding:'0 10px', border:`1px solid ${cargaErr&&!cargaDesde?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}/>
+              <input aria-label="Desde" type="date" value={cargaDesde} onChange={e=>{setCargaDesde(e.target.value);setCargaErr(false);}} style={{ height:36, padding:'0 10px', border:`1px solid ${cargaErr&&!cargaDesde?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}/>
             </div>
             <div>
               <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px' }}>Hasta <span style={{ color:C.error }}>*</span></p>
-              <input type="date" value={cargaHasta} onChange={e=>{setCargaHasta(e.target.value);setCargaErr(false);}} style={{ height:36, padding:'0 10px', border:`1px solid ${cargaErr&&!cargaHasta?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}/>
+              <input aria-label="Hasta" type="date" value={cargaHasta} onChange={e=>{setCargaHasta(e.target.value);setCargaErr(false);}} style={{ height:36, padding:'0 10px', border:`1px solid ${cargaErr&&!cargaHasta?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}/>
             </div>
             <div>
               <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px' }}>Moneda</p>
-              <select value={con.moneda} onChange={e=>onUpdate({moneda:e.target.value})} style={{ height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}>
+              <select aria-label="Moneda" value={con.moneda} onChange={e=>onUpdate({moneda:e.target.value})} style={{ height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}>
                 <option value="CRC">CRC – Colón</option><option value="USD">USD – Dólar</option>
               </select>
             </div>
@@ -196,7 +196,7 @@ export function DetalleConciliacion({ con, onBack, onCerrar, onUpdate }: {
           {cargaErr && <p style={{ fontSize:11, color:C.error, margin:'-10px 0 16px' }}>Completa saldo, desde y hasta antes de cargar movimientos.</p>}
           <div style={{ textAlign:'center', padding:'40px 0' }}>
             <p style={{ fontSize:14, fontWeight:500, color:'#0F0F0F', marginBottom:8 }}>Sin movimientos en este período</p>
-            <p style={{ fontSize:12, color:C.n700, maxWidth:360, margin:'0 auto' }}>Selecciona el rango de fechas y haz clic en "Cargar movimientos", o importá el archivo del banco para conciliar automáticamente.</p>
+            <p style={{ fontSize:12, color:C.n700, maxWidth:360, margin:'0 auto' }}>Selecciona el rango de fechas y haz clic en &quot;Cargar movimientos&quot;, o importá el archivo del banco para conciliar automáticamente.</p>
           </div>
         </div>
       ) : (
@@ -255,14 +255,14 @@ export function DetalleConciliacion({ con, onBack, onCerrar, onUpdate }: {
                   </div>
                 </div>
               ))}
-              <p style={{ fontSize:10, color:C.n700, margin:'6px 0 0' }}>La columna del centro ("Diferencia actual") es la vigente; esta es el valor con el que se creó la conciliación.</p>
+              <p style={{ fontSize:10.5, color:C.n700, margin:'6px 0 0' }}>La columna del centro (&quot;Diferencia actual&quot;) es la vigente; esta es el valor con el que se creó la conciliación.</p>
             </div>
           </div>
 
           {/* Saldo según banco */}
           <div style={{ padding:'10px 24px', display:'flex', alignItems:'center', gap:16, borderBottom:`1px solid ${C.n500}`, background:C.brandBg, flexShrink:0 }}>
             <span style={{ fontSize:12, color:C.n700, fontFamily:F }}>Saldo final según banco</span>
-            <input type="number" value={saldoBanco} onChange={e=>onUpdate({saldoBanco:+e.target.value})} readOnly={cerrada}
+            <input aria-label="Saldo final según banco" type="number" value={saldoBanco} onChange={e=>onUpdate({saldoBanco:+e.target.value})} readOnly={cerrada}
               style={{ height:32, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:13, fontFamily:F, outline:'none', width:160, fontWeight:600 }}/>
             <span style={{ fontSize:11, color:C.n700, fontFamily:F }}>
               {cerrada ? `Registrado al cerrar · ${con.fechaCierre ?? '-'} por ${con.cerradaPor ?? '-'}` : 'Guardado automáticamente para este periodo'}

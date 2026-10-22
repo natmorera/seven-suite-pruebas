@@ -1,5 +1,5 @@
 // Estructura del menú lateral y del sub-panel de Configuración General
-import { IcDashboard, IcRegistro, IcBancos, IcReportes, IcEstados, IcConfig } from '../ui/icons';
+import { IcDashboard, IcRegistro, IcBancos, IcReportes, IcEstados, IcConfig } from '@/components/ui/icons';
 
 export const NAV = [
   { id:'dashboard', label:'Dashboard',           Icon:IcDashboard, href:'/dashboard', children:null },

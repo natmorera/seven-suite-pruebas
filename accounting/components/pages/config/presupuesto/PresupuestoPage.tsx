@@ -1,14 +1,14 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { PageHeader, Modal, Toast } from '../../../ui/primitives';
-import { Button, Select } from '../../../ui/formulario';
-import { Pagination } from '../../../ui/tabla';
-import { radius, C, TABLA } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { SearchInput, BulkActionBar } from '../../../ui/filtros';
-import { IcImport, IcExport, IcCheck, IcCopy, IcTrash, IcCalendar, IcInfo } from '../../../ui/icons';
-import { MESES, TipoPL, TIPOS_DE_CUENTA, TIPOS_DE_CUENTA_DEFAULT, EJERCICIOS_PRESUPUESTO, EjercicioPresupuesto, PresRow, INIT_ROWS } from '../presupuestoData';
-import { useCentrosCostoConfig } from '../../catalogo/centrosCostoConfig';
+import { PageHeader, Modal, Toast } from '@/components/ui/primitives';
+import { Button, Select } from '@/components/ui/formulario';
+import { Pagination } from '@/components/ui/tabla';
+import { radius, C, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { SearchInput, BulkActionBar } from '@/components/ui/filtros';
+import { IcImport, IcExport, IcCheck, IcCopy, IcTrash, IcCalendar, IcInfo } from '@/components/ui/icons';
+import { MESES, type TipoPL, TIPOS_DE_CUENTA, TIPOS_DE_CUENTA_DEFAULT, EJERCICIOS_PRESUPUESTO, type EjercicioPresupuesto, type PresRow, INIT_ROWS } from '../presupuestoData';
+import { useCentrosCostoConfig } from '@/components/pages/catalogo/centrosCostoConfig';
 import { ModalExportar } from './ModalExportar';
 import { F, type ProyectarParams, type RecalcParams, cloneRows, fmtCelda, labelCentro, soloCodigo } from './datos';
 import { ModalImportar, ModalProyectar, ModalRecalcularGlobal, ModalRecalcularSeleccionadas } from './modales';
@@ -17,11 +17,8 @@ import { CeldaMonto, FiltroMultiSelect, TipoToggle } from './piezas';
 // ── Página principal ──────────────────────────────────────────────────────────
 export function PresupuestoPage() {
   const { centrosCosto } = useCentrosCostoConfig();
-  // Issue: antes había un solo arreglo de filas compartido entre los 3
-  // ejercicios del selector - cambiar de "Ejercicio" no cambiaba los datos
-  // (2025 mostraba lo mismo que 2026). Ahora cada ejercicio tiene su propia
-  // copia de filas, y "Proyectar presupuesto" escribe de verdad en el año
-  // destino (creándolo si no existía todavía en la lista de ejercicios).
+  // Cada ejercicio tiene su propia copia de filas; «Proyectar presupuesto» escribe en el año
+  // destino (y lo crea si no estaba en la lista de ejercicios).
   const [ejerciciosList, setEjerciciosList] = useState<EjercicioPresupuesto[]>(EJERCICIOS_PRESUPUESTO);
   const [data, setData] = useState<Record<string, PresRow[]>>(() => ({
     '2026': cloneRows(INIT_ROWS), '2025': cloneRows(INIT_ROWS), '2024': cloneRows(INIT_ROWS),
@@ -67,7 +64,8 @@ export function PresupuestoPage() {
 
   // Al cambiar de ejercicio, la selección y la página quedan referidas al set
   // de filas anterior - se limpian para evitar estados confusos.
-  useEffect(() => { setSelected(new Set()); setPage(1); }, [ejercicio]);
+  const [ejercicioPrevio, setEjercicioPrevio] = useState(ejercicio);
+  if (ejercicio !== ejercicioPrevio) { setEjercicioPrevio(ejercicio); setSelected(new Set()); setPage(1); }
 
   function updateRows(fn: (rows: PresRow[]) => PresRow[]) {
     setData(prev => ({ ...prev, [ejercicio]: fn(prev[ejercicio] ?? []) }));
@@ -100,7 +98,7 @@ export function PresupuestoPage() {
 
   function notify(message:string, type:'success'|'error'='success') { setToast({ message, type }); }
 
-  function toggleRow(id:string) { if (isClosed) return; setSelected(s => { const n=new Set(s); n.has(id)?n.delete(id):n.add(id); return n; }); }
+  function toggleRow(id:string) { if (isClosed) return; setSelected(s => { const n=new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
   function toggleAll() { if (isClosed) return; setSelected(s => s.size===filtered.length && filtered.length>0 ? new Set() : new Set(filtered.map(r=>r.id))); }
 
   function updateValor(rowId:string, mesIdx:number, val:string) {
@@ -192,14 +190,8 @@ export function PresupuestoPage() {
         <Button variant="secondary" onClick={()=>setExportar(true)} icon={<IcExport className="w-3.5 h-3.5" />}>Exportar</Button>
         <Button variant="secondary" onClick={()=>setRecalcGlobal(true)} disabled={isClosed}>Recalcular presupuesto</Button>
         <Button variant="secondary" onClick={()=>setProyectar(true)} disabled={isClosed}>Proyectar presupuesto</Button>
-        {/* Issue: Guardar/Cancelar vivían en una barra flotante aparte, que
-            aparecía en un lugar distinto al de Empresa/Parámetros generales
-            (header) - rompía la regla de "los botones siempre en el mismo
-            lugar". Ahora viven acá también, al final a la derecha, y solo se
-            muestran si hay algo para guardar - por eso "Proyectar
-            presupuesto" deja de ser el botón de color principal fijo: el
-            único botón principal de esta pantalla es "Guardar cambios", y
-            solo existe cuando corresponde. */}
+        {/* Cancelar / Guardar cambios, al final a la derecha y solo cuando hay cambios: es el
+            único botón principal de la pantalla. */}
         {dirty && !isClosed && (
           <>
             <Button variant="secondary" onClick={()=>setConfirmDescartar(true)}>Cancelar</Button>
@@ -213,7 +205,7 @@ export function PresupuestoPage() {
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar por descripción…" width={200} />
         <div style={{ display:'flex',alignItems:'center',gap:6,flexShrink:0 }}>
           <span style={{ fontSize:12,color:C.n700 }}>Ejercicio</span>
-          <Select value={ejercicio} onChange={setEjercicio}
+          <Select ariaLabel="Ejercicio" value={ejercicio} onChange={setEjercicio}
             options={[...ejerciciosList].sort((a,b)=>b.value.localeCompare(a.value)).map(e=>({ value:e.value, label:e.value + (e.cerrado?' (cerrado)':'') }))} />
         </div>
         <FiltroMultiSelect label="Tipo de cuenta"
@@ -259,7 +251,7 @@ export function PresupuestoPage() {
             <thead>
               <tr>
                 <th style={{ position:'sticky', top:0, zIndex:1, padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:500,color:C.n700,borderBottom:`1px solid ${C.n500}`,width:30,background:C.n000 }}>
-                  <input type="checkbox" checked={selected.size===filtered.length && filtered.length>0} onChange={toggleAll} disabled={isClosed} style={{ accentColor:C.brand }} />
+                  <input type="checkbox" aria-label="Seleccionar" checked={selected.size===filtered.length && filtered.length>0} onChange={toggleAll} disabled={isClosed} style={{ accentColor:C.brand }} />
                 </th>
                 <th style={{ position:'sticky', top:0, zIndex:1, padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:500,color:C.n700,borderBottom:`1px solid ${C.n500}`,width:130,whiteSpace:'nowrap',background:C.n000 }}>Cuenta</th>
                 <th title="Centro de costos asociado a la cuenta" style={{ position:'sticky', top:0, zIndex:1, padding:'10px 12px',textAlign:'left',fontSize:11,fontWeight:500,color:C.n700,borderBottom:`1px solid ${C.n500}`,width:90,whiteSpace:'nowrap',background:C.n000,cursor:'help' }}>Centro</th>
@@ -271,7 +263,7 @@ export function PresupuestoPage() {
                 const filaBg = selected.has(r.id) ? C.brandBg : '#FFFFFF';
                 return (
                   <tr key={r.id} style={{ borderBottom:'1px solid #ECECEC' }}>
-                    <td style={{ padding:'6px 12px', background:filaBg, width:30 }}><input type="checkbox" checked={selected.has(r.id)} onChange={()=>toggleRow(r.id)} disabled={isClosed} style={{ accentColor:C.brand }} /></td>
+                    <td style={{ padding:'6px 12px', background:filaBg, width:30 }}><input type="checkbox" aria-label="Seleccionar" checked={selected.has(r.id)} onChange={()=>toggleRow(r.id)} disabled={isClosed} style={{ accentColor:C.brand }} /></td>
                     <td style={{ padding:'6px 12px',color:C.n900,fontWeight:500,whiteSpace:'nowrap', background:filaBg, width:130 }}>{r.cuenta}</td>
                     <td style={{ padding:'6px 12px',color:C.n700,whiteSpace:'nowrap', background:filaBg, width:90 }} title={labelCentro(centrosCosto, r.centroCostoId)}>{r.cg}</td>
                     <td style={{ padding:'6px 12px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap', background:filaBg, width:220 }} title={r.descripcion}>{r.descripcion}</td>

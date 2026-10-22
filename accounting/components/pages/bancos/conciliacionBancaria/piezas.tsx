@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { radius } from '../../../ui/tokens';
+import { radius } from '@/components/ui/tokens';
 import { type EstadoMov, F } from './datos';
 
 export const ESTADO_MOV_ICON: Record<EstadoMov, React.ReactNode> = {

@@ -1,9 +1,8 @@
 'use client';
-import { useRef, useState } from 'react';
-import { fmtNum } from '../../ui/formato';
-import { radius } from '../../ui/tokens';
-import { Chart } from 'chart.js';
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { fmtNum } from '@/components/ui/formato';
+import { radius } from '@/components/ui/tokens';
+import { Chart, type ActiveElement, type TooltipModel } from 'chart.js';
 import { BRAND, DAYS_ES, F, OPERACIONES_PENDIENTES, USUARIOS_CONECTADOS, getDaysInMonth, getFirstDayOfMonth, tiempoDesde, useChartJS } from './datos';
 
 // Tooltip HTML externo para los donuts chicos (88x88px). El tooltip nativo de
@@ -11,9 +10,9 @@ import { BRAND, DAYS_ES, F, OPERACIONES_PENDIENTES, USUARIOS_CONECTADOS, getDays
 // cualquier tooltip más ancho que el canvas se corta contra su borde. Con
 // esto el tooltip es un <div> aparte, posicionado encima del canvas pero sin
 // límite de tamaño, así nunca se corta.
-export function externalDonutTooltip(wrapperId: string) {
-  return (context: any) => {
-    const { chart, tooltip } = context;
+function externalDonutTooltip(wrapperId: string) {
+  return (context: { tooltip: TooltipModel<'doughnut'> }) => {
+    const { tooltip } = context;
     const wrapper = document.getElementById(wrapperId);
     if (!wrapper) return;
     let el = wrapper.querySelector<HTMLDivElement>('.donut-tooltip');
@@ -85,12 +84,6 @@ export function MiniCalendar({
           const inR = !endpoint && inRange(iso);
           const start = isStart(iso);
           const end   = isEnd(iso);
-          const bg = endpoint ? '' : inR ? '#FFF8EC' : 'transparent';
-          const color = endpoint ? '#fff' : inR ? '' : '#0F0F0F';
-          const br = endpoint ? '50%' : inR
-            ? start ? '50% 0 0 50%' : end ? '0 50% 50% 0' : '0'
-            : '50%';
-
           return (
             <div key={iso} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center',
               background: inR && !endpoint ? '#FFF8EC' : 'transparent',
@@ -115,7 +108,7 @@ export function MiniCalendar({
     </div>
   );
 }
-// ── Card shell ────────────────────────────────────────────────────────────────
+// ── Estructura de tarjeta ────────────────────────────────────────────────────────────────
 export function Card({ title, titleExtra, sub, children }: { title: string; titleExtra?: React.ReactNode; sub?: string; children: React.ReactNode }) {
   return (
     <div className="dash-card" style={{ background:'#fff',border:'1px solid #ECECEC',borderRadius:10,padding:'16px 18px',display:'flex',flexDirection:'column',gap:10,height:'100%',boxSizing:'border-box' }}>
@@ -128,11 +121,8 @@ export function Card({ title, titleExtra, sub, children }: { title: string; titl
     </div>
   );
 }
-// ── Card: Usuarios activos (lista completa) ─────────────────────────────────
-// Issue: antes esto solo vivía en el header, con máximo 2 avatares visibles y
-// el resto escondido detrás de un "+N" que solo se veía al pasar el mouse.
-// Con pocos usuarios ya no cabían todos a simple vista. Ahora es una tarjeta
-// propia del dashboard que siempre muestra la lista completa.
+// ── Card: Usuarios activos (lista completa) ── Tarjeta del dashboard que siempre muestra la
+// lista completa.
 export function CardUsuariosActivos() {
   const [hover, setHover] = useState<string|null>(null);
   return (
@@ -165,11 +155,8 @@ export function CardUsuariosActivos() {
     </div>
   );
 }
-// ── Desglose de operaciones bancarias pendientes por módulo (solo lista) ────
-// Antes era un donut con número grande al centro, en su propia tarjeta
-// aparte (Fila 5). Ahora vive como tercera columna dentro de la tarjeta de
-// "Asientos pendientes" (Fila 1): sin donut y sin número grande propio, para
-// no competir visualmente con esa tarjeta - solo la lista módulo → cantidad.
+// ── Desglose de operaciones bancarias pendientes por módulo (solo lista) ── Tercera columna de
+// la tarjeta «Asientos pendientes»: lista módulo → cantidad, sin donut ni número grande.
 export function DesgloseOperacionesPendientes() {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
@@ -184,7 +171,7 @@ export function DesgloseOperacionesPendientes() {
 }
 // ── C1: Situación actual (donut compacto) - sin Card wrapper, para usar inline ──
 export function C1() {
-  const ref = useRef<any>(null);
+  const ref = useRef<Chart | null>(null);
   const [selIdx, setSelIdx] = React.useState<number|null>(null);
   const [hovering, setHovering] = React.useState(false);
   const BASE = ['#A77600','#C49520','#D9B54A','#EDD47E','#F5E8C0'];
@@ -198,8 +185,8 @@ export function C1() {
       data:{ labels, datasets:[{ data, backgroundColor:BASE, borderWidth:2, borderColor:'#fff', hoverOffset:4 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
         plugins:{ legend:{ display:false }, tooltip:{ enabled:false, external:externalDonutTooltip('c1-wrap') } },
-        onClick:(_:any,els:any[])=>{ setSelIdx(els.length>0?els[0].index:null); },
-        onHover:(_:any,els:any[])=>setHovering(els.length>0),
+        onClick:(_: unknown, els: ActiveElement[])=>{ setSelIdx(els.length>0?els[0].index:null); },
+        onHover:(_: unknown, els: ActiveElement[])=>setHovering(els.length>0),
       }
     });
   });

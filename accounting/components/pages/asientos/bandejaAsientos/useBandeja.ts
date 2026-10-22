@@ -36,7 +36,7 @@ export function useBandeja() {
   // Programados y Plantillas - lifted a estado para que sean editables/eliminables/usables
   const [programados, setProgramados] = useState<Programado[]>(PROGRAMADOS_INIT);
   const [plantillas,  setPlantillas]  = useState<Plantilla[]>(PLANTILLAS_INIT);
-  // Issue #1: a Programados y Plantillas les faltaba su propia barra de
+  // a Programados y Plantillas les faltaba su propia barra de
   // búsqueda (las demás pestañas ya la tienen) - un solo campo de texto,
   // sin los filtros avanzados de Pendientes/Anulados porque estas listas
   // son mucho más chicas y no los necesitan.
@@ -75,7 +75,7 @@ export function useBandeja() {
     setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)), 4000);
   }
 
-  // Filtered list
+  // Lista filtrada
   // Para pendientes solo mostramos los NO contabilizados
   const pendientes = asientos.filter(a => !a.contabilizado).filter(a => {
     if (searchQ && !a.titulo.toLowerCase().includes(searchQ.toLowerCase()) && !a.consecutivo.includes(searchQ) && !a.usuario.includes(searchQ.toLowerCase()) && !a.documento.toLowerCase().includes(searchQ.toLowerCase())) return false;
@@ -114,7 +114,7 @@ export function useBandeja() {
   });
   const totalCRC_A = anuladosFiltrados.filter(a=>a.moneda==='CRC').reduce((s,a)=>s+a.importe,0);
 
-  // Programados y Plantillas filtrados por su barra de búsqueda (Issue #1)
+  // Programados y Plantillas filtrados por su barra de búsqueda 
   const programadosFiltrados = programados.filter(p => {
     if (!(!searchProg || p.nombre.toLowerCase().includes(searchProg.toLowerCase()) || p.frecuencia.toLowerCase().includes(searchProg.toLowerCase()))) return false;
     if (filtFrecuencia.size > 0 && !filtFrecuencia.has(p.frecuencia)) return false;
@@ -145,7 +145,7 @@ export function useBandeja() {
   const anuladosVisibles = anuladosFiltrados.slice((paginaAClamp-1)*porPaginaA, paginaAClamp*porPaginaA);
 
   function handleSelectAll(checked: boolean) { setSeleccion(checked?new Set(pendientes.map(a=>a.id)):new Set()); }
-  function handleSelectOne(id: number) { setSeleccion(p=>{ const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; }); }
+  function handleSelectOne(id: number) { setSeleccion(p=>{ const n=new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
 
   function handleAnular(motivo: string, targets?: Asiento[]) {
     const items = targets ?? modalAnular ?? [];
@@ -175,7 +175,7 @@ export function useBandeja() {
     setCrearOpen(true);
     setDetalle(null);
   }
-  function handleEnviarCorreo(a: Asiento, email: string, mensaje: string) {
+  function handleEnviarCorreo(a: Asiento, email: string) {
     addToast(`Asiento ${a.consecutivo} enviado por correo a ${email}.`, 'success');
     setModalCorreo(null);
   }
@@ -196,7 +196,8 @@ export function useBandeja() {
     if (detalle) setDetalle(p=>p?{...p,a:{...p.a,contabilizado:false}}:null);
   }
   function handleRestaurar(a: Asiento) {
-    const { motivoAnulacion, ...resto } = a as any;
+    // Al restaurarlo, el asiento deja de tener motivo de anulación
+    const resto: Asiento = { ...a, motivoAnulacion: undefined };
     setAnulados(p=>p.filter(x=>x.id!==a.id));
     setAsientos(p=>[...p, resto]);
     addToast(`Asiento ${a.consecutivo} restaurado.`,'info');

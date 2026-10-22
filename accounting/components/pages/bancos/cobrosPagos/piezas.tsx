@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { C, radius, shadow } from '../../../ui/tokens';
+import { C, radius, shadow } from '@/components/ui/tokens';
 import { BRAND, F } from './datos';
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ export function Btn({ children, onClick, variant='primary', disabled=false, size
     </button>
   );
 }
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Pantalla principal ─────────────────────────────────────────────────────────────────
 // Tipos de operación para los chips de filtro rápido
 
 // ── Icono acción con tooltip ───────────────────────────────────────────────
@@ -48,7 +48,7 @@ export function ActIcon({ label, children, color, hoverBg, onClick }: {
       </button>
       {hov && (
         <div style={{ position:'absolute', bottom:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)',
-          background:'#0F0F0F', color:'#FFFFFF', fontSize:10, padding:'3px 7px', borderRadius:4,
+          background:'#0F0F0F', color:'#FFFFFF', fontSize:10.5, padding:'3px 7px', borderRadius:4,
           whiteSpace:'nowrap', pointerEvents:'none', zIndex:500 }}>
           {label}
         </div>
@@ -85,9 +85,9 @@ export function CobrosFechasFilter({ value, onChange, onClear }: { value:{from:s
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'4px 8px', alignItems:'center', marginBottom:10 }}>
             <span style={{ fontSize:11, color:C.n700 }}>Desde</span>
-            <input type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
+            <input aria-label="Desde" type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
             <span style={{ fontSize:11, color:C.n700 }}>Hasta</span>
-            <input type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
+            <input aria-label="Hasta" type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
           </div>
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={()=>setOpen(false)} style={{ flex:1, height:30, border:`1px solid ${C.n500}`, borderRadius:7, background:'#FFFFFF', cursor:'pointer', fontSize:11, fontFamily:F }}>Cancelar</button>

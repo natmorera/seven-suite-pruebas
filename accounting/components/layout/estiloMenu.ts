@@ -1,6 +1,6 @@
 // Estilo de una fila del menú lateral (abierto o colapsado, activa o no)
 import { type CSSProperties } from 'react';
-import { C, FONT } from '../ui/tokens';
+import { C, FONT } from '@/components/ui/tokens';
 
 export const filaMenu = (isActive: boolean, isCollapsed: boolean): CSSProperties => ({
   display:'flex', alignItems:'center', gap: isCollapsed ? 0 : 10,

@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Toast } from '../../../ui/primitives';
-import { C, USUARIO_ACTUAL, radius, shadow } from '../../../ui/tokens';
+import { Toast } from '@/components/ui/primitives';
+import { C, USUARIO_ACTUAL, radius, shadow } from '@/components/ui/tokens';
 import { BRAND, CUENTAS_BANCO, ESTADO_STYLE, F, type Transferencia, fmt2, fromIso, tipoCambio, toIso } from './datos';
 import { MonedaToggle, Pill } from './piezas';
 
-// ── Modal: Nueva / editar transferencia ────────────────────────────────────────
+// ── Modal: nueva transferencia o edición ────────────────────────────────────────
 export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transferencia[]; editing?:Transferencia; onClose:()=>void; onSave:(t:Transferencia)=>void }) {
   const consec = editing ? editing.consecutivo.replace('TRF-','') : String(5095 + trfs.length);
   const [form, setForm] = useState({
@@ -54,7 +54,7 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
       <div style={{ background:'#FFFFFF', borderRadius:14, width:'100%', maxWidth:1020, boxShadow:shadow.modal, fontFamily:F }}
         onClick={e=>e.stopPropagation()}>
 
-        {/* Title */}
+        {/* Título */}
         <div style={{ padding:'16px 24px', borderBottom:`1px solid ${C.n500}`, display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:15, fontWeight:600 }}>{editing?'Editar transferencia interbancaria':'Nueva transferencia interbancaria'}</span>
           <span style={{ fontSize:13, color:BRAND, fontWeight:600 }}>{consec}</span>
@@ -65,17 +65,17 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
         <div style={{ padding:'20px 24px', display:'flex', flexDirection:'column', gap:20 }}>
           {/* Título + fecha */}
           <div>
-            <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN Y DESTINO</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN Y DESTINO</p>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 200px', gap:16 }}>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Título / Leyenda</label>
-                <input value={form.titulo} onChange={e=>sf('titulo',e.target.value)}
+                <input aria-label="Título / Leyenda" value={form.titulo} onChange={e=>sf('titulo',e.target.value)}
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 <button onClick={tituloAuto} style={{ fontSize:11, color:BRAND, margin:'3px 0 0', cursor:'pointer', background:'none', border:'none', padding:0 }}>Auto-propuesto.</button>
               </div>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Fecha <span style={{ color:C.error }}>*</span></label>
-                <input type="date" value={form.fecha} onChange={e=>{sf('fecha',e.target.value);setErrores(p=>({...p,fecha:false}));}}
+                <input aria-label="Fecha" type="date" value={form.fecha} onChange={e=>{sf('fecha',e.target.value);setErrores(p=>({...p,fecha:false}));}}
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.fecha?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
             </div>
@@ -83,11 +83,11 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
 
           {/* ORIGEN */}
           <div>
-            <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN</p>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 155px 165px 165px 1fr', gap:14, alignItems:'flex-start' }}>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Cuenta origen <span style={{ color:C.error }}>*</span></label>
-                <select value={form.cuentaOrigen} onChange={e=>sf('cuentaOrigen',e.target.value)}
+                <select aria-label="Cuenta origen" value={form.cuentaOrigen} onChange={e=>sf('cuentaOrigen',e.target.value)}
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', appearance:'none' }}>
                   {CUENTAS_BANCO.map(c=><option key={c.code} value={c.code}>{c.label}</option>)}
                 </select>
@@ -101,7 +101,7 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Importe origen <span style={{ color:C.error }}>*</span></label>
                 <div style={{ display:'flex', alignItems:'center', height:36, padding:'0 10px', border:`1px solid ${errores.importeOrigen?C.error:C.n500}`, borderRadius:radius.md, gap:4 }}>
                   <span style={{ color:C.n700, fontSize:12 }}>{symO}</span>
-                  <input type="number" min="0" step="0.01" value={form.importeOrigen||''} onChange={e=>{sf('importeOrigen',+e.target.value);setErrores(p=>({...p,importeOrigen:false}));}}
+                  <input aria-label="Importe origen" type="number" min="0" step="0.01" value={form.importeOrigen||''} onChange={e=>{sf('importeOrigen',+e.target.value);setErrores(p=>({...p,importeOrigen:false}));}}
                     style={{ flex:1, border:'none', outline:'none', fontSize:12, fontFamily:F }}/>
                 </div>
               </div>
@@ -109,13 +109,13 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Comisión (opcional)</label>
                 <div style={{ display:'flex', alignItems:'center', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, gap:4 }}>
                   <span style={{ color:C.n700, fontSize:12 }}>{symO}</span>
-                  <input type="number" min="0" step="0.01" value={form.comision||''} onChange={e=>sf('comision',+e.target.value)}
+                  <input aria-label="Comisión (opcional)" type="number" min="0" step="0.01" value={form.comision||''} onChange={e=>sf('comision',+e.target.value)}
                     style={{ flex:1, border:'none', outline:'none', fontSize:12, fontFamily:F }}/>
                 </div>
               </div>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Referencia bancaria <span style={{ color:C.error }}>*</span></label>
-                <input value={form.referOrigen} onChange={e=>{sf('referOrigen',e.target.value);setErrores(p=>({...p,referOrigen:false}));}} placeholder="Nro. transacción del banco"
+                <input value={form.referOrigen} onChange={e=>{sf('referOrigen',e.target.value);setErrores(p=>({...p,referOrigen:false}));}} placeholder="Nro. transacción del banco" aria-label="Nro. transacción del banco"
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.referOrigen?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
               </div>
             </div>
@@ -123,11 +123,11 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
 
           {/* DESTINO */}
           <div>
-            <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DESTINO</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DESTINO</p>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 155px 215px 1fr', gap:14, alignItems:'flex-start' }}>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Cuenta destino <span style={{ color:C.error }}>*</span></label>
-                <select value={form.cuentaDestino} onChange={e=>sf('cuentaDestino',e.target.value)}
+                <select aria-label="Cuenta destino" value={form.cuentaDestino} onChange={e=>sf('cuentaDestino',e.target.value)}
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', appearance:'none' }}>
                   {CUENTAS_BANCO.map(c=><option key={c.code} value={c.code}>{c.label}</option>)}
                 </select>
@@ -141,13 +141,13 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Importe destino <span style={{ color:C.error }}>*</span></label>
                 <div style={{ display:'flex', alignItems:'center', height:36, padding:'0 10px', border:`1px solid ${errores.importeDestino?C.error:C.n500}`, borderRadius:radius.md, gap:4 }}>
                   <span style={{ color:C.n700, fontSize:12 }}>{symD}</span>
-                  <input type="number" min="0" step="0.01" value={form.importeDestino||''} onChange={e=>{sf('importeDestino',+e.target.value);setErrores(p=>({...p,importeDestino:false}));}}
+                  <input aria-label="Importe destino" type="number" min="0" step="0.01" value={form.importeDestino||''} onChange={e=>{sf('importeDestino',+e.target.value);setErrores(p=>({...p,importeDestino:false}));}}
                     style={{ flex:1, border:'none', outline:'none', fontSize:12, fontFamily:F }}/>
                 </div>
               </div>
               <div>
                 <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Referencia bancaria</label>
-                <input value={form.referDestino} onChange={e=>sf('referDestino',e.target.value)} placeholder="Nro. transacción del banco"
+                <input value={form.referDestino} onChange={e=>sf('referDestino',e.target.value)} placeholder="Nro. transacción del banco" aria-label="Nro. transacción del banco"
                   style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
               </div>
             </div>
@@ -179,7 +179,7 @@ export function NuevaTrfModal({ trfs, editing, onClose, onSave }: { trfs:Transfe
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Pie */}
         <div style={{ borderTop:`1px solid ${C.n500}`, padding:'14px 24px', display:'flex', justifyContent:'flex-end', gap:8 }}>
           <button onClick={onClose} style={{ height:36, padding:'0 16px', border:'none', background:'transparent', color:C.error, cursor:'pointer', fontSize:13, fontFamily:F }}>Descartar</button>
           <button onClick={()=>{

@@ -1,20 +1,20 @@
 'use client';
 import { useState } from 'react';
-import { PresenciaOperacion } from '../../../ui/primitives';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
+import { PresenciaOperacion } from '@/components/ui/primitives';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
 import { AFILIADOS, BANCOS, BRAND, CUENTAS_TRANSITO, ESTADO_STYLE, F, type Liquidacion, VOUCHERS_MOCK, type Voucher, fmt2 } from './datos';
 import { ImportarVouchersModal, VouchersModal } from './modales';
 import { Btn, Pill } from './piezas';
 
-// ── Modal: Nueva liquidación ──────────────────────────────────────────────────
+// ── Modal: nueva liquidación ──────────────────────────────────────────────────
 export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void; onSave: (liq: Liquidacion) => void }) {
   const [afiliado, setAfiliado] = useState(AFILIADOS[0]);
   const [vouchers, setVouchers] = useState<Voucher[]>(VOUCHERS_MOCK);
   const [showVouchers, setShowVouchers] = useState(false);
   const [showImportar, setShowImportar] = useState(false);
   const [vouchersOpen, setVouchersOpen] = useState(true);
-  // Issue #21/#22: línea(s) de ajuste - para cosas que no son comisión ni
+  // línea(s) de ajuste - para cosas que no son comisión ni
   // retención por voucher, como el cobro anual de suscripción del datáfono.
   const [ajustes, setAjustes] = useState<{id:number; descripcion:string; monto:number}[]>([]);
   const [nuevoAjusteDesc, setNuevoAjusteDesc] = useState('');
@@ -34,7 +34,8 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
     setNuevoAjusteDesc(''); setNuevoAjusteMonto('');
   }
 
-  const LIQ_NUM = `GT-${Math.floor(Math.random()*100+100)}`;
+  // Número de la liquidación nueva (de ejemplo); se fija al abrir el modal
+  const [LIQ_NUM] = useState(() => `GT-${Math.floor(Math.random()*100+100)}`);
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', padding:20, overflowY:'auto' }}
@@ -42,7 +43,7 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
       <div style={{ background:'#FFFFFF', borderRadius:radius.lg, width:'100%', maxWidth:1480, boxShadow:shadow.modal, fontFamily:F, display:'flex', flexDirection:'column' }}
         onClick={e=>e.stopPropagation()}>
 
-        {/* Title */}
+        {/* Título */}
         <div style={{ padding:'14px 24px', borderBottom:`1px solid ${C.n500}`, display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:14, fontWeight:600 }}>Nueva liquidación de tarjeta</span>
           <span style={{ fontSize:13, color:C.n700 }}>14</span>
@@ -60,22 +61,22 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
         </div>
 
         <div style={{ display:'flex', flex:1 }}>
-          {/* Main form */}
+          {/* Formulario principal */}
           <div style={{ flex:1, padding:'16px 20px', overflowY:'auto', display:'flex', flexDirection:'column', gap:16 }}>
             {/* Información general */}
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>INFORMACIÓN GENERAL</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>INFORMACIÓN GENERAL</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr 1fr', gap:'8px 14px' }}>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Cuenta de depósitos en tránsito <span style={{ color:C.error }}>*</span></label>
-                  <select style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
+                  <select aria-label="Cuenta de depósitos en tránsito" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
                     {CUENTAS_TRANSITO.map(c=><option key={c}>{c}</option>)}
                   </select>
-                  <button style={{ fontSize:11, color:BRAND, background:'none', border:'none', cursor:'pointer', padding:'3px 0' }}>Cuentas de tipo "Depósitos en tránsito"</button>
+                  <button style={{ fontSize:11, color:BRAND, background:'none', border:'none', cursor:'pointer', padding:'3px 0' }}>Cuentas de tipo &quot;Depósitos en tránsito&quot;</button>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Afiliado <span style={{ color:C.error }}>*</span></label>
-                  <select value={afiliado.code} onChange={e=>setAfiliado(AFILIADOS.find(a=>a.code===e.target.value)??AFILIADOS[0])}
+                  <select aria-label="Afiliado" value={afiliado.code} onChange={e=>setAfiliado(AFILIADOS.find(a=>a.code===e.target.value)??AFILIADOS[0])}
                     style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
                     {AFILIADOS.map(a=><option key={a.code} value={a.code}>{a.label}</option>)}
                   </select>
@@ -83,23 +84,23 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Título / Leyenda</label>
-                  <input defaultValue={`Gestión de tarjetas - Datáfono BAC ¢ - 14`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+                  <input aria-label="Título / Leyenda" defaultValue={`Gestión de tarjetas - Datáfono BAC ¢ - 14`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                   <p style={{ fontSize:11, color:BRAND, margin:'3px 0 0' }}>Auto-propuesto.</p>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Flujo</label>
-                  <input placeholder="Gestión de tarjetas" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
+                  <input placeholder="Gestión de tarjetas" aria-label="Gestión de tarjetas" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
                 </div>
               </div>
             </div>
 
             {/* Detalle del traslado */}
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DETALLE DEL TRASLADO</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DETALLE DEL TRASLADO</p>
               <div style={{ display:'grid', gridTemplateColumns:'155px 175px 1fr 1fr 1fr', gap:'8px 14px', alignItems:'end' }}>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Fecha <span style={{ color:C.error }}>*</span></label>
-                  <input type="date" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+                  <input aria-label="Fecha" type="date" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Moneda <span style={{ color:C.error }}>*</span></label>
@@ -111,14 +112,14 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Banco de acreditación <span style={{ color:C.error }}>*</span></label>
-                  <select style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
+                  <select aria-label="Banco de acreditación" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
                     {BANCOS.map(b=><option key={b}>{b}</option>)}
                   </select>
                   <span style={{ fontSize:11, color:BRAND }}>Filtrado por moneda CRC</span>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Referencia bancaria</label>
-                  <input placeholder="Nro. transacción del banco" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
+                  <input placeholder="Nro. transacción del banco" aria-label="Nro. transacción del banco" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
                 </div>
               </div>
               {/* Comision pills */}
@@ -132,7 +133,7 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
                 <span style={{ padding:'3px 10px', borderRadius:radius.lg, background:'rgba(59,130,246,.1)', color:'#1E3FAF' }}>
                   Retención IVA tarjetas <strong>{afiliado.retIVA}%</strong>
                 </span>
-                <span style={{ fontSize:10, color:C.n700, alignSelf:'center' }}>Porcentajes del perfil del afiliado. Se aplican automáticamente a cada voucher.</span>
+                <span style={{ fontSize:10.5, color:C.n700, alignSelf:'center' }}>Porcentajes del perfil del afiliado. Se aplican automáticamente a cada voucher.</span>
               </div>
             </div>
 
@@ -189,10 +190,10 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
               )}
             </div>
 
-            {/* Ajustes - Issue #21/#22: espacio para cargos que no son comisión ni
+            {/* Ajustes: espacio para cargos que no son comisión ni
                 retención por voucher (ej. cobro anual de suscripción del datáfono) */}
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>
+              <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>
                 AJUSTES <span style={{ fontWeight:400, textTransform:'none', letterSpacing:'normal' }}>(opcional)</span>
               </p>
               {ajustes.length > 0 && (
@@ -215,25 +216,25 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
               <div style={{ display:'flex', gap:8, alignItems:'flex-end' }}>
                 <div style={{ flex:1 }}>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3 }}>Descripción del ajuste</label>
-                  <input value={nuevoAjusteDesc} onChange={e=>setNuevoAjusteDesc(e.target.value)} placeholder="Ej. Cobro anual de suscripción del datáfono"
+                  <input value={nuevoAjusteDesc} onChange={e=>setNuevoAjusteDesc(e.target.value)} placeholder="Ej. Cobro anual de suscripción del datáfono" aria-label="Ej. Cobro anual de suscripción del datáfono"
                     style={{ width:'100%', height:34, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
                 <div style={{ width:150 }}>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3 }}>Monto (+/-)</label>
-                  <input type="number" step="0.01" value={nuevoAjusteMonto} onChange={e=>setNuevoAjusteMonto(e.target.value)} placeholder="-15000"
+                  <input type="number" step="0.01" value={nuevoAjusteMonto} onChange={e=>setNuevoAjusteMonto(e.target.value)} placeholder="-15000" aria-label="-15000"
                     style={{ width:'100%', height:34, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
                 <button onClick={agregarAjuste} style={{ height:34, padding:'0 14px', border:`1px solid ${BRAND}`, borderRadius:radius.md, background:'#FFF8EC', color:BRAND, cursor:'pointer', fontSize:11, fontWeight:500, fontFamily:F, whiteSpace:'nowrap' }}>
                   + Agregar ajuste
                 </button>
               </div>
-              <p style={{ fontSize:10, color:C.n700, margin:'6px 0 0' }}>Usa un monto negativo para cargos (ej. suscripción del datáfono) y positivo para créditos o correcciones a favor.</p>
+              <p style={{ fontSize:10.5, color:C.n700, margin:'6px 0 0' }}>Usa un monto negativo para cargos (ej. suscripción del datáfono) y positivo para créditos o correcciones a favor.</p>
             </div>
           </div>
 
           {/* Sidebar */}
           <div style={{ width:340, borderLeft:`1px solid ${C.n500}`, padding:'16px 18px', flexShrink:0 }}>
-            <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 8px' }}>AFILIADO SELECCIONADO</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 8px' }}>AFILIADO SELECCIONADO</p>
             <p style={{ fontSize:13, fontWeight:600, margin:'0 0 2px' }}>{afiliado.label.split('·')[1]?.trim() ?? afiliado.label}</p>
             <p style={{ fontSize:11, color:C.n700, margin:'0 0 3px', fontFamily:F }}>{afiliado.code} · Terminal 4654897</p>
             <button style={{ fontSize:11, color:BRAND, background:'none', border:'none', cursor:'pointer', padding:0 }}>3 vouchers</button>
@@ -259,7 +260,7 @@ export function NuevaLiquidacionModal({ onClose, onSave }: { onClose: () => void
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Pie */}
         <div style={{ borderTop:`1px solid ${C.n500}`, padding:'12px 24px', display:'flex', justifyContent:'flex-end', gap:8 }}>
           <Btn variant="danger" onClick={onClose}>Descartar</Btn>
           <Btn onClick={()=>{ onSave({ id:Date.now(), consecutivo:LIQ_NUM, fecha:'00/00/00', afiliado:afiliado.label, afiliadoCode:afiliado.code, cuentaTransito:CUENTAS_TRANSITO[0], referencia:'LIQ-'+Math.floor(Math.random()*99999), moneda:'CRC', importe:neto, usuario:'jperez', estado:'Pendiente' }); onClose(); }}>

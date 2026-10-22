@@ -29,8 +29,8 @@ export default function Caja() {
     <>
       {vista.v === 'inicio' && <Inicio {...props} tabInicial={vista.tab} usuarioInicial={vista.usuario} key={`${h.sesion}-${vista.tab ?? ''}-${vista.usuario ?? ''}`} />}
       {vista.v === 'abrir' && <AbrirTurno {...props} modo={vista.modo} cajero={vista.cajero} />}
-      {vista.v === 'arqueo' && <Arqueo {...props} turnoId={vista.turnoId} inicial={vista.decl} obsInicial={vista.obs} />}
-      {vista.v === 'resumen' && <ResumenCierre {...props} turnoId={vista.turnoId} decl={vista.decl} obs={vista.obs} />}
+      {vista.v === 'arqueo' && <Arqueo {...props} turnoId={vista.turnoId} inicial={vista.decl} obsInicial={vista.obs} desde={vista.desde} />}
+      {vista.v === 'resumen' && <ResumenCierre {...props} turnoId={vista.turnoId} decl={vista.decl} obs={vista.obs} desde={vista.desde} />}
       {vista.v === 'turnoCerrado' && <TurnoCerrado {...props} turnoId={vista.turnoId} />}
       {vista.v === 'cierreDia' && <CierreDia {...props} obsInicial={vista.obs} />}
       {vista.v === 'resumenDia' && <ResumenDia {...props} obs={vista.obs} />}
@@ -80,9 +80,14 @@ function Inicio({ ir, toast, tabInicial, usuarioInicial }: P & { tabInicial?: st
   </>;
 
   return (
-    <PaginaFact titulo={titulo} izquierda={<span style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}><PillUsuario /><VerComo /></span>} acciones={acciones} conRanuras
-      tabs={cerrada ? undefined : { items: tabs, activo: tab, onChange: (t: Tab) => setTab(t) }}
-      filtrosDerecha={<span style={{ fontSize: 12, color: C.n700 }}>{resp ? 'Ves todos los cajeros' : 'Ves solo tus turnos y movimientos'} · {cerrada ? 'Caja del día cerrada' : `Abierta por ${h.cajaDia.abiertaPor} (responsable) desde las ${h.cajaDia.apertura?.slice(11, 16) ?? '—'}${resp ? ` · ${turnosHoy.filter(t => !t.fin).length} turnos abiertos` : ''}`}</span>}>
+    <PaginaFact titulo={titulo} izquierda={<span style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}><PillUsuario /><VerComo />
+</span>} acciones={acciones} conRanuras
+      tabs={cerrada ? undefined : { items: tabs, activo: tab, onChange: (t: Tab) => setTab(t),
+        // Estado de la caja a la derecha de las pestañas: no ocupa una barra propia
+        derecha: <span title={resp ? 'Ves todos los cajeros' : 'Ves solo tus turnos y movimientos'} style={{ fontSize: 12, color: C.n700, whiteSpace: 'nowrap' }}>
+          Abierta por <b style={{ color: C.n900, fontWeight: 500 }}>{h.cajaDia.abiertaPor}</b> · desde las {h.cajaDia.apertura?.slice(11, 16) ?? '—'}{resp ? ` · ${turnosHoy.filter(t => !t.fin).length} turnos abiertos` : ''}
+        </span> }}
+>
       {cerrada ? <>
         <EstadoCaja />
         {h.cajaDia.folioCierre && h.cierres.at(-1)?.fecha === HOY ? <>{!resp && <Banda tono="warn">La caja del día está cerrada. Solo un Cajero Responsable puede abrir la caja del día.</Banda>}<CajaCerradaHoy onVer={() => setVerCierre(true)} onImprimir={() => imprimir(<ReporteCierreCaja cierre={h.cierres.at(-1)} hora={h.cierres.at(-1)!.hora} />)} /></> : (
@@ -152,21 +157,20 @@ function ResumenTurnoAbierto({ t, ahora }: { t: Turno; ahora: string | null }) {
   const total = r.efectivoUSD + crcUSD + r.tarjetas + r.transf || 1;
   const pct = (v: number) => `${fmtN((v / total) * 100, 1)}%`;
   return (
-    <Tarjeta style={{ gap: 18 }}>
-      <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+    <Tarjeta style={{ gap: 12, padding: '14px 16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', rowGap: 12, alignItems: 'start' }} className="kpis-separados">
         <Kpi label="Estado"><StatusBadge label={t.precierre ? '● En precierre' : '● Turno abierto'} color={t.precierre ? 'yellow' : 'green'} /></Kpi>
         <Kpi label="Abierta hace">{ahora ? fmtDuracion(minutosEntre(t.inicio, ahora)) : '—'}</Kpi>
         <Kpi label="Saldo inicial">{fmtUSD(t.saldoInicial)}</Kpi>
         <Kpi label="Total operado" color="#2E7D32">{fmtUSD(r.ingresos, true)}</Kpi>
         <Kpi label="Egresos" color={C.error}>{fmtUSD(-r.egresos)}</Kpi>
         <Kpi label="En caja ahora" color={C.brand}>{fmtUSD(r.esperado)}</Kpi>
-        <Kpi label="TC BCCR">₡{TC} / $1</Kpi>
+        <Kpi label="Tipo de cambio">{fmtCRC(TC)}</Kpi>
       </div>
-      <div style={{ borderTop: `1px solid ${C.n500}`, paddingTop: 18, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
-        <Bloque label="Efectivo USD" valor={fmtUSD(r.efectivoUSD)} sub={`${pct(r.efectivoUSD)} del total`} />
-        <Bloque label="Efectivo CRC" valor={fmtCRC(r.efectivoCRC)} sub={`≈ ${fmtUSD(crcUSD)} · ${pct(crcUSD)}`} />
-        <Bloque label="Tarjetas (datáfono)" valor={fmtUSD(r.tarjetas)} sub={`${pct(r.tarjetas)} del total`} />
-        <Bloque label="Transferencias / Link" valor={fmtUSD(r.transf)} sub={`${pct(r.transf)} del total`} />
+      <div style={{ borderTop: `1px solid ${C.n500}`, paddingTop: 10, paddingLeft: 16, display: 'flex', flexWrap: 'wrap', gap: '6px 28px', fontSize: 12, color: C.n700 }}>
+        {([['Efectivo USD', fmtUSD(r.efectivoUSD), pct(r.efectivoUSD)], ['Efectivo CRC', fmtCRC(r.efectivoCRC), `≈ ${fmtUSD(crcUSD)} · ${pct(crcUSD)}`], ['Tarjetas', fmtUSD(r.tarjetas), pct(r.tarjetas)], ['Transferencias / Link', fmtUSD(r.transf), pct(r.transf)]] as const).map(([l, v, sub]) => (
+          <span key={l} style={{ whiteSpace: 'nowrap' }}>{l} <b style={{ color: C.n900, fontWeight: 600, marginLeft: 4 }}>{v}</b> <span style={{ fontSize: 11.5 }}>· {sub}</span></span>
+        ))}
       </div>
     </Tarjeta>
   );

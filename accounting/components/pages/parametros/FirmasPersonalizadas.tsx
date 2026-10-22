@@ -1,14 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Section, RowAction } from '../../ui/primitives';
-import { radius, TABLA } from '../../ui/tokens';
-import { IcEdit, IcTrash } from '../../ui/icons';
-import { C } from '../../ui/tokens';
-import { useFirmasConfig, REPORTES_FIRMABLES, Firma } from '../config/firmasConfig';
-import { USUARIOS_INIT } from '../config/permissionsData';
+import { useState } from 'react';
+import { Section, RowAction } from '@/components/ui/primitives';
+import { radius, TABLA , C } from '@/components/ui/tokens';
+import { IcEdit, IcTrash } from '@/components/ui/icons';
+import { useFirmasConfig, REPORTES_FIRMABLES, type Firma } from '@/components/pages/config/firmasConfig';
+import { USUARIOS_INIT } from '@/components/pages/config/permissionsData';
 import { ModalFirma } from './firmasPersonalizadas/ModalFirma';
 import { BLANK_FIRMA, F, compactarOrdenes } from './firmasPersonalizadas/datos';
 import { ConfirmDelete, resolverConflictosOrden } from './firmasPersonalizadas/piezas';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 export default function FirmasPersonalizadas({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
   const { firmas, setFirmas } = useFirmasConfig();
@@ -42,11 +42,8 @@ export default function FirmasPersonalizadas({ addSignal, onAddHandled }: { addS
     });
   }
 
-  // Issue #10: "Nueva firma" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { setCreando(true); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nueva firma» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { setCreando(true); });
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>

@@ -1,73 +1,97 @@
 'use client';
 // Configuración › Empresa. Mismas pestañas que Accounting (datos, consecutivos, asignación de impresoras,
-// impresoras y tipos de documento) más las pestañas propias de Front Desk: enlace contable e importación de datos.
-import { TabsEnBarra } from '@/components/layout/Pantalla';
+// impresoras y tipos de documento) y la API Key con la que Management se conecta al módulo;
+// la importación de catálogos se abre desde el header.
+import { AccionesEnHeader, TabsEnBarra } from '@/components/layout/Pantalla';
 import { useState, type ReactNode } from 'react';
-import { C } from '@/components/suite/tokens';
-import { Input, Select } from '@/components/suite/ui';
+import { C, radius } from '@/components/suite/tokens';
+import { Button, Input, Section, Select } from '@/components/suite/ui';
+import { PAISES, TIPOS_ID, ZONAS_HORARIAS, paisPorCodigo } from '../paises';
 import { useDato, usePatch } from '../store';
 import { CrudCatalogo } from '../CrudCatalogo';
-import { Aviso, Campo, Celda, ConfigCard, Fila, Grid, Tabla } from '../kit';
+import { Aviso, Campo, Celda, ConfigCard, Fila, IcUpload, Tabla } from '../kit';
 import type { Datos } from '../inicial';
 import Consecutivos from './Consecutivos';
 import Impresoras from './Impresoras';
 import ImportarDocumentos from './ImportarDocumentos';
-import Contabilidad from './Contabilidad';
+import SeccionApiKey from '@/components/ui/integracion/SeccionApiKey';
+import { obtenerApiKey, regenerarApiKey } from '../apiKey';
 
-const TABS = ['Datos de empresa', 'Consecutivos de documentos', 'Asignación de impresoras', 'Impresoras', 'Tipos de documento', 'Contabilidad', 'Importar datos'] as const;
+const TABS = ['Datos de empresa', 'Consecutivos de documentos', 'Asignación de impresoras', 'Impresoras', 'Tipos de documento', 'API Key'] as const;
 
 export default function Empresa() {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Datos de empresa');
+  const [importar, setImportar] = useState(false);
   return <>
+    <AccionesEnHeader><Button variant="secondary" icon={<IcUpload size={12} />} onClick={() => setImportar(true)}>Importar datos</Button></AccionesEnHeader>
     <TabsEnBarra items={TABS} activo={tab} onChange={setTab} />
     {tab === 'Datos de empresa' && <DatosEmpresa />}
     {tab === 'Consecutivos de documentos' && <Consecutivos />}
     {tab === 'Asignación de impresoras' && <AsignacionImpresoras />}
     {tab === 'Impresoras' && <Impresoras />}
     {tab === 'Tipos de documento' && <TiposDocumento />}
-    {tab === 'Contabilidad' && <Contabilidad />}
-    {tab === 'Importar datos' && <ImportarDocumentos />}
+    {tab === 'API Key' && <ApiKey />}
+    {importar && <ImportarDocumentos onClose={() => setImportar(false)} />}
   </>;
 }
 
-type G = Datos['general'];
-const ACTIVIDADES = ['551001 - Hoteles, moteles y otros alojamientos', '551002 - Alquiler de bienes inmuebles de uso habitacional por periodos cortos', '552001 - Campamentos y parques de casas rodantes'];
+function ApiKey() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div>
+        <h2 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: C.n900 }}>API Key</h2>
+        <p style={{ margin: '4px 0 0', fontSize: 12.5, color: C.n700 }}>Llave con la que Management se conecta a Front Desk. Cópiala en Management al registrar este módulo.</p>
+      </div>
+      <SeccionApiKey obtener={obtenerApiKey} regenerar={regenerarApiKey} marca={C.brand} />
+    </div>
+  );
+}
 
-const Grupo = ({ titulo, children, linea }: { titulo: string; children: ReactNode; linea?: boolean }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: linea ? 20 : 0, borderTop: linea ? `1px solid ${C.n500}` : undefined }}>
-    <h3 style={{ fontSize: 11.5, fontWeight: 500, color: C.n700, letterSpacing: '.05em', textTransform: 'uppercase', margin: 0 }}>{titulo}</h3>
-    {children}
-  </div>
+type G = Datos['general'];
+
+const Columnas = ({ children }: { children: ReactNode }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>{children}</div>
 );
 
 function DatosEmpresa() {
   const [g, patch] = usePatch('general');
-  const texto = (k: keyof G, l: string, tipo = 'text') => (
-    <Campo label={l}><Input value={String(g[k])} type={tipo} onChange={v => patch({ [k]: v } as Partial<G>)} /></Campo>
+  const texto = (k: keyof G, l: string, placeholder: string, extra: { tipo?: string; requerido?: boolean } = {}) => (
+    <Campo label={l} required={extra.requerido}>
+      <Input value={String(g[k])} type={extra.tipo ?? 'text'} placeholder={placeholder} onChange={v => patch({ [k]: v } as Partial<G>)} />
+    </Campo>
   );
-  const opciones = (xs: string[]) => xs.map(x => ({ value: x, label: x }));
+  const pais = paisPorCodigo(g.pais);
+  const zonas = !g.zonaHoraria || ZONAS_HORARIAS.some(z => z.value === g.zonaHoraria) ? ZONAS_HORARIAS : [{ value: g.zonaHoraria, label: g.zonaHoraria }, ...ZONAS_HORARIAS];
   return (
-    <ConfigCard title="Datos de empresa" subtitle="Identidad del establecimiento que aparece en facturas, reportes y correos.">
-      <Grupo titulo="Información básica">
-        <Grid cols={2}>
-          {texto('nombre', 'Nombre comercial')}
-          {texto('razonSocial', 'Razón social')}
-          {texto('cedula', 'Cédula jurídica / RUC')}
-          {texto('pais', 'País')}
-          <Campo label="Moneda predeterminada"><Select value={g.moneda} onChange={v => patch({ moneda: v })} options={opciones(['COL – Colón', 'USD – Dólar americano'])} /></Campo>
-          <Campo label="Idioma predeterminado"><Select value={g.idioma} onChange={v => patch({ idioma: v })} options={opciones(['Español', 'Inglés'])} /></Campo>
-          <Campo label="Actividad económica"><Select value={g.actividad} onChange={v => patch({ actividad: v })} options={opciones(ACTIVIDADES)} /></Campo>
-        </Grid>
-      </Grupo>
-      <Grupo titulo="Contacto" linea>
-        <Grid cols={2}>
-          {texto('telefono', 'Teléfono')}
-          {texto('correo', 'Correo principal', 'email')}
-          {texto('web', 'Sitio web')}
-          {texto('direccion', 'Dirección')}
-        </Grid>
-      </Grupo>
-    </ConfigCard>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Section title="Identificación" hint="Datos legales y fiscales de la empresa.">
+        <Columnas>
+          {texto('nombreLegal', 'Nombre legal', 'Ej. Seven Hospitality S.A.', { requerido: true })}
+          {texto('nombreComercial', 'Nombre comercial', 'Ej. Hotel Seven Suite')}
+          <Campo label="Tipo de identificación" required><Select value={g.tipoId} onChange={v => patch({ tipoId: v })} options={TIPOS_ID} /></Campo>
+          {texto('numeroId', 'Número de identificación', 'Ej. 3101123456', { requerido: true })}
+          <Campo label="País" required>
+            <Select value={g.pais} onChange={v => patch({ pais: v, zonaHoraria: paisPorCodigo(v)?.zona ?? g.zonaHoraria })} options={PAISES.map(x => ({ value: x.value, label: x.label }))} />
+          </Campo>
+          <Campo label="Moneda del país">
+            <div style={{ height: 32, padding: '0 10px', display: 'flex', alignItems: 'center', fontSize: 12, color: C.n700, background: C.n200, border: `1px solid ${C.n500}`, borderRadius: radius.control }}>
+              {pais ? `${pais.simbolo} ${pais.monedaNombre}` : '-'}
+            </div>
+          </Campo>
+          <Campo label="Zona horaria" required><Select value={g.zonaHoraria} onChange={v => patch({ zonaHoraria: v })} options={zonas} /></Campo>
+        </Columnas>
+      </Section>
+
+      <Section title="Contacto" hint="Información de contacto de la empresa.">
+        <Columnas>
+          {texto('direccion', 'Dirección', 'Dirección física')}
+          {texto('telefono', 'Teléfono', '+506 2222-3333')}
+          {texto('correo', 'Correo electrónico', 'info@empresa.com', { tipo: 'email' })}
+          {texto('web', 'Sitio web', 'www.empresa.com')}
+        </Columnas>
+      </Section>
+
+    </div>
   );
 }
 

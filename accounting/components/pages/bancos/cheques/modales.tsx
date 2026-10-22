@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { PresenciaOperacion } from '../../../ui/primitives';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
+import { PresenciaOperacion } from '@/components/ui/primitives';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
 import { BRAND, type Cheque, F, RED, type Retencion, fmtN, inputStyle } from './datos';
 import { Field } from './piezas';
 
-// ── Shared modal shell ────────────────────────────────────────────────────────
+// ── Estructura común de los modales ────────────────────────────────────────────────────────
 export function ModalShell({ title, subtitle, onClose, children, footer, width=520, presencia }:{
   title:string; subtitle?:string; onClose:()=>void;
   children:React.ReactNode; footer?:React.ReactNode; width?:number; presencia?:boolean;
@@ -38,7 +38,7 @@ export function ModalShell({ title, subtitle, onClose, children, footer, width=5
     </div>
   );
 }
-// ── Modal Buscar cuenta ────────────────────────────────────────────────────────
+// ── Modal para buscar una cuenta ────────────────────────────────────────────────────────
 export function ModalBuscarCuenta({ onClose, onSelect }:{ onClose:()=>void; onSelect:(v:string)=>void }) {
   const [busq, setBusq] = useState('');
   const [sel, setSel] = useState('2001001000');
@@ -68,7 +68,7 @@ export function ModalBuscarCuenta({ onClose, onSelect }:{ onClose:()=>void; onSe
           <div style={{ display:'flex',gap:8,alignItems:'center',marginBottom:12 }}>
             <div style={{ position:'relative',flex:1 }}>
               <svg style={{ position:'absolute',left:9,top:'50%',transform:'translateY(-50%)',pointerEvents:'none' }} width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#757575" strokeWidth="1.4" strokeLinecap="round"><circle cx="6" cy="6" r="4"/><path d="M10.5 10.5L8.5 8.5"/></svg>
-              <input value={busq} onChange={e=>setBusq(e.target.value)} placeholder="Título de cuenta, centro de cotos"
+              <input value={busq} onChange={e=>setBusq(e.target.value)} placeholder="Título de cuenta, centro de cotos" aria-label="Título de cuenta, centro de cotos"
                 style={{ width:'100%',height:34,paddingLeft:28,paddingRight:10,border:`1px solid ${BRAND}`,borderRadius:7,fontSize:12,fontFamily:F,outline:'none',boxSizing:'border-box' }}/>
             </div>
             <span style={{ fontSize:12,color:'#757575',fontFamily:F,whiteSpace:'nowrap' }}>{filtradas.length} resultado{filtradas.length!==1?'s':''}</span>
@@ -114,7 +114,7 @@ export function ModalBuscarCuenta({ onClose, onSelect }:{ onClose:()=>void; onSe
     </div>
   );
 }
-// ── Modal Emitir cheque ────────────────────────────────────────────────────────
+// ── Modal para emitir un cheque ────────────────────────────────────────────────────────
 export function ModalEmitir({ cheque, onClose, onConfirm }:{ cheque:Cheque; onClose:()=>void; onConfirm:(id:string,chequeNro:string,nombre:string)=>void }) {
   const [nombre, setNombre] = useState(cheque.proveedor);
   const [error, setError] = useState(false);
@@ -134,7 +134,7 @@ export function ModalEmitir({ cheque, onClose, onConfirm }:{ cheque:Cheque; onCl
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10 }}>
           {[{l:'Consecutivo',v:cheque.consec},{l:'Número de cheque',v:cheque.chequeNro ?? 'Se asignará al confirmar'},{l:'Importe',v:`₡ ${fmtN(importeNeto)}`}].map(({l,v})=>(
             <div key={l}>
-              <p style={{ fontSize:10,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
+              <p style={{ fontSize:10.5,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
               <p style={{ fontSize:13,fontWeight:600,color:l==='Importe'?BRAND:'#0F0F0F',margin:0,fontFamily:F }}>{v}</p>
             </div>
           ))}
@@ -142,25 +142,25 @@ export function ModalEmitir({ cheque, onClose, onConfirm }:{ cheque:Cheque; onCl
         {/* Nombre */}
         <Field label="Nombre en el cheque" required>
           <input value={nombre} onChange={e=>{setNombre(e.target.value);setError(false);}} style={{...inputStyle(true), borderColor:error?RED:BRAND}}/>
-          <p style={{ fontSize:10,color:'#757575',margin:'4px 0 0',fontFamily:F }}>Puede editarlo solo para efectos del formato impreso, sin modificar el proveedor del sistema.</p>
+          <p style={{ fontSize:10.5,color:'#757575',margin:'4px 0 0',fontFamily:F }}>Puede editarlo solo para efectos del formato impreso, sin modificar el proveedor del sistema.</p>
         </Field>
         {/* Leyenda */}
         <label style={{ display:'flex',alignItems:'center',gap:8,fontSize:12,fontFamily:F,cursor:'pointer' }}>
           <div style={{ width:16, height:16,borderRadius:4,border:`1px solid ${BRAND}`,background:BRAND,display:'flex',alignItems:'center',justifyContent:'center' }}>
             <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/></svg>
           </div>
-          <span>Leyenda "No Negociable" <strong>se imprimirá en el cheque</strong></span>
+          <span>Leyenda &quot;No Negociable&quot; <strong>se imprimirá en el cheque</strong></span>
         </label>
         {/* Impresora */}
         <Field label="Impresora">
           <p style={{ fontSize:13,fontWeight:500,color:'#0F0F0F',margin:'0 0 3px',fontFamily:F }}>Impresora Cheques - Recepción (HP LaserJet Pro)</p>
-          <p style={{ fontSize:10,color:'#757575',margin:0,fontFamily:F }}>Al confirmar, el sistema enviará el cheque directamente a la impresora. El número de cheque se asignará en ese momento.</p>
+          <p style={{ fontSize:10.5,color:'#757575',margin:0,fontFamily:F }}>Al confirmar, el sistema enviará el cheque directamente a la impresora. El número de cheque se asignará en ese momento.</p>
         </Field>
       </div>
     </ModalShell>
   );
 }
-// ── Modal Anular cheque ────────────────────────────────────────────────────────
+// ── Modal para anular un cheque ────────────────────────────────────────────────────────
 export function ModalAnular({ cheque, onClose, onConfirm }:{ cheque:Cheque; onClose:()=>void; onConfirm:(id:string)=>void }) {
   const [motivo, setMotivo] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0,10));
@@ -185,7 +185,7 @@ export function ModalAnular({ cheque, onClose, onConfirm }:{ cheque:Cheque; onCl
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10 }}>
           {[{l:'Consecutivo',v:cheque.consec},{l:'Número de cheque',v:numeroRef},{l:'Importe',v:`₡ ${fmtN(importeNeto)}`}].map(({l,v})=>(
             <div key={l}>
-              <p style={{ fontSize:10,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
+              <p style={{ fontSize:10.5,color:'#757575',margin:'0 0 3px',fontFamily:F }}>{l}</p>
               <p style={{ fontSize:13,fontWeight:600,color:l==='Importe'?BRAND:'#0F0F0F',margin:0,fontFamily:F }}>{v}</p>
             </div>
           ))}
@@ -198,9 +198,9 @@ export function ModalAnular({ cheque, onClose, onConfirm }:{ cheque:Cheque; onCl
         </Field>
         <Field label="Motivo de anulación" required>
           <textarea value={motivo} onChange={e=>{setMotivo(e.target.value);setErrores(p=>({...p,motivo:false}));}} rows={3}
-            placeholder="Describa el motivo..."
+            placeholder="Describa el motivo..." aria-label="Describa el motivo..."
             style={{ width:'100%',padding:'8px 10px',border:`1px solid ${errores.motivo?RED:(motivo?BRAND:'#ECECEC')}`,borderRadius:7,fontSize:12,fontFamily:F,resize:'vertical',outline:'none',boxSizing:'border-box' }}/>
-          <p style={{ fontSize:10,color:'#757575',margin:'4px 0 0',fontFamily:F }}>Obligatorio. Quedará registrado en el historial del cheque.</p>
+          <p style={{ fontSize:10.5,color:'#757575',margin:'4px 0 0',fontFamily:F }}>Obligatorio. Quedará registrado en el historial del cheque.</p>
         </Field>
         {/* Efectos automáticos */}
         <div style={{ padding:'12px 14px',background:C.errorBg,border:`1px solid ${C.errorBorder}`,borderRadius:radius.md }}>
@@ -218,7 +218,7 @@ export function ModalAnular({ cheque, onClose, onConfirm }:{ cheque:Cheque; onCl
     </ModalShell>
   );
 }
-// ── Modal Retenciones (editor real, ya no hardcodeado) ─────────────────────────
+// ── Modal Retenciones: editor de las retenciones del cheque ──
 export function ModalRetencionesEditor({ cheque, onClose, onSave }:{ cheque:Cheque; onClose:()=>void; onSave:(r:Retencion[])=>void }) {
   const [rows, setRows] = useState<Retencion[]>(cheque.retenciones);
   const [nuevoImp, setNuevoImp] = useState('');
@@ -268,7 +268,7 @@ export function ModalRetencionesEditor({ cheque, onClose, onSave }:{ cheque:Cheq
               <td style={{ padding:'8px 12px', textAlign:'right', fontFamily:F }}>
                 <div style={{ display:'flex',alignItems:'center',gap:4,justifyContent:'space-between' }}>
                   <span>₡</span>
-                  <input value={nuevoImp} onChange={e=>setNuevoImp(e.target.value)} placeholder="0.00"
+                  <input value={nuevoImp} onChange={e=>setNuevoImp(e.target.value)} placeholder="0.00" aria-label="0.00"
                     style={{ width:80,height:26,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:5,fontSize:12,fontFamily:F,textAlign:'right',outline:'none' }}/>
                 </div>
               </td>

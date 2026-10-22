@@ -9,18 +9,19 @@ import { Button, Checkbox, Input, Radio } from '@/components/suite/ui';
 import { Buscador, Popover, norm } from '@/components/configuracion/kit';
 import { IcChevronDown } from '@/components/suite/icons';
 import { FiltroChecks } from '@/components/hotel/ui';
+import { FiltroFecha } from '@/components/suite/FiltroFecha';
 import { useHotel } from '@/components/hotel/store';
 import { HOY, TARIFAS_NOMBRES, TIPOS, contratoDeTarifa, diaSemana, fmtF, sumarDias } from '@/components/hotel/datos';
 import { GRUPOS_DISP } from '@/components/hotel/reservas';
-import { HojaSistema, PaginaFact, TablaReporte, Tarjeta, tdR } from '@/components/facturacion/comun';
+import { HojaSistema, PaginaFact, TablaReporte, tdR } from '@/components/facturacion/comun';
 import { ExportarReporte, Limpiar, TablaP, tdP } from './comun';
 import { pronostico, type CeldaPron, type OpcPron } from './estadisticas';
 
 const TABS = ['Disponibilidad', 'Ocupación'] as const;
 const ESTADOS = ['Solicitada', 'Confirmada', 'Lista de espera'];
 export const codigoTipo = (id: string) => `${String(TIPOS.findIndex(t => t.id === id) + 1).padStart(2, '0')}_${id}`;
-interface Mas { desde: string; hasta: string; fuente: 'Hotel' | 'Tarifa'; titulo: string; modo: 'Real' | 'Proyectado'; cupos: boolean; release: boolean }
-const masInicial = (): Mas => ({ desde: HOY, hasta: sumarDias(HOY, 20), fuente: 'Hotel', titulo: '', modo: 'Proyectado', cupos: false, release: false });
+interface Mas { desde: string; hasta: string; fuente: 'Hotel' | 'Tarifa'; titulo: string; modo: 'Real' | 'Proyectado'; cupos: boolean }
+const masInicial = (): Mas => ({ desde: HOY, hasta: sumarDias(HOY, 20), fuente: 'Hotel', titulo: '', modo: 'Proyectado', cupos: false });
 
 export default function PronosticoTipo() {
   const h = useHotel();
@@ -35,13 +36,13 @@ export default function PronosticoTipo() {
   const [qc, setQc] = useState('');
   const [info, setInfo] = useState<{ fecha: string; c: CeldaPron } | null>(null);
   const tipos = grupos.length && !grupos.includes('TOTAL') ? TIPOS.filter(t => GRUPOS_DISP.some(g => grupos.includes(g.id) && g.tipos.includes(t.id))) : TIPOS;
-  const opc: OpcPron = { estados, tarifa: tarifa || undefined, titulo: mas.titulo || undefined, modo: mas.modo, fuente: mas.fuente, respetarCupos: mas.cupos, respetarRelease: mas.release };
+  const opc: OpcPron = { estados, tarifa: tarifa || undefined, titulo: mas.titulo || undefined, modo: mas.modo, fuente: mas.fuente, respetarCupos: mas.cupos };
   const dias = pronostico(h, mas.desde, mas.hasta, opc);
   const valor = (c: CeldaPron) => (tab === 'Disponibilidad' ? c.libres : c.ocupadas + c.reservadas);
   const visibles = (d: (typeof dias)[number]) => d.celdas.filter(c => tipos.some(t => t.id === c.tipo));
   const tot = (d: (typeof dias)[number]) => { const cs = visibles(d); const total = cs.reduce((s, c) => s + c.total, 0); const oc = cs.reduce((s, c) => s + c.ocupadas + c.reservadas, 0); return { libres: cs.reduce((s, c) => s + c.libres, 0), oc, pct: total ? Math.round((oc / total) * 1000) / 10 : 0 }; };
   const limpiar = () => { setGrupos([]); setEstados(['Solicitada', 'Confirmada']); setTarifa(''); setMas(masInicial()); };
-  const criterio = `${fmtF(mas.desde)} – ${fmtF(mas.hasta)} · Estados: ${estados.join(', ') || 'ninguno'} · Contrato: ${tarifa ? contratoDeTarifa(tarifa) : 'Todos'} · ${mas.modo} · Fuente: ${mas.fuente}${mas.cupos ? ' · Respeta cupos' : ''}${mas.release ? ' · Respeta release' : ''}`;
+  const criterio = `${fmtF(mas.desde)} – ${fmtF(mas.hasta)} · Estados: ${estados.join(', ') || 'ninguno'} · Contrato: ${tarifa ? contratoDeTarifa(tarifa) : 'Todos'} · ${mas.modo} · Fuente: ${mas.fuente}${mas.cupos ? ' · Respeta cupos' : ''}`;
   const headers = ['Fecha', tab === 'Disponibilidad' ? 'Libres' : 'Ocupadas', '%', ...tipos.map(t => codigoTipo(t.id))];
   const filas = dias.map(d => { const t = tot(d); return [fmtF(d.fecha), tab === 'Disponibilidad' ? t.libres : t.oc, t.pct, ...visibles(d).map(valor)]; });
   const color = (n: number) => (tab === 'Disponibilidad' && n < 0 ? C.error : C.n900);
@@ -53,6 +54,7 @@ export default function PronosticoTipo() {
       </>}
       tabs={{ items: TABS, activo: tab, onChange: setTab }}
       filtros={<>
+          <FiltroFecha label="Período" futuro desde={mas.desde} hasta={mas.hasta} vacio="Próximos 21 días" onChange={(d, x) => { const a = d || HOY; setMas({ ...mas, desde: a, hasta: x && x >= a ? x : sumarDias(a, 20) }); }} />
           <FiltroChecks label="Grupo de disponibilidad" value={grupos} onChange={setGrupos} ancho={260} opciones={[{ value: 'TOTAL', label: 'Total de habitaciones' }, ...GRUPOS_DISP.map(g => ({ value: g.id, label: g.nombre }))]} />
           <FiltroChecks label="Estado" value={estados} onChange={setEstados} opciones={ESTADOS.map(e => ({ value: e, label: e }))} />
           <span style={{ position: 'relative', display: 'inline-flex' }}>
@@ -72,8 +74,8 @@ export default function PronosticoTipo() {
           </span>
           <Limpiar onClick={limpiar} />
       </>}>
-      <Tarjeta>
-        <span style={{ alignSelf: 'flex-start', fontSize: 11.5, color: C.n700, background: C.n200, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '5px 10px' }}>Haz clic en cualquier casilla para ver más información</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
+        <span style={{ fontSize: 12, color: C.n700 }}>Haz clic en cualquier casilla para ver el detalle de ese día y tipo de habitación.</span>
         <TablaP headers={headers} derecha={headers.map((_, i) => i).slice(1)}>
           {dias.map(d => {
             const t = tot(d);
@@ -94,7 +96,7 @@ export default function PronosticoTipo() {
             );
           })}
         </TablaP>
-      </Tarjeta>
+      </div>
     </PaginaFact>
   );
 }
@@ -125,17 +127,13 @@ function MasFiltros({ inicial, onClose, onAplicar }: { inicial: Mas; onClose: ()
   return (
     <Popover open onClose={onClose} width={320}>
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 12 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>Desde<Input type="date" value={m.desde} onChange={v => v && setM({ ...m, desde: v, hasta: v > m.hasta ? v : m.hasta })} /></label>
-          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>Hasta<Input type="date" value={m.hasta} onChange={v => v && v >= m.desde && setM({ ...m, hasta: v })} /></label>
-        </div>
         <span style={lbl}>Fuente de datos</span>
         <span style={{ display: 'flex', gap: 16 }}><Radio name="fuente" checked={m.fuente === 'Hotel'} onChange={() => setM({ ...m, fuente: 'Hotel' })} label="Hotel" /><Radio name="fuente" checked={m.fuente === 'Tarifa'} onChange={() => setM({ ...m, fuente: 'Tarifa' })} label="Tarifa (cupos del contrato)" /></span>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={lbl}>Título del grupo</span><Input value={m.titulo} onChange={v => setM({ ...m, titulo: v })} placeholder="Nombre del grupo o empresa" /></label>
         <span style={{ display: 'flex', gap: 16 }}><Radio name="modo" checked={m.modo === 'Proyectado'} onChange={() => setM({ ...m, modo: 'Proyectado' })} label="Proyectado" /><Radio name="modo" checked={m.modo === 'Real'} onChange={() => setM({ ...m, modo: 'Real' })} label="Real" /></span>
         <span style={lbl}>Restricciones aplicadas</span>
-        <span style={{ display: 'flex', gap: 16 }}><Checkbox checked={m.cupos} onChange={b => setM({ ...m, cupos: b })} label="Respetar cupos" /><Checkbox checked={m.release} onChange={b => setM({ ...m, release: b })} label="Respetar release" /></span>
-        <span style={{ fontSize: 11, color: C.n700 }}>Cupos y release aplican cuando hay un contrato seleccionado.</span>
+        <span style={{ display: 'flex', gap: 16 }}><Checkbox checked={m.cupos} onChange={b => setM({ ...m, cupos: b })} label="Respetar cupos" /></span>
+        <span style={{ fontSize: 11, color: C.n700 }}>Los cupos aplican cuando hay un contrato seleccionado.</span>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={() => onAplicar(m)}>Aplicar filtros</Button></div>
       </div>
     </Popover>

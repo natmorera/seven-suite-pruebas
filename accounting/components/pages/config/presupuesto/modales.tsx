@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, FormField, Select, Checkbox, Radio } from '../../../ui/formulario';
-import { radius, C } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { IcImport, IcCheck, IcInfo, IcClose } from '../../../ui/icons';
+import { Modal } from '@/components/ui/primitives';
+import { Button, FormField, Select, Checkbox, Radio } from '@/components/ui/formulario';
+import { radius, C } from '@/components/ui/tokens';
+import { IcImport, IcCheck, IcInfo, IcClose } from '@/components/ui/icons';
 import { MESES, TIPOS_DE_CUENTA } from '../presupuestoData';
 import { ANIOS_PROYECCION, F, type ProyectarParams, type RecalcParams, descargarPlantilla } from './datos';
 import { RangoInput } from './piezas';
@@ -91,7 +90,7 @@ export function ModalRecalcularGlobal({ cuentaOpciones, centroOpciones, onClose,
                   <div style={{ display:'flex',alignItems:'center',gap:10 }}>
                     <span style={{ fontSize:13 }}>{label}</span>
                     {val!=='cero' && accion===val && <>
-                      <input type="number" value={pct} onChange={e=>setPct(e.target.value)}
+                      <input aria-label="Porcentaje" type="number" value={pct} onChange={e=>setPct(e.target.value)}
                         style={{ width:60,height:28,padding:'0 8px',border:`1px solid ${C.n500}`,borderRadius:4,fontSize:12,fontFamily:F }} />
                       <span style={{ fontSize:12,color:C.n700 }}>%</span>
                     </>}
@@ -111,12 +110,12 @@ export function ModalRecalcularGlobal({ cuentaOpciones, centroOpciones, onClose,
             {usarCentro && <RangoInput inicial={cIni} final={cFin} onInicial={setCIni} onFinal={setCFin} opciones={centroOpciones} tituloBuscador="Buscar centro de costos" />}
             <Checkbox label="Tipo de cuenta" checked={usarTipo} onChange={setUsarTipo} />
             {usarTipo && (
-              <Select value={tipoCuenta} onChange={setTipoCuenta}
+              <Select ariaLabel="A qué cuentas aplicar" value={tipoCuenta} onChange={setTipoCuenta}
                 options={TIPOS_DE_CUENTA.map(t=>({ value:t.codigo, label:`${t.codigo} - ${t.nombre}` }))} />
             )}
             <Checkbox label="Solo por período" checked={usarPeriodo} onChange={setUsarPeriodo} />
             {usarPeriodo && (
-              <Select value={String(periodo)} onChange={v=>setPeriodo(Number(v))}
+              <Select ariaLabel="A qué cuentas aplicar" value={String(periodo)} onChange={v=>setPeriodo(Number(v))}
                 options={MESES.map((m,i)=>({ value:String(i), label:m }))} />
             )}
           </div>
@@ -157,7 +156,7 @@ export function ModalRecalcularSeleccionadas({ cantidad, onClose, onAplicar }: {
                   <div style={{ display:'flex',alignItems:'center',gap:10 }}>
                     <span style={{ fontSize:13 }}>{label}</span>
                     {val!=='cero' && accion===val && <>
-                      <input type="number" value={pct} onChange={e=>setPct(e.target.value)}
+                      <input aria-label="Porcentaje" type="number" value={pct} onChange={e=>setPct(e.target.value)}
                         style={{ width:60,height:28,padding:'0 8px',border:`1px solid ${C.n500}`,borderRadius:4,fontSize:12,fontFamily:F }} />
                       <span style={{ fontSize:12,color:C.n700 }}>%</span>
                     </>}
@@ -219,7 +218,7 @@ export function ModalProyectar({ ejercicioActual, cuentaOpciones, onClose, onApl
                   <div style={{ display:'flex',alignItems:'center',gap:10 }}>
                     <span style={{ fontSize:13 }}>{label}</span>
                     {(val==='aumentar'||val==='disminuir') && accion===val && <>
-                      <input type="number" value={pct} onChange={e=>setPct(e.target.value)}
+                      <input aria-label="Porcentaje" type="number" value={pct} onChange={e=>setPct(e.target.value)}
                         style={{ width:60,height:28,padding:'0 8px',border:`1px solid ${C.n500}`,borderRadius:4,fontSize:12,fontFamily:F }} />
                       <span style={{ fontSize:12,color:C.n700 }}>%</span>
                     </>}
@@ -237,7 +236,7 @@ export function ModalProyectar({ ejercicioActual, cuentaOpciones, onClose, onApl
             {usarRango && <RangoInput inicial={rIni} final={rFin} onInicial={setRIni} onFinal={setRFin} opciones={cuentaOpciones} tituloBuscador="Buscar cuenta" />}
             <Checkbox label="Tipo de cuenta" checked={usarTipo} onChange={setUsarTipo} />
             {usarTipo && (
-              <Select value={tipoCuenta} onChange={setTipoCuenta}
+              <Select ariaLabel="A qué cuentas aplicar" value={tipoCuenta} onChange={setTipoCuenta}
                 options={TIPOS_DE_CUENTA.map(t=>({ value:t.codigo, label:`${t.codigo} - ${t.nombre}` }))} />
             )}
           </div>
@@ -254,9 +253,9 @@ export function ModalProyectar({ ejercicioActual, cuentaOpciones, onClose, onApl
         <Checkbox label="Limitar a un rango de períodos" checked={limitarPeriodo} onChange={setLimitarPeriodo} />
         {limitarPeriodo && (
           <div style={{ display:'grid',gridTemplateColumns:'1fr auto 1fr',gap:10,alignItems:'center' }}>
-            <Select value={String(desde)} onChange={v=>setDesde(Number(v))} options={MESES.map((m,i)=>({ value:String(i),label:m }))} />
+            <Select ariaLabel="Mes desde" value={String(desde)} onChange={v=>setDesde(Number(v))} options={MESES.map((m,i)=>({ value:String(i),label:m }))} />
             <span style={{ color:C.n700 }}>→</span>
-            <Select value={String(hasta)} onChange={v=>setHasta(Number(v))} options={MESES.map((m,i)=>({ value:String(i),label:m }))} />
+            <Select ariaLabel="Hasta" value={String(hasta)} onChange={v=>setHasta(Number(v))} options={MESES.map((m,i)=>({ value:String(i),label:m }))} />
           </div>
         )}
       </div>

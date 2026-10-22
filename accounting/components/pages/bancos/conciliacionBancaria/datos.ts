@@ -1,13 +1,13 @@
 'use client';
 import { useEffect } from 'react';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
 
 export const F = FONT;
 export const BRAND = C.brand;
 export function fmt2(n: number) { return fmtNum(n, 2); }
 export function sym(moneda: string) { return moneda === 'USD' ? '$' : '₡'; }
-export type EstadoCon = 'En proceso' | 'Sin saldo' | 'Cerrada';
+type EstadoCon = 'En proceso' | 'Sin saldo' | 'Cerrada';
 export type EstadoMov = 'Conciliado' | 'Pendiente' | 'Futuro';
 export interface Movimiento {
   id: number; fecha: string; comprobante: string; documento: string;

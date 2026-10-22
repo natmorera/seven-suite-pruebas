@@ -6,7 +6,7 @@ import { Button, Checkbox, Input, Modal, Select, Switch } from '@/components/sui
 import { IcClose } from '@/components/suite/icons';
 import { Campo, Grid, MultiSelect, TextArea } from '@/components/configuracion/kit';
 import { useHotel, estadoTarea, nuevoId } from '@/components/hotel/store';
-import { HOY, TIPOS, TIPOS_TAREA, USUARIOS, USUARIO_ACTUAL, sumarDias, type Bloqueo, type Recordatorio, type Tarea, type TipoTarea } from '@/components/hotel/datos';
+import { HOY, TIPOS, TIPOS_TAREA, USUARIOS, USUARIO_ACTUAL, correoUsuario, sumarDias, type Bloqueo, type Recordatorio, type Tarea, type TipoTarea } from '@/components/hotel/datos';
 import { Alerta } from '@/components/hotel/ui';
 import { CUANDO, conLog } from './comun';
 
@@ -28,17 +28,19 @@ function SeccionToggle({ titulo, on, onChange, estado, children }: { titulo: str
   );
 }
 
-export function ModalTarea({ id, onClose, onListo }: { id?: string; onClose: () => void; onListo: (t: string) => void }) {
+/** `conBloqueo`: abre con la sección de bloqueo activa (desde el detalle de la tarea). */
+export function ModalTarea({ id, onClose, onListo, conBloqueo }: { id?: string; onClose: () => void; onListo: (t: string) => void; conBloqueo?: boolean }) {
   const h = useHotel();
   const original = id ? h.tareas.find(t => t.id === id) : undefined;
   const [f, setF] = useState({
     tipo: original?.tipo ?? ('' as TipoTarea | ''), tarea: original?.tarea ?? '', responsables: original ? [original.responsable] : [] as string[],
     inicio: original?.inicio ?? HOY, vencimiento: original?.vencimiento ?? sumarDias(HOY, 1), estado: original?.estado ?? 'Pendiente',
-    bloqueo: original?.bloqueo ?? null as Bloqueo | null, recordatorio: original?.recordatorio ?? null as Recordatorio | null,
+    bloqueo: original?.bloqueo ?? (conBloqueo ? { habitaciones: [], inicio: original?.inicio && original.inicio > HOY ? original.inicio : HOY, fin: original?.vencimiento ?? sumarDias(HOY, 1), motivo: original?.tarea ?? '' } : null) as Bloqueo | null, recordatorio: original?.recordatorio ?? null as Recordatorio | null,
   });
   const [err, setErr] = useState<Record<string, string>>({});
   const [salir, setSalir] = useState(false);
   const [quitarBloqueo, setQuitarBloqueo] = useState(false);
+  const [cambiosClave, setCambiosClave] = useState<string[] | null>(null);
   const opcionesHab = useOpcionesHab();
   const inicial = useState(() => JSON.stringify(f))[0];
   const sucio = JSON.stringify(f) !== inicial;
@@ -62,12 +64,7 @@ export function ModalTarea({ id, onClose, onListo }: { id?: string; onClose: () 
       if (ocupadas.length) e.bHab = `Las habitaciones ${ocupadas.join(', ')} están ocupadas hoy: el bloqueo se aplicará cuando queden libres.`;
     }
     if (rec) {
-      if (!rec.canales.sistema && !rec.canales.email && !rec.canales.whatsapp) e.canales = 'Selecciona al menos un canal';
-      destinatarios.forEach(d => {
-        const c = rec.contactos[d];
-        if (rec.canales.email && !/^\S+@\S+\.\S+$/.test(c?.email ?? '')) e['em' + d] = 'Correo obligatorio (usuario@dominio.com)';
-        if (rec.canales.whatsapp && !/^\d{8,}$/.test((c?.telefono ?? '').replace(/\s/g, ''))) e['wa' + d] = 'Teléfono obligatorio';
-      });
+      if (!rec.canales.sistema && !rec.canales.email) e.canales = 'Selecciona al menos un canal';
     }
     setErr(e);
     return !Object.keys(e).filter(k => !(k === 'bHab' && e.bHab.includes('se aplicará'))).length;
@@ -97,7 +94,10 @@ export function ModalTarea({ id, onClose, onListo }: { id?: string; onClose: () 
   return (
     <>
       <Modal open onClose={intentarCerrar} width={600} title={id ? 'Editar tarea' : 'Crear nueva tarea'}
-        footer={id ? <><Button variant="secondary" onClick={intentarCerrar}>Cancelar</Button><Button onClick={guardar} disabled={!sucio}>Guardar cambios</Button></>
+        footer={id ? <><Button variant="secondary" onClick={intentarCerrar}>Cancelar</Button><Button disabled={!sucio} onClick={() => {
+          const cambios = [original && f.tipo !== original.tipo && `el tipo (${original.tipo} → ${f.tipo})`, original && f.responsables[0] !== original.responsable && `el responsable (${original.responsable} → ${f.responsables.join(', ')})`].filter(Boolean) as string[];
+          if (cambios.length && validar()) setCambiosClave(cambios); else guardar();
+        }}>Guardar cambios</Button></>
           : <><Button variant="secondary" onClick={intentarCerrar}>Cancelar</Button><Button onClick={guardar}>Crear tarea</Button></>}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Campo label="Tipo de tarea" required error={err.tipo}><Select value={f.tipo} onChange={v => setF({ ...f, tipo: v as TipoTarea })} error={err.tipo} options={[{ value: '', label: 'Seleccionar' }, ...TIPOS_TAREA.map(t => ({ value: t, label: t }))]} /></Campo>
@@ -140,33 +140,22 @@ export function ModalTarea({ id, onClose, onListo }: { id?: string; onClose: () 
               </Campo>
               <Campo label="Canales de envío" required error={err.canales}>
                 <div style={{ display: 'flex', gap: 20 }}>
-                  {([['sistema', 'En sistema'], ['email', 'Email'], ['whatsapp', 'WhatsApp']] as const).map(([k, l]) => <Checkbox key={k} checked={rec.canales[k]} onChange={b => setRec({ canales: { ...rec.canales, [k]: b } })} label={l} />)}
+                  {([['sistema', 'En sistema'], ['email', 'Correo electrónico']] as const).map(([k, l]) => <Checkbox key={k} checked={rec.canales[k]} onChange={b => setRec({ canales: { ...rec.canales, [k]: b } })} label={l} />)}
                 </div>
               </Campo>
-              {(rec.canales.email || rec.canales.whatsapp) && destinatarios.length === 0 && <p style={{ margin: 0, fontSize: 12, color: C.n700 }}>Agrega responsables para configurar sus contactos.</p>}
-              {(rec.canales.email || rec.canales.whatsapp) && destinatarios.map(d => {
-                const c = rec.contactos[d] ?? { email: '', codigo: '+506', telefono: '' };
-                const setC = (p: Partial<typeof c>) => setRec({ contactos: { ...rec.contactos, [d]: { ...c, ...p } } });
-                return (
-                  <div key={d} style={{ background: C.n200, borderRadius: radius.md, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <b style={{ fontSize: 12, fontWeight: 500 }}>{d}</b>
-                    <Grid cols={rec.canales.email && rec.canales.whatsapp ? 2 : 1}>
-                      {rec.canales.email && <Campo label="Correo electrónico" required error={err['em' + d]}><Input type="email" value={c.email} onChange={v => setC({ email: v.trim() })} placeholder="Ingrese el correo" /></Campo>}
-                      {rec.canales.whatsapp && <Campo label="Teléfono (WhatsApp)" required error={err['wa' + d]}>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <div style={{ width: 90 }}><Select value={c.codigo} onChange={v => setC({ codigo: v })} options={['+506', '+1', '+52', '+34', '+507'].map(x => ({ value: x, label: x }))} /></div>
-                          <Input value={c.telefono} onChange={v => setC({ telefono: v.replace(/[^\d ]/g, '') })} placeholder="8888 8888" />
-                        </div>
-                      </Campo>}
-                    </Grid>
-                  </div>
-                );
-              })}
+              {rec.canales.email && (destinatarios.length === 0
+                ? <p style={{ margin: 0, fontSize: 12, color: C.n700 }}>Agrega responsables para enviarles el correo.</p>
+                : <div style={{ background: C.n200, borderRadius: radius.md, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12 }}>
+                    <span style={{ color: C.n700 }}>Se envía al correo de cada usuario:</span>
+                    {destinatarios.map(d => <span key={d}><b style={{ fontWeight: 500 }}>{d}</b> · {correoUsuario(d)}</span>)}
+                  </div>)}
               <Campo label="Cuándo recordar" required><Select value={rec.cuando} onChange={v => setRec({ cuando: v })} options={CUANDO.map(x => ({ value: x, label: `${x} del vencimiento` }))} /></Campo>
             </>}
           </SeccionToggle>
         </div>
       </Modal>
+      <Alerta open={!!cambiosClave} titulo="¿Guardar los cambios de la tarea?" confirmar="Sí, guardar" onClose={() => setCambiosClave(null)}
+        onConfirm={() => { setCambiosClave(null); guardar(); }}>Vas a cambiar {cambiosClave?.join(' y ')}.</Alerta>
       <Alerta open={salir} titulo="¿Deseas salir?" tono="danger" confirmar="Salir sin guardar" onClose={() => setSalir(false)} onConfirm={onClose}>Los cambios no se guardarán.</Alerta>
       <Alerta open={quitarBloqueo} titulo="¿Quitar el bloqueo de habitaciones?" tono="danger" confirmar="Sí, quitar" onClose={() => setQuitarBloqueo(false)}
         onConfirm={() => { setF({ ...f, bloqueo: null }); setQuitarBloqueo(false); }}>Al guardar se liberarán las habitaciones {original?.bloqueo?.habitaciones.join(', ')}.</Alerta>

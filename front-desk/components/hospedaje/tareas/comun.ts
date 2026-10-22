@@ -11,8 +11,8 @@ export const selInline = { border: 'none', background: 'transparent', fontSize: 
 /** Pestañas por estado (plural) + Todas. */
 export type TabT = Tarea['estado'] | 'Todas';
 export const TABS_T: { id: TabT; label: string }[] = [
-  { id: 'Pendiente', label: 'Pendientes' }, { id: 'En proceso', label: 'En proceso' }, { id: 'Atrasado', label: 'Atrasadas' },
-  { id: 'Completado', label: 'Completadas' }, { id: 'Anulado', label: 'Anuladas' }, { id: 'Todas', label: 'Todas' },
+  { id: 'Todas', label: 'Todas' }, { id: 'Pendiente', label: 'Pendientes' }, { id: 'En proceso', label: 'En proceso' }, { id: 'Atrasado', label: 'Atrasadas' },
+  { id: 'Completado', label: 'Completadas' }, { id: 'Anulado', label: 'Anuladas' },
 ];
 export const ahora = () => { const d = new Date(); return `${HOY}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 /** Agrega una entrada a la bitácora de la tarea. */

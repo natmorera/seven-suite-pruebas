@@ -1,24 +1,22 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, Input } from '../../../ui/formulario';
-import { radius, shadow, C } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { SearchInput } from '../../../ui/filtros';
-import { IcSearch, IcCheck, IcClose, IcChevronDown } from '../../../ui/icons';
-import { TIPOS_PL, TipoPL } from '../presupuestoData';
+import { Modal } from '@/components/ui/primitives';
+import { Button, Input } from '@/components/ui/formulario';
+import { radius, shadow, C } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcSearch, IcCheck, IcClose, IcChevronDown } from '@/components/ui/icons';
+import { TIPOS_PL, type TipoPL } from '../presupuestoData';
 import { F } from './datos';
 
-// Celda de monto editable: mientras se edita muestra el número "pelado" (fácil
-// de escribir), y al salir del campo lo formatea con "," de miles y "." de
-// decimales, siempre con 2 decimales - el mismo formato estándar de toda la
-// app (ver fmtNum), que antes solo se aplicaba en la vista de solo lectura.
+// Celda de monto editable: mientras se edita muestra el número sin formato y al salir lo
+// formatea con separador de miles y 2 decimales (fmtNum), igual que en toda la app.
 export function CeldaMonto({ value, onChange, disabled }: { value:number; onChange:(v:number)=>void; disabled?:boolean }) {
   const [editando, setEditando] = useState(false);
   const [texto, setTexto] = useState('');
   const mostrado = editando ? texto : (value ? fmtNum(value, 2) : '');
   return (
-    <input type="text" inputMode="decimal" value={mostrado} disabled={disabled}
+    <input aria-label="Monto" type="text" inputMode="decimal" value={mostrado} disabled={disabled}
       onFocus={()=>{ setEditando(true); setTexto(value ? String(value) : ''); }}
       onChange={e=>setTexto(e.target.value)}
       onBlur={()=>{ setEditando(false); onChange(parseFloat(texto.replace(/,/g,'')) || 0); }}
@@ -29,13 +27,13 @@ export function CeldaMonto({ value, onChange, disabled }: { value:number; onChan
   );
 }
 // ── Filtro "Tipo" (Costos/Gastos/Ingresos) - toggle de selección múltiple ────
-// La spec pide selección múltiple con resaltado ámbar el activo, aunque en las
+// El diseño pide selección múltiple con resaltado ámbar el activo, aunque en las
 // capturas se veía dibujado como radios de selección única.
 export function TipoToggle({ value, onChange, disabled }: { value: Set<TipoPL>; onChange:(v:Set<TipoPL>)=>void; disabled?: boolean }) {
   function toggle(t: TipoPL) {
     if (disabled) return;
     const next = new Set(value);
-    next.has(t) ? next.delete(t) : next.add(t);
+    if (next.has(t)) next.delete(t); else next.add(t);
     onChange(next);
   }
   return (
@@ -74,7 +72,7 @@ export function FiltroMultiSelect({ label, items, selected, onApply }: {
     return () => { document.removeEventListener('mousedown', onClickFuera); document.removeEventListener('keydown', onEsc); };
   }, [open]);
 
-  function toggle(id:string) { setTemp(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
+  function toggle(id:string) { setTemp(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
   const filtrados = items.filter(i => !q || i.label.toLowerCase().includes(q.toLowerCase()));
   const labelBoton = selected.size===0 ? label : selected.size===items.length ? `${label} (todas)` : `${label} (${selected.size})`;
 
@@ -133,10 +131,8 @@ export function FiltroMultiSelect({ label, items, selected, onApply }: {
     </div>
   );
 }
-// ── Rango simple (Inicial/Final) ─────────────────────────────────────────────
-// La lupa ahora abre un buscador real cuando se le pasan `opciones` (cuentas o
-// centros de costo de esta misma pantalla); si no hay opciones para ese
-// contexto, queda deshabilitada en vez de ser puramente decorativa.
+// ── Rango simple (Inicial/Final) ── La lupa abre un buscador cuando hay `opciones` (cuentas o
+// centros de costo de esta pantalla); sin opciones queda deshabilitada.
 export function RangoInput({ inicial, final, onInicial, onFinal, disabled, opciones, tituloBuscador='Buscar código' }: {
   inicial:string; final:string; onInicial:(v:string)=>void; onFinal:(v:string)=>void; disabled?:boolean;
   opciones?: { value:string; label:string }[]; tituloBuscador?:string;
@@ -163,7 +159,7 @@ export function RangoInput({ inicial, final, onInicial, onFinal, disabled, opcio
 }
 
 // ── Buscador simple de un código (cuenta o centro de costo) ──────────────────
-export function ModalBuscarCodigo({ title, opciones, onPick, onClose }: {
+function ModalBuscarCodigo({ title, opciones, onPick, onClose }: {
   title:string; opciones:{ value:string; label:string }[]; onPick:(v:string)=>void; onClose:()=>void;
 }) {
   const [q, setQ] = useState('');

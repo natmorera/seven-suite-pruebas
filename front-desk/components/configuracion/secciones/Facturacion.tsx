@@ -6,18 +6,28 @@ import { C } from '@/components/suite/tokens';
 import { Button, Checkbox, Input, Modal, Select } from '@/components/suite/ui';
 import { IcPlus } from '@/components/suite/icons';
 import { useDato } from '../store';
-import { Aviso, Buscador, Campo, Celda, ConfigCard, Contador, Fila, FilaVacia, Grid, IcTrash, IconButton, ItemMaestro, OutlineButton, Tabla, norm, uid, useConfirmar } from '../kit';
+import { Buscador, Campo, Celda, ConfigCard, Contador, Fila, FilaVacia, Grid, IcTrash, IconButton, ItemMaestro, OutlineButton, Tabla, norm, uid, useConfirmar } from '../kit';
 import { CUENTAS_OPC, MONEDAS_OPC, type Concepto, type GrupoProd } from '../datos';
 import { Servicios } from './FacturacionServicios';
 import { Descuentos, Exoneracion, FoliosExternos, Impuestos, TiposCobro } from './FacturacionCobros';
 import { CabeceraDetalle, MaestroDetalle, ops } from './FacturacionPiezas';
 
 const TABS = ['Producción', 'Servicios', 'Tipos de cobro', 'Impuestos', 'Exoneración', 'Descuentos', 'Folios externos'] as const;
+/** Una línea por pestaña: el título de la tarjeta es la pestaña (no se repite «Facturación»). */
+const AYUDA: Record<(typeof TABS)[number], string> = {
+  'Producción': 'Grupos → conceptos → cuentas contables. Elige un grupo o concepto para editarlo.',
+  'Servicios': 'Servicios que se cargan a las cuentas: precios por moneda, impuestos y descuentos.',
+  'Tipos de cobro': 'Formas de pago que acepta la caja y su cuenta contable.',
+  'Impuestos': 'Impuestos que se aplican a los conceptos y servicios.',
+  'Exoneración': 'Tipos de exoneración de impuestos para clientes autorizados.',
+  'Descuentos': 'Descuentos que se pueden aplicar a cargos y servicios.',
+  'Folios externos': 'Tipos de folio externo, su moneda y su cuenta contable.',
+};
 
 export default function Facturacion() {
   const [tab, setTab] = useState<(typeof TABS)[number]>('Producción');
   return (
-    <ConfigCard title="Facturación">
+    <ConfigCard title={tab} subtitle={AYUDA[tab]}>
       <TabsEnBarra items={TABS} activo={tab} onChange={setTab} />
       {tab === 'Producción' && <Produccion />}
       {tab === 'Servicios' && <Servicios />}
@@ -71,8 +81,7 @@ function Produccion() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <Aviso><b>Grupos → Conceptos → Cuentas contables.</b> Selecciona un grupo para ver sus conceptos.</Aviso>
-      <MaestroDetalle lista={<>
+      <MaestroDetalle titulo="Grupos y conceptos" contador={filtrados.length} lista={<>
         <BarraSeccion filtros={<Buscador value={q} onChange={setQ} placeholder="Buscar grupo o concepto" width={240} />}
           derecha={<span style={{ fontSize: 12, color: C.n700 }}>{filtrados.length} grupos · {filtrados.reduce((n, g) => n + g.conceptos.length, 0)} conceptos</span>}
           acciones={<>

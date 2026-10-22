@@ -1,10 +1,9 @@
 'use client';
-import { FONT } from '../../../ui/tokens';
-import { Firma, FirmaReporte, FormatoFirmaLinea } from '../../config/firmasConfig';
+import { FONT } from '@/components/ui/tokens';
+import { type Firma, type FirmaReporte, type FormatoFirmaLinea } from '@/components/pages/config/firmasConfig';
 
 export const F = FONT;
-// Issue #13: "No. Documento" -> "Número de identificación", sin descripción
-// adicional (antes tenía un hint explicando qué tipos de documento admitía).
+// Líneas de información que puede mostrar una firma
 export const FORMATO_OPCIONES: { value: FormatoFirmaLinea; label: string }[] = [
   { value:'nombre',    label:'Nombre del firmante' },
   { value:'documento', label:'Número de identificación' },
@@ -13,7 +12,7 @@ export const FORMATO_OPCIONES: { value: FormatoFirmaLinea; label: string }[] = [
 export function BLANK_FIRMA(): Firma {
   return { id:`f${Date.now()}`, nombre:'', documento:'', puesto:'', puestoAlt:'', formato:['nombre','documento','puesto'], reportes:[], usuarioId:undefined };
 }
-// Issue: al eliminar una firma (o al destildarle un reporte) las firmas que
+// al eliminar una firma (o al destildarle un reporte) las firmas que
 // quedaban en ese reporte no se recorrían - si borrabas a quien tenía el
 // orden 1, las demás seguían en 2, 3… en vez de pasar a 1, 2… Esto renumera
 // de forma compacta (sin huecos) todas las firmas de un reporte específico,

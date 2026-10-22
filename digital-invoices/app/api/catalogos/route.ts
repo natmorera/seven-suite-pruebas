@@ -1,0 +1,14 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
+import { conPaisDeSolicitud } from '@/lib/paisServidor';
+
+// Catálogos de Hacienda guardados en la base: ?nombre=medios_pago
+async function manejarGET(req: NextRequest) {
+  const nombre = req.nextUrl.searchParams.get('nombre') ?? '';
+  const db = await getDb();
+  const { rows } = await db.execute({ sql: 'SELECT codigo AS value, descripcion AS label FROM catalogos_hacienda WHERE catalogo = ? AND activo = 1 ORDER BY orden, codigo', args: [nombre] });
+  return NextResponse.json(rows);
+}
+
+// Cada solicitud corre con el país de la empresa elegida
+export const GET = conPaisDeSolicitud(manejarGET);

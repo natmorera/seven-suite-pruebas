@@ -1,7 +1,7 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { ConciliacionAfectada } from '../../asientos/DescontabilizarModal';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { type ConciliacionAfectada } from '@/components/pages/asientos/DescontabilizarModal';
 
 // ── CRÍTICO: toda la tipografía usa Montserrat explícitamente ─────────────────
 export const F = FONT;
@@ -14,7 +14,7 @@ export const EMPRESA_PAIS: 'CR' | 'NI' | 'GT' | 'HN' = 'CR';
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type TipoMov = 'A' | 'M' | 'I' | 'D';
 export type EstadoMov = 'Contabilizado' | 'Pendiente' | 'Anulado';
-export type NivelCuenta = 'mayor' | 'submajor' | 'detalle' | 'auxiliar';
+type NivelCuenta = 'mayor' | 'submajor' | 'detalle' | 'auxiliar';
 export interface Movimiento {
   id: number; tipo: TipoMov; fecha: string; consecutivo: string;
   descripcion: string; estado: EstadoMov; idAuxiliar: string;
@@ -28,7 +28,7 @@ export interface Cuenta {
   code: string; nombre: string; banco?: string;
   nivel: NivelCuenta; moneda: string; saldoInicial: number;
 }
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Datos de ejemplo ──────────────────────────────────────────────────────────────────────
 export const CUENTAS: Cuenta[] = [
   { code:'100-001-0001',         nombre:'Fondo de caja general',    nivel:'detalle',  moneda:'CRC', saldoInicial:150000 },
   { code:'100-002-0001',         nombre:'BAC ¢ 4546545466888',      banco:'BAC ¢ 4546545466888', nivel:'detalle',  moneda:'CRC', saldoInicial:0 },
@@ -99,9 +99,8 @@ export const MOVIMIENTOS_INIT: Movimiento[] = [
       { color:C.success, texto:'Asiento creado manualmente', fecha:'20/04/2026 09:00', usuario:'glopez' },
       { color:C.success, texto:'Contabilizado', fecha:'20/04/2026 16:30', usuario:'jperez' },
     ] },
-  // Issue #18: contrapartidas - antes cada asiento solo tenía un lado (debe o
-  // haber) registrado, así que la sumatoria general nunca cuadraba aunque se
-  // seleccionaran todas las cuentas. Cada línea de abajo completa su asiento.
+  // Contrapartidas: cada asiento tiene sus dos lados (debe y haber), así la sumatoria general
+  // cuadra al seleccionar todas las cuentas.
   { id:11, tipo:'A', fecha:'2026-04-01', consecutivo:'20260400001', descripcion:'Depósito adelantado en efectivo', estado:'Contabilizado', idAuxiliar:'',     modulo:'FDK', documento:'DA23400/DA23399', moneda:'CRC', debe:0, haber:935558.00, cuentaCode:'200-002-0001',
     observacion:'Contrapartida: pasivo por depósitos de huéspedes aún no aplicados a factura.', archivos:[],
     historial:[ { color:C.success, texto:'Contabilizado', fecha:'01/04/2026 09:00', usuario:'jperez' } ] },
@@ -129,15 +128,15 @@ export const ESTADO_STYLE: Record<EstadoMov,[string,string]> = {
   Pendiente:  ['#EF9F27','rgba(239,159,39,.1)'],
   Anulado:    [C.error,'rgba(226,75,74,.1)'],
 };
-// Issue #13: opciones de Tipo de asiento con su código real (m.tipo es 'A'|'M'|'I'|'D',
-// no la palabra completa) - antes el filtro comparaba contra la palabra y nunca coincidía.
+// Opciones de tipo de asiento con su código (m.tipo es 'A'|'M'|'I'|'D'), que es lo que compara
+// el filtro.
 export const TIPO_OPTIONS: { value:TipoMov; label:string }[] = [
   { value:'A', label:'Automático' },
   { value:'M', label:'Manual' },
   { value:'I', label:'Importado' },
   { value:'D', label:'Duplicado' },
 ];
-// Issue #11: filtro de Módulo
+// filtro de Módulo
 export const MODULOS: { value:string; label:string }[] = [
   { value:'FDK',  label:'Front Desk (FDK)' },
   { value:'POS',  label:'Point of Sales (POS)' },

@@ -1,4 +1,4 @@
-import { CSSProperties } from "react";
+import { type CSSProperties } from "react";
 type IconProps = { className?: string; style?: CSSProperties };
 
 // All SVG icons - 14x14 system icons + special sizes
@@ -36,15 +36,6 @@ export const IcBancos = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   </svg>
 );
 
-export const IcFunciones = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
-  <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3.44 9.92H10.55C11.66 9.92 12.24 9.33 12.24 8.22V1.17H1.74V8.22C1.75 9.33 2.33 9.92 3.44 9.92Z"/>
-    <path d="M1.17 1.17H12.83"/>
-    <path d="M4.67 12.83L7 11.67V9.92M9.33 12.83L7 11.67"/>
-    <path d="M4.38 6.42L6.21 4.88C6.36 4.76 6.55 4.8 6.65 4.96L7.35 6.12C7.45 6.29 7.64 6.32 7.79 6.2L9.63 4.67"/>
-  </svg>
-);
-
 export const IcReportes = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5.9 6.5H4.35C3.98 6.5 3.69 6.8 3.69 7.17V10.16H5.9V6.5Z"/>
@@ -58,15 +49,6 @@ export const IcEstados = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5.25 12.83H8.75C11.67 12.83 12.83 11.67 12.83 8.75V5.25C12.83 2.33 11.67 1.17 8.75 1.17H5.25C2.33 1.17 1.17 2.33 1.17 5.25V8.75C1.17 11.67 2.33 12.83 5.25 12.83Z"/>
     <path d="M4.52 7L6.17 8.65L9.48 5.35"/>
-  </svg>
-);
-
-// Billetera con moneda - Presupuesto
-export const IcPresupuesto = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
-  <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1.17 4.08C1.17 3.12 1.95 2.33 2.92 2.33H10.5C11.14 2.33 11.67 2.86 11.67 3.5V4.08"/>
-    <path d="M1.17 4.08V10.5C1.17 11.14 1.7 11.67 2.33 11.67H11.67C12.31 11.67 12.83 11.14 12.83 10.5V5.83C12.83 5.19 12.31 4.67 11.67 4.67H2.33C1.7 4.67 1.17 4.6 1.17 4.08Z"/>
-    <circle cx="9.63" cy="8.17" r="1.17"/>
   </svg>
 );
 
@@ -105,12 +87,6 @@ export const IcChevronRight = ({ className = "w-[14px] h-[14px]" }: IconProps) =
   </svg>
 );
 
-export const IcArrowLeft = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
-  <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8.75 2.33L4.08 7L8.75 11.67"/>
-  </svg>
-);
-
 export const IcPlus = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round">
     <path d="M7 2.33V11.67M2.33 7H11.67"/>
@@ -146,7 +122,7 @@ export const IcSearch = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   </svg>
 );
 
-export const IcInfo = ({ className = "w-[14px] h-[14px]", style }: IconProps) => (
+export const IcInfo = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="7" cy="7" r="5.83"/>
     <path d="M7 9.33V7M7 4.67H7.01"/>
@@ -170,13 +146,6 @@ export const IcWarning = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
 export const IcClose = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round">
     <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"/>
-  </svg>
-);
-
-// ── New icons from uploaded SVGs ──────────────────────────────────────────────
-export const IcLink = ({ className = "w-[13px] h-[13px]" }: IconProps) => (
-  <svg className={className} width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="0.8125">
-    <path d="M10.205 6.635L11.137 5.709C11.63 5.198 11.903 4.514 11.897 3.804C11.891 3.094 11.606 2.415 11.104 1.913C10.602 1.41 9.922 1.126 9.212 1.119C8.502 1.113 7.818 1.386 7.307 1.88L6.375 2.806M2.8 6.365L1.874 7.291C1.381 7.802 1.108 8.486 1.114 9.196C1.12 9.906 1.405 10.585 1.907 11.087C2.409 11.59 3.089 11.874 3.799 11.881C4.509 11.887 5.193 11.614 5.704 11.12L6.63 10.194"/>
   </svg>
 );
 
@@ -236,14 +205,6 @@ export const IcMail = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
   <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.17" strokeLinecap="round" strokeLinejoin="round">
     <rect x="1.17" y="2.92" width="11.67" height="8.17" rx="1.5"/>
     <path d="M1.75 3.5L7 7.58L12.25 3.5"/>
-  </svg>
-);
-
-export const IcRefresh = ({ className = "w-[14px] h-[14px]" }: IconProps) => (
-  <svg className={className} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12.25 4.08V6.42H9.92"/>
-    <path d="M1.75 9.92V7.58H4.08"/>
-    <path d="M2.73 5.83C3.02 5.01 3.52 4.27 4.18 3.69C5.78 2.28 8.22 2.28 9.82 3.69L12.25 6.42M1.75 7.58L4.18 10.31C5.78 11.72 8.22 11.72 9.82 10.31C10.48 9.73 10.98 8.99 11.27 8.17"/>
   </svg>
 );
 

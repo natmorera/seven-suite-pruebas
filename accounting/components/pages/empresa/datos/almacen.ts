@@ -3,7 +3,7 @@
 // pestaña del navegador esté abierta; al recargar vuelven a los de ejemplo.
 import { useSyncExternalStore } from 'react';
 
-export interface Almacen<T> {
+interface Almacen<T> {
   inicial: T;
   leer: () => T;
   guardar: (valor: T | ((anterior: T) => T)) => void;

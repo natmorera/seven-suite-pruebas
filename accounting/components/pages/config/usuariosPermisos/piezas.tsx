@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import { Toast, Section, RowAction } from '../../../ui/primitives';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
-import { DataTable, DataRow, Td } from '../../../ui/tabla';
-import { IcEdit, IcTrash, IcClose, IcCopy, IcMail, IcPrinter } from '../../../ui/icons';
-import { Usuario, PlantillaPermiso, totalLeavesInTree, permisosAgrupadosPorUsuario } from '../permissionsData';
+import { Toast, Section, RowAction } from '@/components/ui/primitives';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { DataTable, DataRow, Td } from '@/components/ui/tabla';
+import { IcEdit, IcTrash, IcClose, IcCopy, IcMail, IcPrinter } from '@/components/ui/icons';
+import { type Usuario, type PlantillaPermiso, totalLeavesInTree, permisosAgrupadosPorUsuario } from '../permissionsData';
 import { BRAND, F, exportarDetalleUsuarioPDF, filterInputStyle } from './datos';
 import { EnviarCorreoPermisosModal } from './modales';
 
@@ -13,12 +13,12 @@ export function setsIguales(a: Set<string>, b: Set<string>): boolean {
   for (const v of a) if (!b.has(v)) return false;
   return true;
 }
-export function SelectFiltro({ value, onChange, children, minWidth, disabled }: {
-  value: string|number; onChange:(e:React.ChangeEvent<HTMLSelectElement>)=>void; children:React.ReactNode; minWidth?:number; disabled?:boolean;
+export function SelectFiltro({ value, onChange, children, minWidth, disabled, ariaLabel }: {
+  value: string|number; onChange:(e:React.ChangeEvent<HTMLSelectElement>)=>void; children:React.ReactNode; minWidth?:number; disabled?:boolean; ariaLabel?:string;
 }) {
   return (
     <div style={{ position:'relative', minWidth }}>
-      <select value={value} onChange={onChange} disabled={disabled} style={{ ...filterInputStyle(disabled), width:'100%', paddingRight:28 }}>
+      <select aria-label={ariaLabel} value={value} onChange={onChange} disabled={disabled} style={{ ...filterInputStyle(disabled), width:'100%', paddingRight:28 }}>
         {children}
       </select>
       <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke={C.n700} strokeWidth="1.5" strokeLinecap="round"
@@ -118,10 +118,8 @@ export function DetalleUsuarioPermisos({ u, plantillas, onClose }: { u:Usuario; 
     </div>
   );
 }
-// ── Tab: Usuarios ─────────────────────────────────────────────────────────────
-// Switch verde de estado (Activo). Reemplaza el checkbox cuadrado que tenía
-// esta columna - ahora es un switch para que "activo/inactivo" se lea como
-// un estado (on/off), no como una casilla de selección.
+// ── Tab: Usuarios ── Switch verde de estado (Activo): se lee como un estado encendido/apagado,
+// no como una casilla de selección.
 export function SwitchActivo({ activo, onToggle }: { activo:boolean; onToggle:()=>void }) {
   return (
     <button onClick={e=>{ e.stopPropagation(); onToggle(); }} title={activo?'Activo':'Inactivo'}

@@ -1,12 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { PageHeader, InfoBox, Modal, Toast, RowAction } from '../../ui/primitives';
-import { Button, FormField, Input, Select, Checkbox } from '../../ui/formulario';
-import { StatusBadge } from '../../ui/tabla';
-import { radius, TABLA } from '../../ui/tokens';
-import { SearchInput } from '../../ui/filtros';
-import { IcPlus, IcEdit, IcTrash, IcClose, IcCheck, IcUser } from '../../ui/icons';
-import { C, FONT } from '../../ui/tokens';
+import { PageHeader, InfoBox, Modal, Toast, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select, Checkbox } from '@/components/ui/formulario';
+import { StatusBadge } from '@/components/ui/tabla';
+import { radius, TABLA , C, FONT } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcPlus, IcEdit, IcTrash, IcClose, IcCheck, IcUser } from '@/components/ui/icons';
 
 const F = FONT;
 
@@ -29,12 +28,11 @@ interface Perfil {
   nombre:string;tipoIdentificacion:string;numeroIdentificacion:string;pais:string;
   correo:string;telefono:string;contacto:string;direccion:string;
   cuentaCode:string;cuentaNombre:string;bancarias:Bancaria[];
-  // Condiciones comerciales - Issue: días de crédito faltaba por completo en este
+  // Condiciones comerciales - días de crédito faltaba por completo en este
   // formulario; la fecha de vencimiento de cada factura se calcula sumando estos días
   // (ese cálculo vive en Histórico clientes/proveedores, donde están las facturas reales).
   diasCredito:number;
-  // Fiscal - antes estos campos existían en la UI pero no estaban en el modelo,
-  // así que lo que se escribía ahí se perdía apenas se cerraba la pestaña.
+  // Datos fiscales del cliente o proveedor
   tipoIdTributaria:string;nombreComercial:string;representanteLegal:string;actividadEconomica:string;regimenTributario:string;
   provincia:string;canton:string;distrito:string;barrioSenas:string;
   creadoPor:string;creadoEn:string;
@@ -57,8 +55,8 @@ function Initials({ n, t }: { n:string;t:string }) {
   const txt = w.length>=2?(w[0][0]+w[1][0]).toUpperCase():n.slice(0,2).toUpperCase();
   return <div style={{ width:36,height:36,borderRadius:'50%',background:t==='02'?'#E6F1FB':'#E1F5EE',color:t==='02'?'#0C447C':'#085041',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,flexShrink:0,fontFamily:"'Montserrat',sans-serif" }}>{txt}</div>;
 }
-function SL({ c }: { c:React.ReactNode }) { return <p style={{ fontSize:10,fontWeight:600,color:C.n700,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6,paddingBottom:4,borderBottom:`1px solid ${C.n500}` }}>{c}</p>; }
-function RF({ l, v, m=false }: { l:string;v?:string;m?:boolean }) { return <div><p style={{ fontSize:10,color:C.n700,marginBottom:2 }}>{l}</p><p style={{ fontSize:12,color:v?C.n900:'#ECECEC',fontFamily:"'Montserrat',sans-serif" }}>{v||'-'}</p></div>; }
+function SL({ c }: { c:React.ReactNode }) { return <p style={{ fontSize:10.5,fontWeight:600,color:C.n700,textTransform:'uppercase',letterSpacing:'0.05em',marginBottom:6,paddingBottom:4,borderBottom:`1px solid ${C.n500}` }}>{c}</p>; }
+function RF({ l, v }: { l:string;v?:string;m?:boolean }) { return <div><p style={{ fontSize:10.5,color:C.n700,marginBottom:2 }}>{l}</p><p style={{ fontSize:12,color:v?C.n900:'#ECECEC',fontFamily:"'Montserrat',sans-serif" }}>{v||'-'}</p></div>; }
 
 function PerfilDetalle({ perfil,onUpdate,onClose }: { perfil:Perfil;onUpdate:(p:Perfil)=>void;onClose:()=>void }) {
   const [tab,setTab]=useState<TabId>('basica');
@@ -77,7 +75,7 @@ function PerfilDetalle({ perfil,onUpdate,onClose }: { perfil:Perfil;onUpdate:(p:
           <Initials n={perfil.nombre} t={perfil.tipo} />
           <div style={{ minWidth:0 }}>
             <p style={{ fontSize:13,fontWeight:500,color:C.n900 }}>{perfil.nombre}</p>
-            <div style={{ display:'flex',gap:6,marginTop:2 }}><span style={{ fontSize:10,color:C.n900,fontFamily:F }}>{perfil.auxId}</span><span style={{ fontSize:10,color:C.n700 }}>·</span><span style={{ fontSize:10,color:C.n900,fontFamily:F }}>{fullCode}</span></div>
+            <div style={{ display:'flex',gap:6,marginTop:2 }}><span style={{ fontSize:10.5,color:C.n900,fontFamily:F }}>{perfil.auxId}</span><span style={{ fontSize:10.5,color:C.n700 }}>·</span><span style={{ fontSize:10.5,color:C.n900,fontFamily:F }}>{fullCode}</span></div>
           </div>
         </div>
         <div style={{ display:'flex',gap:6,alignItems:'center',flexShrink:0 }}>
@@ -91,7 +89,7 @@ function PerfilDetalle({ perfil,onUpdate,onClose }: { perfil:Perfil;onUpdate:(p:
         {(['basica','bancaria','fiscal'] as TabId[]).map(id=>(
           <button key={id} onClick={()=>setTab(id)} style={{ padding:'0 14px',height:40,fontSize:12,cursor:'pointer',border:'none',background:'none',color:tab===id?C.brand:C.n700,fontWeight:400,borderBottom:`2px solid ${tab===id?C.brand:'transparent'}`,fontFamily:"'Montserrat',sans-serif",display:'flex',alignItems:'center',gap:6 }}>
             {id==='basica'?'Información básica':id==='bancaria'?'Cuentas bancarias':'Fiscal'}
-            {id==='fiscal'&&<span style={{ fontSize:9,padding:'1px 5px',background:C.n200,color:C.n700,borderRadius:radius.md }}>Opcional</span>}
+            {id==='fiscal'&&<span style={{ fontSize:10.5,padding:'1px 5px',background:C.n200,color:C.n700,borderRadius:radius.md }}>Opcional</span>}
           </button>
         ))}
       </div>
@@ -99,8 +97,8 @@ function PerfilDetalle({ perfil,onUpdate,onClose }: { perfil:Perfil;onUpdate:(p:
         {tab==='basica'&&(
           <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
             <div style={{ background:C.brandBg,border:`1px solid ${C.brandBd}`,borderRadius:radius.md,padding:'10px 14px',display:'flex',justifyContent:'space-between' }}>
-              <div><p style={{ fontSize:10,color:'#8A6200',marginBottom:2 }}>ID auxiliar (4° nivel)</p><span style={{ fontSize:13,fontWeight:500,color:'#412402',fontFamily:F }}>{fullCode}</span></div>
-              <div style={{ textAlign:'right' }}><p style={{ fontSize:10,color:'#8A6200',marginBottom:2 }}>Cuenta vinculada</p><p style={{ fontSize:11,color:'#633806' }}>{perfil.cuentaCode} · {perfil.cuentaNombre}</p></div>
+              <div><p style={{ fontSize:10.5,color:'#8A6200',marginBottom:2 }}>ID auxiliar (4° nivel)</p><span style={{ fontSize:13,fontWeight:500,color:'#412402',fontFamily:F }}>{fullCode}</span></div>
+              <div style={{ textAlign:'right' }}><p style={{ fontSize:10.5,color:'#8A6200',marginBottom:2 }}>Cuenta vinculada</p><p style={{ fontSize:11,color:'#633806' }}>{perfil.cuentaCode} · {perfil.cuentaNombre}</p></div>
             </div>
             <div><SL c="Datos de identificación" /><div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}><RF l="Nombre / Razón social" v={perfil.nombre} /><RF l="Tipo de identificación" v={TIPO_LABEL[perfil.tipoIdentificacion]} /><RF l="Número de identificación" v={perfil.numeroIdentificacion} m /><RF l="País" v={PAIS_LABEL[perfil.pais]} /></div></div>
             <div><SL c="Condiciones comerciales" /><div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}><RF l="Días de crédito" v={perfil.diasCredito>0?`${perfil.diasCredito} días`:'Contado (0 días)'} /></div></div>
@@ -116,7 +114,7 @@ function PerfilDetalle({ perfil,onUpdate,onClose }: { perfil:Perfil;onUpdate:(p:
                 {perfil.bancarias.length===0&&!addB&&<tr><td colSpan={6} style={TABLA.empty}>No hay cuentas bancarias registradas.</td></tr>}
                 {perfil.bancarias.map(b=>(
                   <tr key={b.id} style={{ borderTop:'1px solid #ECECEC' }}>
-                    <td style={{ padding:'8px 12px' }}>{b.banco}{b.principal&&<span style={{ fontSize:9,marginLeft:6,padding:'1px 5px',background:C.brandBg,color:C.brand,border:`1px solid ${C.brandBd}`,borderRadius:radius.md }}>Principal</span>}</td>
+                    <td style={{ padding:'8px 12px' }}>{b.banco}{b.principal&&<span style={{ fontSize:10.5,marginLeft:6,padding:'1px 5px',background:C.brandBg,color:C.brand,border:`1px solid ${C.brandBd}`,borderRadius:radius.md }}>Principal</span>}</td>
                     <td style={{ padding:'8px 12px' }}>{b.moneda}</td>
                     <td style={{ padding:'8px 12px' }}>{TIPOS_CUENTA.find(t=>t.value===b.tipo)?.label}</td>
                     <td style={{ padding:'8px 12px' }}>{b.titulo||'-'}</td>
@@ -206,8 +204,9 @@ export function ClientesProveedoresPage() {
   const [nf,setNf]=useState({ nombre:'',tipoIdentificacion:'juridica',numeroIdentificacion:'',pais:'CR',correo:'',telefono:'',contacto:'',direccion:'',diasCredito:'' });
   const lista=perfiles.filter(p=>p.tipo===tipo&&(!search||p.nombre.toLowerCase().includes(search.toLowerCase())||p.auxId.toLowerCase().includes(search.toLowerCase())));
 
-  // Issue #2: acceso directo desde el Catálogo de cuentas (?open=<código de cuenta
+  // acceso directo desde el Catálogo de cuentas (?open=<código de cuenta
   // auxiliar>) - abre de una vez el perfil completo del cliente/proveedor.
+  /* eslint-disable react-hooks/set-state-in-effect -- la página se prerenderiza sin parámetros; los de la URL se leen en el navegador después de hidratar */
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -221,8 +220,9 @@ export function ClientesProveedoresPage() {
         ?? (nombreParam ? pool.find(p => p.nombre.toLowerCase() === nombreParam.toLowerCase()) : undefined);
       if (match) { setTipo(match.tipo); setSelected(match); }
     } catch { /* noop - SSR o entorno sin window */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- los parámetros de la URL se leen una sola vez, al abrir la pantalla
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
   function create() {
     if(!nf.nombre||!nf.numeroIdentificacion)return;
     const count=perfiles.filter(p=>p.tipo===tipo).length+1;
@@ -254,7 +254,7 @@ export function ClientesProveedoresPage() {
             {lista.map(p=>(
               <button key={p.id} onClick={()=>setSelected(p)} style={{ width:'100%',padding:'10px 12px',background:selected?.id===p.id?C.brandBg:C.n000,border:'none',borderBottom:`1px solid ${C.n500}`,cursor:'pointer',display:'flex',alignItems:'center',gap:10,textAlign:'left',fontFamily:"'Montserrat',sans-serif" }}>
                 <Initials n={p.nombre} t={p.tipo} />
-                <div style={{ flex:1,minWidth:0 }}><p style={{ fontSize:12,fontWeight:400,color:C.n900,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{p.nombre}</p><p style={{ fontSize:10,color:C.n700,fontFamily:"'Montserrat',sans-serif" }}>{p.auxId}</p></div>
+                <div style={{ flex:1,minWidth:0 }}><p style={{ fontSize:12,fontWeight:400,color:C.n900,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis' }}>{p.nombre}</p><p style={{ fontSize:10.5,color:C.n700,fontFamily:"'Montserrat',sans-serif" }}>{p.auxId}</p></div>
                 <StatusBadge label={p.activo?'Activo':'Inactivo'} color={p.activo?'green':'gray'} />
               </button>
             ))}

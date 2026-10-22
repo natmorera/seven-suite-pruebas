@@ -104,14 +104,20 @@ export function MoverHuesped({ reservaId, destino, onClose, onListo }: { reserva
   );
 }
 
-export function BloquearHab({ hab, onClose, onListo }: { hab: Habitacion; onClose: () => void; onListo: () => void }) {
+/** Bloquear una habitación libre, o editar el bloqueo manual vigente (`editar`). */
+export function BloquearHab({ hab, editar, onClose, onListo }: { hab: Habitacion; editar?: boolean; onClose: () => void; onListo: () => void }) {
   const h = useHotel();
-  const [motivo, setMotivo] = useState('');
-  const [hasta, setHasta] = useState('');
+  const actual = editar ? h.bloqueos.find(b => b.habitacion === hab.numero && !b.tareaId && b.desde <= HOY && (!b.hasta || b.hasta >= HOY)) : undefined;
+  const [motivo, setMotivo] = useState(actual?.motivo ?? (editar ? hab.motivoBloqueo : ''));
+  const [hasta, setHasta] = useState(actual?.hasta ?? '');
+  const deTarea = editar && !actual;
   return (
-    <Modal open onClose={onClose} title={`Bloquear habitación ${hab.numero}`} width={460}
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button disabled={!motivo.trim()} onClick={() => { h.bloquear(hab.numero, motivo.trim(), hasta); onListo(); }}>Bloquear</Button></>}>
-      <CamposBloqueo motivo={motivo} setMotivo={setMotivo} hasta={hasta} setHasta={setHasta} />
+    <Modal open onClose={onClose} title={`${editar ? 'Editar bloqueo' : 'Bloquear habitación'} ${hab.numero}`} width={460}
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button>
+        <Button disabled={!motivo.trim() || deTarea} onClick={() => { if (editar) h.editarBloqueo(hab.numero, motivo.trim(), hasta); else h.bloquear(hab.numero, motivo.trim(), hasta); onListo(); }}>{editar ? 'Guardar cambios' : 'Bloquear'}</Button></>}>
+      {deTarea
+        ? <p style={{ margin: 0, fontSize: 12.5, color: C.n700 }}>Este bloqueo viene de una tarea. Se edita desde la tarea en Hospedaje › Tareas o en Ama de llaves › Bloqueo de habitaciones.</p>
+        : <CamposBloqueo motivo={motivo} setMotivo={setMotivo} hasta={hasta} setHasta={setHasta} />}
     </Modal>
   );
 }

@@ -8,7 +8,7 @@ import { C, FONT, radius } from '@/components/suite/tokens';
 import { StatusBadge } from '@/components/suite/ui';
 import { Buscador } from '@/components/configuracion/kit';
 import { AccionesEnHeader, FiltrosEnBarra, Pantalla } from '@/components/layout/Pantalla';
-import { FechaBoton, FiltroChecks } from '@/components/hotel/ui';
+import { FiltroChecks, RangoBoton } from '@/components/hotel/ui';
 import { useHotel } from '@/components/hotel/store';
 import { HOY, TIPOS, contratoDeTarifa, fmtF, tareaAbierta } from '@/components/hotel/datos';
 import { CUPOS } from '@/components/hotel/reservas';
@@ -61,7 +61,7 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
 
   const estancias = useMemo(() => h.reservas.filter(r => ['In-House', 'Solicitada', 'Confirmada'].includes(r.estado) && tipoVisible(tipos, r.tipo)
     && (!q || r.habitacion.includes(q) || r.numero.toLowerCase().includes(q.toLowerCase()))
-    && (!estado || (estado === 'Ocupada' ? r.estado === 'In-House' : r.estado === estado)) && (!entrada || r.entrada === entrada) && (!salida || r.salida === salida)
+    && (!estado || (estado === 'Ocupada' ? r.estado === 'In-House' : r.estado === estado)) && (!entrada || r.entrada >= entrada) && (!salida || r.salida <= salida)
     && (!fecha || (r.entrada <= fecha && r.salida > fecha))).sort((a, b) => a.entrada.localeCompare(b.entrada)), [h.reservas, tipos, q, estado, entrada, salida, fecha]);
   const bloqueos = useMemo(() => {
     const out: { num: string; tipo: string; desde: string; hasta: string; motivo: string }[] = [];
@@ -81,7 +81,7 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
     const ocupadas = rs.filter(r => r.estado === 'In-House').length;
     const cupos = c.cupos * nt;
     const cupon = rs.filter(r => r.idExterno).length;
-    return { t, grupo: c.grupo, cupos, release: c.release, reservadas, ocupadas, total: reservadas + ocupadas, cupon, libres: cupos - reservadas - ocupadas };
+    return { t, grupo: c.grupo, cupos, reservadas, ocupadas, total: reservadas + ocupadas, cupon, libres: cupos - reservadas - ocupadas };
   }), [h.reservas, tipos, q, ref]);
 
   const filtroTipo = <FiltroChecks label="Tipo de habitación" value={tipos} onChange={setTipos} opciones={TIPOS.map(t => ({ value: t.id, label: `${codigoTipo(t.id)} · ${t.nombre}` }))} />;
@@ -93,7 +93,7 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
     filas = estancias.map(r => [r.numero, r.estado === 'In-House' ? 'Ocupada' : r.estado, nombreT(r.tipo), r.tarifa, r.nombre, r.habitacion || '—', fmtF(r.entrada), fmtF(r.salida), r.vip ? 'Sí' : 'No', r.depGarantia > 0 ? 'Sí' : 'No']);
     filtros = <><div style={{ width: 200 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por número" /></div>
       <FiltroUno label="Estado" value={estado} onChange={setEstado} opciones={['Ocupada', 'Solicitada', 'Confirmada'].map(e => ({ value: e, label: e }))} />{filtroTipo}
-      <FechaBoton label="Fecha de entrada" value={entrada} onChange={setEntrada} /><FechaBoton label="Fecha de salida" value={salida} onChange={setSalida} />{chipFecha}</>;
+      <RangoBoton label="Estancia" desde={entrada} hasta={salida} onChange={(d, x) => { setEntrada(d); setSalida(x); }} futuro />{chipFecha}</>;
     tabla = <TablaP headers={headers} alto="calc(100vh - 330px)">
       {!estancias.length && <Vacio cols={10} />}
       {estancias.map(r => (
@@ -108,7 +108,7 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
   } else if (tab === 'Fuera de orden') {
     headers = ['Número', 'Desde', 'Hasta', 'Motivo'];
     filas = bloqueos.map(b => [b.num, fmtF(b.desde), fmtF(b.hasta), b.motivo]);
-    filtros = <><div style={{ width: 200 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por número" /></div>{filtroTipo}<FechaBoton label="Fecha desde" value={desde} onChange={setDesde} /><FechaBoton label="Fecha hasta" value={hasta} onChange={setHasta} /></>;
+    filtros = <><div style={{ width: 200 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por número" /></div>{filtroTipo}<RangoBoton label="Período" desde={desde} hasta={hasta} onChange={(d, x) => { setDesde(d); setHasta(x); }} /></>;
     tabla = <TablaP headers={headers} alto="calc(100vh - 330px)">{!bloqueos.length && <Vacio cols={4} />}{bloqueos.map((b, i) => <tr key={i} className="suite-fila"><td style={tdP()}>{b.num}</td><td style={tdP()}>{fmtF(b.desde)}</td><td style={tdP()}>{fmtF(b.hasta)}</td><td style={tdP()}>{b.motivo}</td></tr>)}</TablaP>;
   } else if (tab === 'Disponibles') {
     headers = ['Número', 'Estado', 'Tipo de habitación', 'Descripción'];
@@ -116,11 +116,11 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
     filtros = <><div style={{ width: 200 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por número" /></div>{filtroTipo}{chipFecha || <span style={{ fontSize: 12, color: C.n700 }}>Disponibles hoy ({fmtF(HOY)})</span>}</>;
     tabla = <TablaP headers={headers} alto="calc(100vh - 330px)">{!disponibles.length && <Vacio cols={4} />}{disponibles.map(x => <tr key={x.numero} className="suite-fila"><td style={tdP()}>{x.numero}</td><td style={tdP()}>{x.sucia ? <StatusBadge label="Sucia" color="red" /> : ''}</td><td style={tdP()}>{codigoTipo(x.tipo)}</td><td style={tdP()}>{nombreT(x.tipo).toUpperCase()}</td></tr>)}</TablaP>;
   } else {
-    headers = ['Empresa', 'Tarifa', 'Cupos', 'Release', 'Reservadas', 'Ocupadas', 'Total (Res+Ocup)', 'Total Cupón', 'Libres'];
-    filas = tarifas.map(x => [x.grupo, `${x.t} · ${contratoDeTarifa(x.t)}`, x.cupos, x.release, x.reservadas, x.ocupadas, x.total, x.cupon, x.libres]);
+    headers = ['Empresa', 'Tarifa', 'Cupos', 'Reservadas', 'Ocupadas', 'Total (Res+Ocup)', 'Total Cupón', 'Libres'];
+    filas = tarifas.map(x => [x.grupo, `${x.t} · ${contratoDeTarifa(x.t)}`, x.cupos, x.reservadas, x.ocupadas, x.total, x.cupon, x.libres]);
     filtros = <><div style={{ width: 220 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por empresa o tarifa" /></div>{filtroTipo}{chipFecha || <span style={{ fontSize: 12, color: C.n700 }}>Para el {fmtF(HOY)}</span>}</>;
-    tabla = <TablaP headers={headers} derecha={[2, 3, 4, 5, 6, 7, 8]} alto="calc(100vh - 330px)">{!tarifas.length && <Vacio cols={9} />}{tarifas.map(x => (
-      <tr key={x.t} className="suite-fila"><td style={tdP()}>{x.grupo}</td><td style={tdP()}>{x.t} <span style={{ color: C.n700 }}>· {contratoDeTarifa(x.t)}</span></td><td style={tdP(true)}>{x.cupos}</td><td style={tdP(true)}>{x.release}</td><td style={tdP(true)}>{x.reservadas}</td><td style={tdP(true)}>{x.ocupadas}</td>
+    tabla = <TablaP headers={headers} derecha={[2, 3, 4, 5, 6, 7, 8]} alto="calc(100vh - 330px)">{!tarifas.length && <Vacio cols={8} />}{tarifas.map(x => (
+      <tr key={x.t} className="suite-fila"><td style={tdP()}>{x.grupo}</td><td style={tdP()}>{x.t} <span style={{ color: C.n700 }}>· {contratoDeTarifa(x.t)}</span></td><td style={tdP(true)}>{x.cupos}</td><td style={tdP(true)}>{x.reservadas}</td><td style={tdP(true)}>{x.ocupadas}</td>
         <td style={tdP(true, { fontWeight: 600, color: x.cupos > 0 && x.total > x.cupos ? C.error : C.n900 })}>{x.total}</td><td style={tdP(true)}>{x.cupon}</td><td style={tdP(true, { color: x.libres < 0 ? C.error : C.n900 })}>{x.cupos ? x.libres : '—'}</td></tr>))}</TablaP>;
   }
   const criterio = `${tipos.length ? `Tipo: ${tipos.join(', ')}` : 'Todos los tipos'}${fecha ? ` · Fecha: ${fmtF(fecha)}` : ''}`;
@@ -130,7 +130,7 @@ function Contenido({ tab, tipoInicial, fechaInicial }: { tab: Tab; tipoInicial: 
       <AccionesEnHeader><ExportarReporte disabled={!filas.length} datos={() => ({ nombre: `detalle-tipo-${tab.toLowerCase().replace(/\s/g, '-')}`, titulo: `Detalle del tipo de habitación · ${tab}`, criterio, headers, filas })}
           pdf={<HojaSistema titulo="Detalle del tipo de habitación" subtitulo={tab} criterio={criterio}><TablaReporte headers={headers}>{filas.map((f, i) => <tr key={i}>{f.map((c, j) => <td key={j} style={tdR(typeof c === 'number')}>{c}</td>)}</tr>)}</TablaReporte></HojaSistema>} /></AccionesEnHeader>
       {tabla}
-      {tab === 'Tarifas' && <span style={{ fontSize: 11.5, color: C.n700 }}>Cupos y release por contrato (Configuración › Tarifas / Contratos). «Total (Res+Ocup)» en rojo indica overbooking contractual. Fecha de referencia: {fmtF(ref)}.</span>}
+      {tab === 'Tarifas' && <span style={{ fontSize: 11.5, color: C.n700 }}>Cupos por contrato (Configuración › Tarifas / Contratos). «Total (Res+Ocup)» en rojo indica overbooking contractual. Fecha de referencia: {fmtF(ref)}.</span>}
     </>
   );
 }

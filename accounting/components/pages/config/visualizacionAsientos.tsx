@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 // ── Visualización de asientos: Detallado vs. Consolidado ────────────────────
 // Configuración a nivel de empresa (Parámetros generales → Asientos contables).

@@ -17,7 +17,7 @@ import { useHotel, nuevoId } from '@/components/hotel/store';
 import { HOY, TIPOS, fmtF, sumarDias, tareaAbierta, type BloqueoHab } from '@/components/hotel/datos';
 import { bloqueaHabitacion } from '@/components/hotel/reservas';
 import { bloqueoCruza } from '@/components/reservaciones/inventario';
-import { Alerta, BotonExportar, FechaBoton, HojaReporte, TablaImpresa, exportarCSV, usePrint } from '@/components/hotel/ui';
+import { Alerta, BotonExportar, HojaReporte, TablaImpresa, exportarCSV, usePrint, RangoBoton } from '@/components/hotel/ui';
 import { Tarjeta, TextoEnLinea, td, th } from './comun';
 
 interface Fila extends BloqueoHab { tarea?: string }
@@ -111,8 +111,7 @@ export default function BloqueoHabitaciones() {
       </>}
       filtros={<>
         <Buscador value={q} onChange={v => setQ(v.replace(/\D/g, ''))} placeholder="Buscar habitación" width={200} />
-        <FechaBoton label="Fecha desde" value={fDesde} onChange={setFDesde} />
-        <FechaBoton label="Fecha hasta" value={fHasta} onChange={setFHasta} min={fDesde || undefined} />
+        <RangoBoton label="Período" desde={fDesde} hasta={fHasta} onChange={(d, x) => { setFDesde(d); setFHasta(x); }} futuro />
         <Checkbox checked={historial} onChange={setHistorial} label="Mostrar finalizados" />
         {(q || fDesde || fHasta) ? <Button variant="ghost" onClick={() => { setQ(''); setFDesde(''); setFHasta(''); }}>Limpiar filtros</Button> : null}
       </>}

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { C, radius } from '../../../ui/tokens';
+import { C, radius } from '@/components/ui/tokens';
 import { BRAND, CUENTAS, type Cuenta, F, type RangoCuentas } from './datos';
 import { MiniCuentaCombo } from './piezas';
 
@@ -56,7 +56,7 @@ export function CuentaFiltroUnico({ cuenta, rango, onSelectCuenta, onSelectRango
           <div style={{ padding:'10px 14px', borderBottom:`1px solid ${C.n500}` }}>
             <p style={{ fontSize:12, fontWeight:600, margin:'0 0 8px' }}>Seleccionar cuenta</p>
 
-            {/* Nivel tabs */}
+            {/* Pestañas de nivel */}
             <div style={{ display:'flex', gap:4, marginBottom:8 }}>
               {(['detalle','auxiliar'] as const).map(n=>(
                 <button key={n} onClick={()=>setNivel(n)}
@@ -84,7 +84,7 @@ export function CuentaFiltroUnico({ cuenta, rango, onSelectCuenta, onSelectRango
               <div style={{ padding:'10px 14px 0' }}>
                 <div style={{ position:'relative' }}>
                   <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke={C.n700} strokeWidth="1.3" style={{ position:'absolute', left:8, top:'50%', transform:'translateY(-50%)' }}><circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l-2-2"/></svg>
-                  <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por código o nombre…"
+                  <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por código o nombre…" aria-label="Buscar por código o nombre…"
                     style={{ width:'100%', height:32, paddingLeft:26, paddingRight:8, border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
               </div>

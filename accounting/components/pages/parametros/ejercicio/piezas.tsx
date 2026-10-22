@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { radius } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
+import { radius , C } from '@/components/ui/tokens';
 import { ESTADO_STYLE, F, type Periodo } from './datos';
 
 export function EstadoDropdown({ periodo, onCambiar }: { periodo:Periodo; onCambiar:(e:Periodo['estado'])=>void }) {

@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Toast, PageHeader } from '../../ui/primitives';
-import { C, USUARIO_ACTUAL, FONT, radius, PAGE_PAD, TABLA } from '../../ui/tokens';
-import { IcCheck, IcEye, IcEyeOff } from '../../ui/icons';
+import { Toast, PageHeader } from '@/components/ui/primitives';
+import { C, USUARIO_ACTUAL, FONT, radius, PAGE_PAD, TABLA } from '@/components/ui/tokens';
+import { IcCheck, IcEye, IcEyeOff } from '@/components/ui/icons';
 import { USUARIOS_INIT, PLANTILLAS_INIT, PERMISSIONS_TREE, countChecked, countLeaves, leafIsChecked } from './permissionsData';
 
 const F = FONT;
@@ -21,11 +21,8 @@ const TIPOS_DOCUMENTO = [
   { tipo:'Recibos',    codigo:'REC-001' },
 ];
 
-// Issue: "Mi firma" se quitó de Mi cuenta - la configuración de firmas ahora
-// vive en un único lugar (Parámetros generales > Firmas), donde un
-// administrador enlaza cada firma a un usuario del sistema y define qué
-// reportes puede firmar y en qué orden. Tener dos pantallas manejando lo
-// mismo (acá y allá) generaba confusión.
+// Las firmas se configuran en un único lugar: Parámetros generales › Firmas, donde se enlaza
+// cada firma a un usuario y se define qué reportes firma y en qué orden.
 type Tab = 'perfil' | 'permisos' | 'clave' | 'impresora';
 
 // ── Vista de solo lectura de los permisos del usuario logueado ──────────────
@@ -43,8 +40,7 @@ function MisPermisosView({ perms }: { perms: Set<string> }) {
             const total = countLeaves(mod);
             const leaves = mod.leaves ?? (mod.groups ?? []).flatMap(g => g.leaves);
             if (n === 0) {
-              // Antes esto se ocultaba del todo cuando no tenías nada aquí, lo
-              // cual parecía que la sección ni existía. Mejor decirlo explícito.
+              // Si no hay nada asignado se dice explícitamente.
               return (
                 <div key={mod.key} style={{ border:`1px solid ${C.n500}`, borderRadius:radius.md, marginBottom:8, padding:'10px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', background:'#F9F9F9' }}>
                   <span style={{ fontSize:13, fontWeight:500, color:C.n700 }}>{mod.label}</span>
@@ -95,6 +91,7 @@ export default function MiCuenta() {
   const [error, setError] = useState('');
 
   // Acceso directo por URL a una pestaña específica (?tab=impresora, etc.)
+  /* eslint-disable react-hooks/set-state-in-effect -- la página se prerenderiza sin parámetros; la pestaña de la URL se lee en el navegador después de hidratar */
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -104,6 +101,7 @@ export default function MiCuenta() {
       }
     } catch { /* noop - SSR o entorno sin window */ }
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const usuario = USUARIOS_INIT.find(u => u.usuario === USUARIO_ACTUAL);
   const rol = usuario?.plantillaId ? PLANTILLAS_INIT.find(p => p.id === usuario.plantillaId) : undefined;
@@ -142,27 +140,27 @@ export default function MiCuenta() {
           <div style={{ background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:10, padding:20, display:'flex', flexDirection:'column', gap:14 }}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Usuario</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Usuario</p>
                 <p style={{ fontSize:13, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{usuario.usuario}</p>
               </div>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Nombre</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Nombre</p>
                 <p style={{ fontSize:13, fontWeight:500, color:C.n900, margin:0 }}>{usuario.descripcion}</p>
               </div>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Rol</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Rol</p>
                 <p style={{ fontSize:13, fontWeight:500, color:C.n900, margin:0 }}>{rol?.nombre ?? 'Sin rol asignado'}</p>
               </div>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Estado</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Estado</p>
                 <p style={{ fontSize:13, fontWeight:500, color: usuario.activo?C.success:C.n700, margin:0 }}>{usuario.activo?'Activo':'Inactivo'}</p>
               </div>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Último acceso</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Último acceso</p>
                 <p style={{ fontSize:13, color:C.n900, margin:0, fontFamily:F }}>{usuario.ultimoAcceso}</p>
               </div>
               <div>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px' }}>Último cambio de contraseña</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px' }}>Último cambio de contraseña</p>
                 <p style={{ fontSize:13, color:C.n900, margin:0, fontFamily:F }}>{usuario.ultimoCambioClave}</p>
               </div>
             </div>
@@ -190,7 +188,7 @@ export default function MiCuenta() {
             <div>
               <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Contraseña actual</label>
               <div style={{ position:'relative' }}>
-                <input type={verActual?'text':'password'} value={actual} onChange={e=>{setActual(e.target.value); setError('');}} style={inputStyle}/>
+                <input aria-label="Contraseña actual" type={verActual?'text':'password'} value={actual} onChange={e=>{setActual(e.target.value); setError('');}} style={inputStyle}/>
                 <button type="button" onClick={()=>setVerActual(v=>!v)} title={verActual?'Ocultar':'Mostrar'}
                   style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:C.n700, padding:4, display:'flex' }}>
                   {verActual ? <IcEyeOff className="w-3.5 h-3.5"/> : <IcEye className="w-3.5 h-3.5"/>}
@@ -200,7 +198,7 @@ export default function MiCuenta() {
             <div>
               <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Nueva contraseña</label>
               <div style={{ position:'relative' }}>
-                <input type={verNueva?'text':'password'} value={nueva} onChange={e=>{setNueva(e.target.value); setError('');}} placeholder="Mínimo 8 caracteres" style={inputStyle}/>
+                <input type={verNueva?'text':'password'} value={nueva} onChange={e=>{setNueva(e.target.value); setError('');}} placeholder="Mínimo 8 caracteres" aria-label="Mínimo 8 caracteres" style={inputStyle}/>
                 <button type="button" onClick={()=>setVerNueva(v=>!v)} title={verNueva?'Ocultar':'Mostrar'}
                   style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:C.n700, padding:4, display:'flex' }}>
                   {verNueva ? <IcEyeOff className="w-3.5 h-3.5"/> : <IcEye className="w-3.5 h-3.5"/>}
@@ -209,7 +207,7 @@ export default function MiCuenta() {
             </div>
             <div>
               <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Confirmar nueva contraseña</label>
-              <input type={verNueva?'text':'password'} value={confirmar} onChange={e=>{setConfirmar(e.target.value); setError('');}}
+              <input aria-label="Confirmar nueva contraseña" type={verNueva?'text':'password'} value={confirmar} onChange={e=>{setConfirmar(e.target.value); setError('');}}
                 style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
             {error && <p style={{ fontSize:11, color:C.error, margin:0 }}>{error}</p>}
@@ -240,7 +238,7 @@ export default function MiCuenta() {
                     </td>
                     <td style={{ padding:'8px 12px', color:C.n700, fontFamily:F }}>{d.codigo}</td>
                     <td style={{ padding:'8px 12px' }}>
-                      <select value={impresoras[d.codigo] ?? ''} onChange={e=>{
+                      <select aria-label="Impresora" value={impresoras[d.codigo] ?? ''} onChange={e=>{
                           const v = e.target.value;
                           setImpresoras(prev=>({ ...prev, [d.codigo]: v }));
                           setToast(v ? `${d.tipo}: se va a imprimir en ${v}` : `${d.tipo}: se quitó tu preferencia, usa la de la empresa`);

@@ -16,8 +16,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { C, FONT, radius, SIZE } from '@/components/suite/tokens';
-import { Radio, SearchInput, Switch } from '@/components/suite/ui';
+import { SearchInput, Switch } from '@/components/suite/ui';
 import { IcChevronDown } from '@/components/suite/icons';
+import { FiltroFecha } from '@/components/suite/FiltroFecha';
 import { Popover, norm } from '@/components/configuracion/kit';
 import { HOY, fmtF } from '@/components/hotel/datos';
 
@@ -176,7 +177,7 @@ export function FiltroUnico({ label, opciones, value, onChange, ancho = 240 }: {
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }}>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-haspopup="listbox" aria-label={`${label}: ${sel?.label ?? ''}`} style={boton(false, open)}>
-        {label}: {sel?.label ?? '—'}<Chevron arriba={open} />
+        <span style={{ maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis' }} title={sel?.label}>{label}: {sel?.label ?? '—'}</span><Chevron arriba={open} />
       </button>
       <Popover open={open} onClose={() => setOpen(false)} width={ancho}>
         <div role="listbox" aria-label={label} style={{ padding: '4px 0', maxHeight: 320, overflowY: 'auto' }}>
@@ -215,53 +216,58 @@ function Fecha({ label, value, onChange, limpiable }: { label: string; value: st
   );
 }
 function Rango({ label, value, onChange }: { label: string; value: [string, string]; onChange: (v: [string, string]) => void }) {
+  return <FiltroFecha label={label} desde={value[0]} hasta={value[1]} onChange={(d, h) => onChange([d, h])} />;
+}
+
+/** Controles de la barra en el orden de las definiciones. Con dos o más casillas o interruptores, estos se agrupan en
+ *  «Opciones ▾» al final junto con las modalidades excluyentes (agrupar, vista), para que la barra quede en una sola línea. */
+export function ControlesFiltros({ f }: { f: Filtros }) {
+  const binarios = f.defs.filter(d => d.tipo === 'check' || d.tipo === 'toggle');
+  const agrupar = binarios.length >= 2;
+  return <>{f.defs.map(d => {
+    switch (d.tipo) {
+      case 'busqueda': return <SearchInput key={d.k} value={f.s(d.k)} onChange={x => f.set(d.k, x)} placeholder={d.placeholder} width={d.ancho ?? 200} />;
+      case 'multi': return <FiltroMulti key={d.k} label={d.label} opciones={d.opciones} value={f.m(d.k)} onChange={x => f.set(d.k, x)} />;
+      case 'unico': return <FiltroUnico key={d.k} label={d.label} opciones={d.opciones} value={f.s(d.k)} onChange={x => f.set(d.k, x)} />;
+      // Las opciones excluyentes van en un desplegable para que la barra quede en una sola línea
+      case 'radio': return agrupar ? null : <FiltroUnico key={d.k} label={d.label ?? 'Vista'} opciones={d.opciones} value={f.s(d.k)} onChange={x => f.set(d.k, x)} />;
+      case 'check': return agrupar ? null : <CheckFiltro key={d.k} label={d.label} value={f.b(d.k)} onChange={x => f.set(d.k, x)} />;
+      case 'toggle': return agrupar ? null : <span key={d.k} style={{ whiteSpace: 'nowrap' }}><Switch checked={f.b(d.k)} onChange={x => f.set(d.k, x)} label={d.label} /></span>;
+      case 'fecha': return <Fecha key={d.k} label={d.label} value={f.s(d.k)} onChange={x => f.set(d.k, x)} />;
+      case 'rango': return <Rango key={d.k} label={d.label} value={f.r(d.k)} onChange={x => f.set(d.k, x)} />;
+    }
+  })}{agrupar && <Opciones f={f} defs={[...f.defs.filter(d => d.tipo === 'radio'), ...binarios]} />}</>;
+}
+
+/** «Opciones ▾»: casillas e interruptores del reporte en un desplegable. */
+function Opciones({ f, defs }: { f: Filtros; defs: DefFiltro[] }) {
   const [open, setOpen] = useState(false);
-  const [d, h] = value;
-  const activo = !!(d || h);
-  const atajo = (l: string, a: string, b: string) => <button key={l} type="button" onClick={() => onChange([a, b])} style={{ fontSize: 11, padding: '4px 8px', border: `1px solid ${C.n500}`, borderRadius: radius.pill, background: C.n000, cursor: 'pointer', fontFamily: FONT }}>{l}</button>;
-  const sumar = (n: number) => { const x = new Date(HOY + 'T12:00:00'); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
+  const activas = defs.filter(d => (d.tipo === 'radio' ? f.s(d.k) !== d.def : f.b(d.k) !== (d.tipo === 'toggle' ? (d.def ?? false) : false))).length;
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }}>
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} style={boton(false, open)}>
-        {label}: {activo ? rangoTxt(value) : 'Todas'}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} style={boton(activas > 0, open)}>
+        Opciones{activas ? ` (${activas})` : ''}<Chevron arriba={open} />
       </button>
-      <Popover open={open} onClose={() => setOpen(false)} width={290}>
-        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10, fontFamily: FONT }}>
-          {([['Desde', d, (x: string) => onChange([x, h])], ['Hasta', h, (x: string) => onChange([d, x])]] as const).map(([l, x, f]) => (
-            <label key={l} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: C.n700 }}>{l}
-              <input type="date" value={x} onChange={e => f(e.target.value)} aria-label={`${label} ${l.toLowerCase()}`} className="suite-campo" style={{ height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT }} />
-            </label>
-          ))}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {atajo('Hoy', HOY, HOY)}{atajo('Próx. 7 días', HOY, sumar(7))}{atajo('Últ. 7 días', sumar(-7), HOY)}{atajo('Este mes', HOY.slice(0, 8) + '01', HOY)}
-            {activo && <button type="button" onClick={() => { onChange(['', '']); setOpen(false); }} style={{ fontSize: 11, padding: '4px 8px', border: 'none', background: 'none', color: C.error, cursor: 'pointer', fontFamily: FONT, textDecoration: 'underline' }}>Quitar</button>}
-          </div>
+      <Popover open={open} onClose={() => setOpen(false)} width={260} align="right">
+        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: FONT }}>
+          {defs.map(d => d.tipo === 'radio' ? (
+            <div key={d.k} role="radiogroup" aria-label={d.label ?? 'Vista'} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: `1px solid ${C.n500}` }}>
+              <span style={{ fontSize: 11.5, color: C.n700 }}>{d.label ?? 'Vista'}</span>
+              {d.opciones.map(o => {
+                const on = f.s(d.k) === o.value;
+                return <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => f.set(d.k, o.value)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', padding: '2px 0', fontSize: 12.5, fontFamily: FONT, color: C.n900, cursor: 'pointer', textAlign: 'left' }}>
+                  <span aria-hidden style={{ width: 14, height: 14, borderRadius: '50%', border: `1.5px solid ${on ? C.brand : '#D6D6DB'}`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{on && <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.brand }} />}</span>{o.label}
+                </button>;
+              })}
+            </div>
+          ) : d.tipo === 'toggle'
+            ? <Switch key={d.k} checked={f.b(d.k)} onChange={x => f.set(d.k, x)} label={d.label} />
+            : d.tipo === 'check' ? <CheckFiltro key={d.k} label={d.label} value={f.b(d.k)} onChange={x => f.set(d.k, x)} /> : null)}
         </div>
       </Popover>
     </span>
   );
-}
-
-/** Controles de la barra en el orden de las definiciones. */
-export function ControlesFiltros({ f }: { f: Filtros }) {
-  return <>{f.defs.map(d => {
-    switch (d.tipo) {
-      case 'busqueda': return <SearchInput key={d.k} value={f.s(d.k)} onChange={x => f.set(d.k, x)} placeholder={d.placeholder} width={d.ancho ?? 240} />;
-      case 'multi': return <FiltroMulti key={d.k} label={d.label} opciones={d.opciones} value={f.m(d.k)} onChange={x => f.set(d.k, x)} />;
-      case 'unico': return <FiltroUnico key={d.k} label={d.label} opciones={d.opciones} value={f.s(d.k)} onChange={x => f.set(d.k, x)} />;
-      case 'radio': return (
-        <span key={d.k} role="radiogroup" aria-label={d.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 14, whiteSpace: 'nowrap' }}>
-          {d.label && <span style={{ fontSize: 12, color: C.n700 }}>{d.label}</span>}
-          {d.opciones.map(o => <Radio key={o.value} name={`r-${d.k}`} checked={f.s(d.k) === o.value} onChange={() => f.set(d.k, o.value)} label={o.label} />)}
-        </span>
-      );
-      case 'check': return <CheckFiltro key={d.k} label={d.label} value={f.b(d.k)} onChange={x => f.set(d.k, x)} />;
-      case 'toggle': return <span key={d.k} style={{ whiteSpace: 'nowrap' }}><Switch checked={f.b(d.k)} onChange={x => f.set(d.k, x)} label={d.label} /></span>;
-      case 'fecha': return <Fecha key={d.k} label={d.label} value={f.s(d.k)} onChange={x => f.set(d.k, x)} />;
-      case 'rango': return <Rango key={d.k} label={d.label} value={f.r(d.k)} onChange={x => f.set(d.k, x)} />;
-    }
-  })}</>;
 }
 
 /** Fila de chips de filtros activos + «Limpiar todo». */

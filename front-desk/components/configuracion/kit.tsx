@@ -36,6 +36,16 @@ export const IcBolt = ({ size = 14 }: IcP) => (
     <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
   </svg>
 );
+export const IcLink = ({ size = 14 }: IcP) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+  </svg>
+);
+export const IcFiltro = ({ size = 14 }: IcP) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 5h16l-6 8v5l-4 2v-7L4 5z" />
+  </svg>
+);
 export const IcInfo = ({ size = 14 }: IcP) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden>
     <circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" />
@@ -89,22 +99,9 @@ export function CardTabs<T extends string>({ tabs, active, onChange }: { tabs: r
   );
 }
 
-/** Sub-pestañas en forma de botón (Servicios de facturación · de agencia · simples). */
-export function PillTabs<T extends string>({ tabs, active, onChange, style }: { tabs: readonly T[]; active: T; onChange: (t: T) => void; style?: CSSProperties }) {
-  return (
-    <div role="tablist" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', ...style }}>
-      {tabs.map(t => {
-        const on = t === active;
-        return (
-          <button key={t} role="tab" aria-selected={on} onClick={() => onChange(t)}
-            style={{ height: 28, padding: '0 10px', fontSize: 12, borderRadius: radius.control, border: 'none', cursor: 'pointer', fontFamily: FONT,
-              background: on ? C.brand : C.n500, color: on ? '#fff' : C.n700, fontWeight: on ? 500 : 400 }}>
-            {t}
-          </button>
-        );
-      })}
-    </div>
-  );
+/** Sub-pestañas (nivel 2): mismo control segmentado que `SubTabs` del patrón maestro-detalle. */
+export function PillTabs<T extends string>(p: { tabs: readonly T[]; active: T; onChange: (t: T) => void; style?: CSSProperties }) {
+  return <SubTabs {...p} />;
 }
 
 /** Sub-sección con borde (Consecutivos, Configuración general, Conexión de API…). */
@@ -234,3 +231,5 @@ export * from './kit/base';
 export * from './kit/tabla';
 export * from './kit/modales';
 export * from './kit/selectores';
+export * from './kit/maestro';
+import { SubTabs } from './kit/maestro';

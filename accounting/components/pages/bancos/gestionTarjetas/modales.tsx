@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { Monto } from '../../../ui/montos';
+import { Modal } from '@/components/ui/primitives';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { Monto } from '@/components/ui/montos';
 import { BRAND, ESTADO_STYLE, F, type Liquidacion, VOUCHERS_MOCK, fmt2 } from './datos';
 import { Btn, Pill } from './piezas';
 
@@ -39,7 +39,7 @@ export function VouchersModal({ onSelect, onClose }: { onSelect: (ids: string[])
           <table className="tabla" style={TABLA.table}>
             <thead><tr style={TABLA.headRow}>
               <th style={{ ...TABLA.th, width:40 }}>
-                <input type="checkbox" checked={sel.size===VOUCHERS_MOCK.length} onChange={()=>setSel(p=>p.size===VOUCHERS_MOCK.length?new Set():new Set(VOUCHERS_MOCK.map(v=>v.id)))} style={{ accentColor:BRAND }}/>
+                <input type="checkbox" aria-label="Seleccionar" checked={sel.size===VOUCHERS_MOCK.length} onChange={()=>setSel(p=>p.size===VOUCHERS_MOCK.length?new Set():new Set(VOUCHERS_MOCK.map(v=>v.id)))} style={{ accentColor:BRAND }}/>
               </th>
               {['Documento','Fecha','Descripción','Imp. original','Saldo pendiente'].map(h=>(
                 <th key={h} style={{ ...TABLA.th, textAlign:h.includes('Imp')||h.includes('Saldo')?'right':'left' }}>{h}</th>
@@ -49,9 +49,9 @@ export function VouchersModal({ onSelect, onClose }: { onSelect: (ids: string[])
               {VOUCHERS_MOCK.map(v=>{
                 const isSel=sel.has(v.id);
                 return (
-                  <tr key={v.id} onClick={()=>setSel(p=>{const n=new Set(p);isSel?n.delete(v.id):n.add(v.id);return n;})}
+                  <tr key={v.id} onClick={()=>setSel(p=>{const n=new Set(p);if (isSel) n.delete(v.id); else n.add(v.id);return n;})}
                     style={{ borderBottom:'1px solid #ECECEC', cursor:'pointer', background:isSel?C.brandBg:'#FFFFFF' }}>
-                    <td style={{ padding:'8px 12px' }}><input type="checkbox" checked={isSel} readOnly style={{ accentColor:BRAND }}/></td>
+                    <td style={{ padding:'8px 12px' }}><input type="checkbox" aria-label="Seleccionar" checked={isSel} readOnly style={{ accentColor:BRAND }}/></td>
                     <td style={{ padding:'8px 12px', color:BRAND, fontFamily:F }}>{v.codigo}</td>
                     <td style={{ padding:'8px 12px' }}>{v.fecha}</td>
                     <td style={{ padding:'8px 12px', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={v.descripcion}>{v.descripcion}</td>
@@ -74,7 +74,7 @@ export function VouchersModal({ onSelect, onClose }: { onSelect: (ids: string[])
     </div>
   );
 }
-// ── Modal: Importar vouchers ──────────────────────────────────────────────────
+// ── Modal: importar vouchers ──────────────────────────────────────────────────
 export function ImportarVouchersModal({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<string|null>(null);
   return (
@@ -93,7 +93,7 @@ export function ImportarVouchersModal({ onClose }: { onClose: () => void }) {
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ECECEC" strokeWidth="1.5" style={{ marginBottom:10 }}><path d="M12 16V4M8 8l4-4 4 4"/><path d="M3 20h18"/></svg>
             <p style={{ fontSize:12, color:C.n700, margin:'0 0 8px' }}>{file ? file : 'Arrastrá tu archivo aquí o'}</p>
             {!file && <button style={{ height:28, padding:'0 14px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, background:'#FFFFFF', cursor:'pointer', fontSize:11, fontFamily:F }}>Seleccionar archivo</button>}
-            <p style={{ fontSize:10, color:C.n700, margin:'8px 0 0' }}>Formatos soportados: .xlsx, .csv - Máx. 5 MB</p>
+            <p style={{ fontSize:10.5, color:C.n700, margin:'8px 0 0' }}>Formatos soportados: .xlsx, .csv - Máx. 5 MB</p>
           </div>
         </div>
         <div style={{ padding:'12px 18px', borderTop:`1px solid ${C.n500}`, display:'flex', justifyContent:'flex-end', gap:8 }}>
@@ -104,7 +104,7 @@ export function ImportarVouchersModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-// ── Detalle de liquidación (antes no existía nada al hacer clic) ────────────
+// ── Detalle de liquidación (al hacer clic en una fila) ──
 export function DetalleLiquidacionModal({ liq, onClose, onAnular }: { liq: Liquidacion; onClose:()=>void; onAnular:()=>void }) {
   const sym = liq.moneda==='USD'?'$':'₡';
   const [stColor, stBg] = ESTADO_STYLE[liq.estado];
@@ -131,7 +131,7 @@ export function DetalleLiquidacionModal({ liq, onClose, onAnular }: { liq: Liqui
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px 16px' }}>
         {campos.map(([l,v])=>(
           <div key={l}>
-            <p style={{ fontSize:10, color:C.n700, margin:'0 0 2px', fontFamily:F }}>{l}</p>
+            <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px', fontFamily:F }}>{l}</p>
             <p style={{ fontSize:12, fontWeight:500, color:'#0F0F0F', margin:0, fontFamily:F }}>{v}</p>
           </div>
         ))}
@@ -156,9 +156,9 @@ export function CorreoLiquidacionModal({ liq, onClose, onEnviar }: { liq: Liquid
         </div>
       }>
       <p style={{ fontSize:11, color:C.n700, margin:'0 0 10px', fontFamily:F }}>Correo del destinatario</p>
-      <input value={correo} onChange={e=>{setCorreo(e.target.value); setError('');}} placeholder="nombre@empresa.com" autoFocus
+      <input value={correo} onChange={e=>{setCorreo(e.target.value); setError('');}} placeholder="nombre@empresa.com" aria-label="nombre@empresa.com" autoFocus
         style={{ width:'100%', height:34, padding:'0 10px', border:`1px solid ${error?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
-      {error && <p style={{ fontSize:10, color:C.error, margin:'5px 0 0' }}>{error}</p>}
+      {error && <p style={{ fontSize:10.5, color:C.error, margin:'5px 0 0' }}>{error}</p>}
     </Modal>
   );
 }

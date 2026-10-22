@@ -1,20 +1,10 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
-// ── Centros de costo (lista plana compartida) ────────────────────────────────
-// Issue: esta lista vivía duplicada como constante local en AccountDetail.tsx
-// (para asignar centro de costo a una cuenta) sin ningún contexto compartido,
-// así que cualquier otra pantalla que necesitara "los centros de costo reales"
-// (como Presupuesto) no tenía de dónde leerlos y terminaba con su propia copia
-// mock, que podía desincronizarse. Se centraliza acá, siguiendo el mismo
-// patrón que FirmasProvider.
-//
-// Nota: Catálogo de cuentas > Centros de costo (CatalogoTabs.tsx) maneja una
-// jerarquía más rica (Grupo → Centro, con alta/edición/baja) para ADMINISTRAR
-// esos centros. Esta lista plana es la que se usa para ASIGNAR/FILTRAR por
-// centro de costo en otras pantallas (AccountDetail, Presupuesto). Unificar
-// también con esa jerarquía de administración es un cambio más grande que
-// queda fuera de este alcance.
+// ── Centros de costo (lista plana compartida) ── Lista que usan las pantallas para asignar o
+// filtrar por centro de costo (ficha de cuenta, Presupuesto), con el mismo patrón que
+// FirmasProvider. La administración de centros (grupos y centros, con alta, edición y baja)
+// está en Catálogo de cuentas › Centros de costo.
 export interface CentroCosto { id: string; codigo: string; descripcion: string; }
 
 export const CENTROS_COSTO_INIT: CentroCosto[] = [

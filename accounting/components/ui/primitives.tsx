@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useState, ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { IcClose } from './icons';
 import { C, FONT, radius } from './tokens';
 
-// ── InfoBox - sin ícono (#9), sin borde gris en variante neutra (#11) ─────────
+// ── InfoBox - sin ícono, sin borde gris en variante neutra ─────────
 export function InfoBox({ children, variant = 'brand' }: { children: ReactNode; variant?: 'brand' | 'neutral' }) {
   const isBrand = variant === 'brand';
   return (
@@ -14,7 +14,7 @@ export function InfoBox({ children, variant = 'brand' }: { children: ReactNode; 
     </div>
   );
 }
-// ── Section card ──────────────────────────────────────────────────────────────
+// ── Tarjeta de sección ──────────────────────────────────────────────────────────────
 // ── Section: tarjeta estándar de Configuración ────────────────────────────────
 // Modelo: Empresa → Consecutivos de documentos (ver ESTANDAR-CONFIGURACION.md).
 // Tarjeta blanca sobre el gris de la página: título + descripción, separador,
@@ -115,12 +115,9 @@ export function PageHeader({ title, left, children }: { title: string; left?: Re
     </div>
   );
 }
-// ── TabBar ────────────────────────────────────────────────────────────────────
-// Acepta tabs como string simple o como { label, count } cuando la sección
-// necesita mostrar una cantidad (p. ej. "Pendientes 6") - antes cada pantalla
-// con contador armaba sus propios tabs a mano (ver Bandeja de asientos), sin
-// compartir look con el resto de la app.
-export interface TabItem { label: string; count?: number }
+// ── TabBar ── Acepta pestañas como texto o como { label, count } cuando la sección muestra una
+// cantidad (p. ej. «Pendientes 6»).
+interface TabItem { label: string; count?: number }
 export function TabBar({ tabs, active, onChange, actions }: {
   tabs: (string | TabItem)[]; active: number; onChange: (i: number) => void; actions?: ReactNode;
 }) {
@@ -139,7 +136,7 @@ export function TabBar({ tabs, active, onChange, actions }: {
             {item.label}
             {item.count !== undefined && (
               <span style={{ width: 18, height: 18, borderRadius: 9, background: active === i ? C.brand : C.n500, color: '#FFFFFF',
-                fontSize: 10, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                fontSize: 10.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 {item.count}
               </span>
             )}
@@ -150,14 +147,10 @@ export function TabBar({ tabs, active, onChange, actions }: {
     </div>
   );
 }
-// ── Presencia por operación ───────────────────────────────────────────────────
-// Para formularios de bancos (crear/editar cheque, depósito, transferencia,
-// liquidación, conciliación, gestión de cobro/pago): al ser datos sensibles,
-// se muestra quién más de la empresa está en ESTA operación específica ahora
-// mismo - distinto del widget global "usuarios activos" del Dashboard, que es
-// del sistema completo. Placeholder con datos de ejemplo; en producción esto
-// vendría de una sesión colaborativa en tiempo real (websocket) atada al id
-// del registro que se está editando.
+// ── Presencia por operación ── En los formularios de bancos (cheque, depósito, transferencia,
+// liquidación, conciliación, cobro/pago) muestra quién más de la empresa está en esa misma
+// operación. Datos de ejemplo; con backend viene de una sesión colaborativa en tiempo real
+// (websocket) atada al id del registro.
 const PRESENCIA_MOCK = [
   { iniciales:'MJ', color:'#2563EB', nombre:'Maria Jimenez' },
   { iniciales:'CN', color:'#1D9E75', nombre:'Cristina Navarro' },
@@ -174,7 +167,7 @@ export function PresenciaOperacion({ usuarios = PRESENCIA_MOCK }: { usuarios?: {
         {usuarios.map((u,i)=>(
           <div key={u.nombre} title={u.nombre} style={{
             width:24, height:24, borderRadius:'50%', background:u.color, color:'#FFFFFF',
-            fontSize:9.5, fontWeight:600, fontFamily:F, display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:10.5, fontWeight:600, fontFamily:F, display:'flex', alignItems:'center', justifyContent:'center',
             border:'2px solid #FFFFFF', marginLeft: i===0?0:-8, position:'relative', zIndex:usuarios.length-i,
           }}>{u.iniciales}</div>
         ))}
@@ -182,12 +175,12 @@ export function PresenciaOperacion({ usuarios = PRESENCIA_MOCK }: { usuarios?: {
       {open && (
         <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, background:'#FFFFFF', border:`1px solid ${C.n500}`,
           borderRadius:radius.md, boxShadow:'0 4px 16px rgba(0,0,0,.12)', padding:'10px 12px', zIndex:50, minWidth:190 }}>
-          <div style={{ fontSize:10, color:C.n700, fontFamily:F, marginBottom:8, fontWeight:600, letterSpacing:'.04em' }}>
+          <div style={{ fontSize:10.5, color:C.n700, fontFamily:F, marginBottom:8, fontWeight:600, letterSpacing:'.04em' }}>
             EN ESTA OPERACIÓN AHORA
           </div>
           {usuarios.map(u=>(
             <div key={u.nombre} style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
-              <div style={{ width:18, height:18, borderRadius:'50%', background:u.color, color:'#FFFFFF', fontSize:8, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{u.iniciales}</div>
+              <div style={{ width:18, height:18, borderRadius:'50%', background:u.color, color:'#FFFFFF', fontSize:10.5, fontWeight:600, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{u.iniciales}</div>
               <span style={{ fontSize:12, color:C.n900, fontFamily:F }}>{u.nombre}</span>
             </div>
           ))}

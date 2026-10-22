@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
 import { BRAND, CUENTAS_CLIENTES, CUENTAS_PROVEEDORES, F } from './datos';
 
-// ── Seleccionar cuenta auxiliar modal ─────────────────────────────────────────
+// ── Modal para seleccionar la cuenta auxiliar ─────────────────────────────────────────
 export function SelAuxModal({ tipo, onSelect, onClose }: {
   tipo: 'Cliente' | 'Proveedor'; onSelect: (c: typeof CUENTAS_CLIENTES[0]) => void; onClose: () => void;
 }) {
@@ -48,7 +48,7 @@ export function SelAuxModal({ tipo, onSelect, onClose }: {
                   onMouseEnter={e=>(e.currentTarget.style.background=C.n200)}
                   onMouseLeave={e=>(e.currentTarget.style.background='#FFFFFF')}>
                   <td style={{ padding:'8px 12px' }}>
-                    <input type="checkbox" style={{ accentColor:BRAND, width:14, height:14 }}/>
+                    <input type="checkbox" aria-label="Seleccionar" style={{ accentColor:BRAND, width:14, height:14 }}/>
                   </td>
                   <td style={{ padding:'8px 12px', color:BRAND, fontFamily:F }}>100</td>
                   <td style={{ padding:'8px 12px', color:'#0F0F0F' }}>001</td>
@@ -57,7 +57,7 @@ export function SelAuxModal({ tipo, onSelect, onClose }: {
                   <td style={{ padding:'8px 12px', color:'#0F0F0F' }}>
                     {item.nombre}
                     {item.tipo==='Cliente' && item.code.includes('CLI0002') && (
-                      <span style={{ marginLeft:6, fontSize:10, padding:'1px 6px', borderRadius:4, background:C.successBg, color:C.success, fontWeight:600 }}>Con datos bancarios</span>
+                      <span style={{ marginLeft:6, fontSize:10.5, padding:'1px 6px', borderRadius:4, background:C.successBg, color:C.success, fontWeight:600 }}>Con datos bancarios</span>
                     )}
                   </td>
                 </tr>

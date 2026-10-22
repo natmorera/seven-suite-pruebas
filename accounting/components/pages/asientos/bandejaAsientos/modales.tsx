@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
 import { type Asiento, BRAND, CONTABILIZAR_GREEN, F, MONEDAS, MON_SYM, type Moneda, type Programado, dmyToIso, fmt2, isoToDmy } from './datos';
 import { IcCheck, IcClip, IcMail, IcPlus } from './piezas';
 
@@ -75,11 +75,11 @@ export function ModalEnviarCorreo({ asiento, onSend, onClose }: {
         <p style={{ fontSize:11, color:'#757575', margin:'0 0 16px' }}>Asiento {asiento.consecutivo} · {asiento.titulo}</p>
 
         <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Correo destino <span style={{ color:C.error }}>*</span></label>
-        <input type="email" autoFocus value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@empresa.com"
+        <input type="email" autoFocus value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@empresa.com" aria-label="nombre@empresa.com"
           style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${email && !valido ? C.error : C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', marginBottom:12 }}/>
 
         <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Mensaje (opcional)</label>
-        <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)} rows={3} placeholder="Información adicional para el destinatario…"
+        <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)} rows={3} placeholder="Información adicional para el destinatario…" aria-label="Información adicional para el destinatario…"
           style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', resize:'vertical', marginBottom:16 }}/>
 
         <div style={{ display:'flex', gap:8, justifyContent:'flex-end' }}>
@@ -119,7 +119,7 @@ export function AnularModal({ asientos, onConfirm, onClose }: { asientos:Asiento
             </p>
           </div>
           <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Motivo <span style={{ color:C.error }}>*</span></label>
-          <textarea value={motivo} onChange={e=>setMotivo(e.target.value)} rows={3} placeholder="Ej. Error en cuenta contable…"
+          <textarea value={motivo} onChange={e=>setMotivo(e.target.value)} rows={3} placeholder="Ej. Error en cuenta contable…" aria-label="Ej. Error en cuenta contable…"
             style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, resize:'vertical', outline:'none', boxSizing:'border-box' }}/>
         </div>
         <div style={{ padding:'12px 20px', borderTop:`1px solid ${C.n500}`, display:'flex', justifyContent:'flex-end', gap:8 }}>
@@ -222,18 +222,18 @@ export function EditProgramadoModal({ programado, onSave, onClose }: { programad
         <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:4 }}>Nombre</label>
-            <input value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+            <input aria-label="Nombre" value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:4 }}>Frecuencia</label>
-              <select value={frecuencia} onChange={e=>setFrecuencia(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}>
+              <select aria-label="Frecuencia" value={frecuencia} onChange={e=>setFrecuencia(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}>
                 {FRECUENCIAS.map(f=><option key={f}>{f}</option>)}
               </select>
             </div>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:4 }}>Próxima ejecución</label>
-              <input type="date" value={proximaIso} onChange={e=>setProximaIso(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+              <input aria-label="Próxima ejecución" type="date" value={proximaIso} onChange={e=>setProximaIso(e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
           </div>
           <div>

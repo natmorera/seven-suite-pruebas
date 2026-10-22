@@ -40,7 +40,7 @@ export function Tarjeta({ children, style, titulo, acciones }: { children: React
 /** Indicador del encabezado (Estado, Abierta hace, Saldo inicial…). */
 export function Kpi({ label, children, color, sub }: { label: string; children: ReactNode; color?: string; sub?: ReactNode }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+    <div className="kpi" style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, padding: '0 16px' }}>
       <span style={{ fontSize: 12, color: C.n700 }}>{label}</span>
       <span style={{ fontSize: 15, fontWeight: 600, color: color ?? C.n900, whiteSpace: 'nowrap' }}>{children}</span>
       {sub && <span style={{ fontSize: 11, color: C.n700 }}>{sub}</span>}
@@ -65,6 +65,18 @@ export function Bloque({ label, valor, sub, color, fondo, borde }: { label: stri
       <span style={{ fontSize: 16, fontWeight: 600, color: color ?? C.n900 }}>{valor}</span>
       {sub && <span style={{ fontSize: 11, color: C.n700 }}>{sub}</span>}
     </div>
+  );
+}
+
+/** Aviso en la barra de acciones (pie de la página o del modal): queda a la izquierda de los botones,
+ *  siempre a la vista, para que una validación no se pierda al final de un formulario largo. */
+export function AvisoPie({ children, tono = 'error' }: { children: ReactNode; tono?: 'error' | 'warn' | 'info' }) {
+  const color = tono === 'error' ? C.error : tono === 'warn' ? '#B58900' : C.n700;
+  return (
+    <span role={tono === 'error' ? 'alert' : 'status'} style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color, lineHeight: 1.4, minWidth: 0, fontFamily: FONT }}>
+      {tono !== 'info' && <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden style={{ flexShrink: 0 }}><path d="M12 3 2 21h20L12 3zM12 10v5M12 18h.01" /></svg>}
+      <span>{children}</span>
+    </span>
   );
 }
 
@@ -101,7 +113,7 @@ export function FiltroUno({ label, value, onChange, opciones, todos = 'Todos', a
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }}>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} aria-label={label} className="suite-campo" style={botonFiltro(!!sel && todos !== null)}>
-        {sel ? (prefijo === false ? sel.label : `${label}: ${sel.label}`) : label}<IcChevronDown size={12} />
+        <span style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }} title={sel?.label}>{sel ? (prefijo === false ? sel.label : `${label}: ${sel.label}`) : label}</span><IcChevronDown size={12} />
       </button>
       <Popover open={open} onClose={() => setOpen(false)} width={ancho}>
         <div role="listbox" style={{ padding: 6, display: 'flex', flexDirection: 'column', maxHeight: 300, overflowY: 'auto' }}>
@@ -242,7 +254,7 @@ export function Firma({ onChange, alto = 150, placeholder }: { onChange: (dataUr
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ position: 'relative' }}>
         <canvas ref={ref} height={alto} aria-label="Área de firma" style={{ width: '100%', height: alto, border: `1.5px dashed ${C.n500}`, borderRadius: radius.md, touchAction: 'none', background: C.n200, cursor: 'crosshair', display: 'block' }}
-          onPointerDown={e => { dibujando.current = true; const c = ref.current!.getContext('2d')!; const [x, y] = pos(e); c.beginPath(); c.moveTo(x, y); c.lineWidth = 2.2; c.lineCap = 'round'; c.strokeStyle = C.n900; }}
+          onPointerDown={e => { dibujando.current = true; const cv = ref.current!; if (vacia && cv.clientWidth && cv.width !== cv.clientWidth) { cv.width = cv.clientWidth; cv.height = alto; } const c = cv.getContext('2d')!; const [x, y] = pos(e); c.beginPath(); c.moveTo(x, y); c.lineWidth = 2.2; c.lineCap = 'round'; c.strokeStyle = C.n900; }}
           onPointerMove={e => { if (!dibujando.current) return; const c = ref.current!.getContext('2d')!; const [x, y] = pos(e); c.lineTo(x, y); c.stroke(); if (vacia) setVacia(false); }}
           onPointerUp={() => { if (dibujando.current) { dibujando.current = false; onChange(ref.current!.toDataURL()); } }}
           onPointerLeave={() => { if (dibujando.current) { dibujando.current = false; onChange(ref.current!.toDataURL()); } }} />

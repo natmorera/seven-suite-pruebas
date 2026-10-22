@@ -1,14 +1,13 @@
 'use client';
-import { useState, Fragment } from 'react';
-import { Modal, Section, RowAction } from '../../ui/primitives';
-import { Button, FormField, Input, Select } from '../../ui/formulario';
-import { radius, TABLA, PAGE_PAD } from '../../ui/tokens';
-import { IcPlus, IcEdit, IcTrash, IcClose, IcChevronDown, IcChevronRight } from '../../ui/icons';
-import { C, FONT } from '../../ui/tokens';
-import { Cuenta } from './catalogoData';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
+import { useState, Fragment  } from 'react';
+import { Modal, Section, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input } from '@/components/ui/formulario';
+import { radius, TABLA, PAGE_PAD , C, FONT } from '@/components/ui/tokens';
+import { IcPlus, IcEdit, IcTrash, IcClose, IcChevronDown, IcChevronRight } from '@/components/ui/icons';
+import { type Cuenta } from './catalogoData';
 import { flattenTree } from './datos/arbol';
 import { TBL } from './catalogoTableStyles';
-import { useEffect } from 'react';
 
 const F = FONT;
 const BRAND = '#A77600';
@@ -36,9 +35,9 @@ const initialCentrosCosto: Centro[] = [
 ];
 
 // ── Centros de costo ──────────────────────────────────────────────────────────
-// Issue #4: CC solo visible en cuentas con tipoEspecial
-// Issue #5: hover no mueve la fila - actions tienen width reservado fija
-// Issue #6: no hay botón exportar duplicado en la tabla
+// CC solo visible en cuentas con tipoEspecial
+// hover no mueve la fila - actions tienen width reservado fija
+// no hay botón exportar duplicado en la tabla
 
 export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: { 
   cuentas: Cuenta[]; triggerNuevo?: boolean; onNuevoDone?: ()=>void;
@@ -55,10 +54,8 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
   const flat = flattenTree(cuentas);
   const cuentasEspeciales = flat.filter(n=>n.tipoEspecial&&n.nivel==='detalle');
 
-  // Trigger from parent header button
-  useEffect(() => {
-    if (triggerNuevo) { openNuevoGrupo(); onNuevoDone?.(); }
-  }, [triggerNuevo]);
+  // Señal del botón del encabezado de la página
+  useSenalAgregar(triggerNuevo, onNuevoDone, () => { openNuevoGrupo(); });
 
   function centrosPorGrupo(gid:string) { return centros.filter(c=>c.grupoId===gid); }
   function toggleGrupo(id:string) { setCollapsed(p=>({...p,[id]:!p[id]})); }
@@ -91,7 +88,7 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
 
   return (
     <div style={{ flex:1, display:'flex', overflow:'hidden', fontFamily:F }}>
-      {/* Main table */}
+      {/* Tabla principal */}
       <div style={{ flex:1, overflowY:'auto', padding:PAGE_PAD }}><Section title="Centros de costo" hint="Grupos y centros de costo que se asignan a las líneas de asiento.">
         <div style={{ ...TBL.wrap }}>
           <table className="tabla" style={TBL.table}>
@@ -100,7 +97,7 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
                 <th style={{ ...TBL.th, width:200 }}>Código</th>
                 <th style={{ ...TBL.th }}>Descripción</th>
                 <th style={{ ...TBL.th }}>Descripción alternativa</th>
-                {/* Issue #5: fixed-width actions column so row never shifts */}
+                {/* Columna de acciones de ancho fijo para que la fila no se mueva */}
                 <th style={{ ...TBL.th, width:120 }}>Acciones</th>
               </tr>
             </thead>
@@ -123,15 +120,15 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
                       </td>
                       <td style={{ padding:'8px 12px', color:C.n900, fontFamily:F }}>{grp.descripcion}</td>
                       <td style={{ padding:'8px 12px', fontFamily:F }}>{grp.descripcionAlt}</td>
-                      {/* Issue #5: actions always occupy same space - no layout shift */}
+                      {/* Las acciones siempre ocupan el mismo espacio */}
                       <td style={{ padding:'8px 12px', width:120 }}>
                         <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
                           <button onClick={()=>openNuevoCentro(grp.id)}
-                            style={{ height:23, padding:'0 7px', fontSize:10, color:BRAND, background:C.brandBg, border:`1px solid ${C.brandBd}`, borderRadius:4, cursor:'pointer', fontFamily:F, display:'flex', alignItems:'center', gap:3 }}>
+                            style={{ height:23, padding:'0 7px', fontSize:10.5, color:BRAND, background:C.brandBg, border:`1px solid ${C.brandBd}`, borderRadius:4, cursor:'pointer', fontFamily:F, display:'flex', alignItems:'center', gap:3 }}>
                             <IcPlus className="w-2.5 h-2.5"/> Centro
                           </button>
                           <button onClick={()=>openEditGrupo(grp)}
-                            style={{ height:23, padding:'0 7px', fontSize:10, color:C.n700, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:4, cursor:'pointer', fontFamily:F }}>
+                            style={{ height:23, padding:'0 7px', fontSize:10.5, color:C.n700, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:4, cursor:'pointer', fontFamily:F }}>
                             Editar
                           </button>
                         </div>
@@ -145,7 +142,7 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
                         <td style={{ padding:'8px 12px', paddingLeft:35, fontFamily:F, color:C.n900 }}>{cc.codigo}</td>
                         <td style={{ padding:'8px 12px', fontFamily:F }}>{cc.descripcion}</td>
                         <td style={{ padding:'8px 12px', fontFamily:F }}>{cc.descripcionAlt}</td>
-                        {/* Issue #5: same fixed-width column, always visible */}
+                        {/* same fixed-width column, always visible */}
                         <td style={{ padding:'8px 12px', width:120 }}>
                           <div style={{ display:'flex', gap:4, justifyContent:'flex-end' }}>
                             <RowAction title="Editar" onClick={e=>{e.stopPropagation();openEditCentro(cc);}}><IcEdit className="w-3.5 h-3.5"/></RowAction>
@@ -157,7 +154,7 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
                     {isOpen && hijos.length===0 && (
                       <tr style={{ borderTop:'1px solid #ECECEC' }}>
                         <td colSpan={4} style={{ paddingLeft:35, padding:'7px 35px', fontStyle:'italic', fontFamily:F }}>
-                          Sin centros - usá el botón "Centro" para agregar.
+                          Sin centros - usá el botón &quot;Centro&quot; para agregar.
                         </td>
                       </tr>
                     )}
@@ -166,7 +163,7 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
               })}
               <tr>
                 <td colSpan={4} style={{ padding:'8px 12px' }}>
-                  <button onClick={openNuevoGrupo} style={{ display:'flex', alignItems:'center', gap:5, fontSize:10, color:C.n700, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>
+                  <button onClick={openNuevoGrupo} style={{ display:'flex', alignItems:'center', gap:5, fontSize:10.5, color:C.n700, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>
                     <IcPlus className="w-3 h-3"/> Nuevo grupo
                   </button>
                 </td>
@@ -176,13 +173,13 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
         </div>
       </Section></div>
 
-      {/* Detail panel for selected centro */}
+      {/* Panel de detalle del centro seleccionado */}
       {selected && (
         <aside style={{ width:380, minWidth:380, borderLeft:`1px solid ${C.n500}`, background:'#FFFFFF', display:'flex', flexDirection:'column', overflow:'hidden' }}>
           <div style={{ height:52, padding:'0 14px', borderBottom:`1px solid ${C.n500}`, display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
             <div>
               <p style={{ fontSize:13, fontWeight:600, color:C.n900, margin:0, fontFamily:F }}>{selected.descripcion}</p>
-              <p style={{ fontSize:10, color:C.n700, margin:'2px 0 0', fontFamily:F }}>{selected.codigo}</p>
+              <p style={{ fontSize:10.5, color:C.n700, margin:'2px 0 0', fontFamily:F }}>{selected.codigo}</p>
             </div>
             <div style={{ display:'flex', gap:5 }}>
               <Button variant="primary" icon={<IcEdit className="w-3 h-3"/>} style={{ height:24 }} onClick={()=>openEditCentro(selected)}>Editar</Button>
@@ -193,28 +190,28 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
           </div>
           <div style={{ flex:1, overflowY:'auto', padding:14 }}>
             <div style={{ background:C.n200, borderRadius:radius.md, padding:12, marginBottom:12 }}>
-              <p style={{ fontSize:9, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:9, fontFamily:F }}>Datos del centro de costo</p>
+              <p style={{ fontSize:10.5, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', marginBottom:9, fontFamily:F }}>Datos del centro de costo</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:9 }}>
-                <div><p style={{ fontSize:9, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Código</p><p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{selected.codigo}</p></div>
-                <div><p style={{ fontSize:9, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Grupo</p><p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{grupos.find(g=>g.id===selected.grupoId)?.descripcion??'-'}</p></div>
-                {selected.descripcionAlt && <div style={{ gridColumn:'1/-1' }}><p style={{ fontSize:9, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Descripción alternativa</p><p style={{ fontSize:11, color:C.n900, margin:0, fontFamily:F }}>{selected.descripcionAlt}</p></div>}
+                <div><p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Código</p><p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{selected.codigo}</p></div>
+                <div><p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Grupo</p><p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{grupos.find(g=>g.id===selected.grupoId)?.descripcion??'-'}</p></div>
+                {selected.descripcionAlt && <div style={{ gridColumn:'1/-1' }}><p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px', fontFamily:F }}>Descripción alternativa</p><p style={{ fontSize:11, color:C.n900, margin:0, fontFamily:F }}>{selected.descripcionAlt}</p></div>}
               </div>
             </div>
 
-            {/* Issue #4: only show accounts WITH tipoEspecial */}
-            <p style={{ fontSize:9, color:BRAND, fontWeight:600, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 4px', fontFamily:F }}>
+            {/* Solo las cuentas con tipo especial */}
+            <p style={{ fontSize:10.5, color:BRAND, fontWeight:600, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 4px', fontFamily:F }}>
               Cuentas especiales asociadas ({cuentasEspeciales.length})
             </p>
-            <p style={{ fontSize:10, color:C.n700, margin:'0 0 9px', fontFamily:F }}>Solo las cuentas con rol especial pueden tener centros de costo asignados.</p>
+            <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 9px', fontFamily:F }}>Solo las cuentas con rol especial pueden tener centros de costo asignados.</p>
             {cuentasEspeciales.length===0
               ? <p style={{ fontSize:11, color:C.n700, fontFamily:F }}>Sin cuentas especiales con centros asignados.</p>
               : cuentasEspeciales.map(c=>(
                 <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 0', borderBottom:`1px solid ${C.n500}` }}>
                   <div>
                     <p style={{ fontSize:11, fontWeight:500, color:BRAND, margin:0, fontFamily:F }}>{c.code}</p>
-                    <p style={{ fontSize:10, color:C.n700, margin:0, fontFamily:F }}>{c.nombre}</p>
+                    <p style={{ fontSize:10.5, color:C.n700, margin:0, fontFamily:F }}>{c.nombre}</p>
                   </div>
-                  <button style={{ fontSize:10, color:BRAND, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Ver →</button>
+                  <button style={{ fontSize:10.5, color:BRAND, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Ver →</button>
                 </div>
               ))
             }
@@ -222,11 +219,11 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
         </aside>
       )}
 
-      {/* Modal grupo */}
+      {/* Modal de grupo */}
       {modal?.tipo==='grupo' && (
         <Modal open title={modal.editId?'Editar grupo':'Nuevo grupo de centros de costo'} onClose={closeModal}
           footer={<div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            {modal.editId?<button onClick={()=>deleteGrupo(modal.editId!)} style={{ fontSize:10, color:C.error, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Eliminar grupo</button>:<div/>}
+            {modal.editId?<button onClick={()=>deleteGrupo(modal.editId!)} style={{ fontSize:10.5, color:C.error, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Eliminar grupo</button>:<div/>}
             <div style={{ display:'flex', gap:7 }}>
               <Button variant="secondary" onClick={closeModal}>Cancelar</Button>
               <Button onClick={saveGrupo}>Guardar</Button>
@@ -240,11 +237,11 @@ export function TabCentrosCosto({ cuentas, triggerNuevo, onNuevoDone }: {
         </Modal>
       )}
 
-      {/* Modal centro */}
+      {/* Modal de centro */}
       {modal?.tipo==='centro' && (
         <Modal open title={modal.editId?'Editar centro de costo':'Nuevo centro de costo'} onClose={closeModal}
           footer={<div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            {modal.editId?<button onClick={()=>deleteCentro(modal.editId!)} style={{ fontSize:10, color:C.error, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Eliminar</button>:<div/>}
+            {modal.editId?<button onClick={()=>deleteCentro(modal.editId!)} style={{ fontSize:10.5, color:C.error, background:'none', border:'none', cursor:'pointer', fontFamily:F }}>Eliminar</button>:<div/>}
             <div style={{ display:'flex', gap:7 }}>
               <Button variant="secondary" onClick={closeModal}>Cancelar</Button>
               <Button onClick={saveCentro}>Guardar</Button>

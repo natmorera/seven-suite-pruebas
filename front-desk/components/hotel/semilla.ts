@@ -46,7 +46,7 @@ export function crearSemilla(): DatosOperacion {
     }
     const perfil = perfiles.find(p => p.id === perfilId);
     return {
-      id, numero: `${extra.rooming ? 'RL' : 'RD'}-${nRes}`, rooming: false, perfilId, nombre: nombre.toUpperCase(), empresa: t.empresa, cliente: t.cliente,
+      id, numero: `${extra.rooming || t.cliente === 'Agencia de Viajes' ? 'RL' : 'RE'}-${nRes}`, rooming: false, perfilId, nombre: nombre.toUpperCase(), empresa: t.empresa, cliente: t.cliente,
       habitacion: hab.numero, tipo: hab.tipo, entrada, salida, adultos: 1 + Math.floor(r() * 2), ninos: r() > 0.8 ? 1 : 0,
       tarifa: t.nombre, precio, regimen: pick(['SP', '1.BB', 'DESI', 'DESI', 'MP']), moneda: 'USD', estado, pagado, depGarantia: r() > 0.6 ? Math.round(precio * 0.5) : 0, credito: r() > 0.7,
       condiciones: r() > 0.75 ? [pick(CONDICIONES)] : [], observaciones: '', observacionesInternas: '',

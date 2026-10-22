@@ -1,7 +1,7 @@
 'use client';
-import { PageHeader, TabBar } from '../../ui/primitives';
-import { C, radius } from '../../ui/tokens';
-import { BotonExportarUnico } from '../../ui/exportar';
+import { PageHeader, TabBar } from '@/components/ui/primitives';
+import { C, radius } from '@/components/ui/tokens';
+import { BotonExportarUnico } from '@/components/ui/exportar';
 import { CrearAsientoDrawer } from './bandejaAsientos/CrearAsientoDrawer';
 import { DetalleDrawer } from './bandejaAsientos/DetalleDrawer';
 import { EditPlantillaModal, ImportarAsientoModal } from './bandejaAsientos/EditPlantillaModal';
@@ -29,7 +29,7 @@ export default function BandejaAsientos() {
         @keyframes bandeja-spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Bandeja de asientos">
         {(tab==='pendientes' || tab==='anulados') && (
           <BotonExportarUnico onClick={()=>setExportarOpen(true)}/>
@@ -52,7 +52,7 @@ export default function BandejaAsientos() {
         </div>
       </PageHeader>
 
-      {/* Tabs */}
+      {/* Pestañas */}
       <TabBar
         tabs={[
           { label:'Pendientes',  count:pendientes.length },
@@ -117,7 +117,7 @@ export default function BandejaAsientos() {
       )}
       {modalCorreo && (
         <ModalEnviarCorreo asiento={modalCorreo}
-          onSend={(email,mensaje)=>handleEnviarCorreo(modalCorreo, email, mensaje)}
+          onSend={email=>handleEnviarCorreo(modalCorreo, email)}
           onClose={()=>setModalCorreo(null)}/>
       )}
 

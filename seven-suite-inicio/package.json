@@ -1,6 +1,6 @@
 {
   "name": "seven-suite-inicio",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "scripts": { "dev": "next dev", "build": "next build", "start": "next start" },
   "dependencies": { "@fontsource/montserrat": "^5.2.8", "next": "16.2.7", "react": "19.2.4", "react-dom": "19.2.4" },

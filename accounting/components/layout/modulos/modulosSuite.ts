@@ -1,7 +1,7 @@
 // Módulos de Seven Suite que se muestran en «Módulos» del menú lateral. Este
 // sitio es Accounting; el enlace de cada uno de los demás sale de su variable
 // de entorno y, si no está definida, el módulo no aparece en la lista.
-export interface ModuloSuite {
+interface ModuloSuite {
   id: string; sigla: string; nombre: string; descripcion: string;
   colores: [string, string];   // isotipo, degradado claro → oscuro
   texto: string; fondo: string; url?: string;

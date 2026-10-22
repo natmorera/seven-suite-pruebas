@@ -19,6 +19,6 @@ export const titulo = (s: string) => s.toLowerCase().replace(/(^|\s)\S/g, c => c
 export const nombreTipo = (id: string) => TIPOS.find(t => t.id === id)?.nombre ?? id;
 
 export type ModalMapa =
-  | { tipo: 'panel'; hab: string } | { tipo: 'mover'; reserva: string; destino?: string } | { tipo: 'bloquear'; hab: string } | { tipo: 'reserva'; hab: string }
+  | { tipo: 'panel'; hab: string } | { tipo: 'mover'; reserva: string; destino?: string } | { tipo: 'bloquear'; hab: string; editar?: boolean } | { tipo: 'reserva'; hab: string }
   | { tipo: 'ver'; reserva: string } | { tipo: 'prepago'; reserva: string } | { tipo: 'checkin'; reserva: string } | { tipo: 'asignar'; hab: string } | null;
 /** Lo que se está arrastrando: una reserva (llegada o huésped en casa). */

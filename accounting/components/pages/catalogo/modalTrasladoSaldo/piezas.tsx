@@ -1,10 +1,9 @@
 'use client';
-import { radius } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
+import { radius , C } from '@/components/ui/tokens';
 import { fmt } from '../datos/arbol';
 import { F, codeStyle } from './datos';
 
-// ── Step indicator ────────────────────────────────────────────────────────────
+// ── Indicador de pasos ────────────────────────────────────────────────────────────
 export function Steps({ current }: { current: 1 | 2 | 3 }) {
   const steps = [
     { n: 1, label: 'Origen y fecha' },
@@ -23,11 +22,11 @@ export function Steps({ current }: { current: 1 | 2 | 3 }) {
                 width: 24, height:24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 background: done ? C.brand : active ? C.brand : C.n500,
                 color: done || active ? '#FFFFFF' : C.n700,
-                fontSize:10, fontWeight: 600, fontFamily: F, flexShrink: 0,
+                fontSize:10.5, fontWeight: 600, fontFamily: F, flexShrink: 0,
               }}>
                 {done ? <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg> : s.n}
               </div>
-              <span style={{ fontSize:9, color: active ? C.brand : done ? C.brand : C.n700, fontFamily: F, whiteSpace: 'nowrap', fontWeight: active ? 600 : 400 }}>
+              <span style={{ fontSize:10.5, color: active ? C.brand : done ? C.brand : C.n700, fontFamily: F, whiteSpace: 'nowrap', fontWeight: active ? 600 : 400 }}>
                 {s.label}
               </span>
             </div>

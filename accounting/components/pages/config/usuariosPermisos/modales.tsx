@@ -1,8 +1,8 @@
 'use client';
 import React, { useState } from 'react';
-import { C, radius } from '../../../ui/tokens';
-import { IcClose, IcEye, IcEyeOff } from '../../../ui/icons';
-import { Usuario, PlantillaPermiso } from '../permissionsData';
+import { C, radius } from '@/components/ui/tokens';
+import { IcClose, IcEye, IcEyeOff } from '@/components/ui/icons';
+import { type Usuario, type PlantillaPermiso } from '../permissionsData';
 import { BRAND, EMAIL_RE, F, filterInputStyle } from './datos';
 
 export function EnviarCorreoPermisosModal({ u, onClose, onEnviar }: { u:Usuario; onClose:()=>void; onEnviar:(correos:string[], mensaje:string)=>void }) {
@@ -40,7 +40,7 @@ export function EnviarCorreoPermisosModal({ u, onClose, onEnviar }: { u:Usuario;
         </div>
         <div style={{ padding:'18px 24px' }}>
           <div style={{ background:'#F9F9F9', border:`1px solid ${C.n500}`, borderRadius:radius.md, padding:'10px 12px', marginBottom:14 }}>
-            <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 6px' }}>Se va a enviar</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 6px' }}>Se va a enviar</p>
             <p style={{ fontSize:12, fontWeight:600, color:C.n900, margin:0 }}>Detalle de permisos · {u.descripcion} ({u.usuario})</p>
           </div>
 
@@ -59,11 +59,11 @@ export function EnviarCorreoPermisosModal({ u, onClose, onEnviar }: { u:Usuario;
               placeholder={correos.length===0 ? 'nombre@empresa.com' : 'agregar otro...'}
               style={{ flex:1, minWidth:120, border:'none', outline:'none', fontSize:12, fontFamily:F, padding:'4px 2px' }}/>
           </div>
-          <p style={{ fontSize:10, color:C.n700, margin:'4px 0 0' }}>Enter, coma o espacio agrega el correo.</p>
-          {error && <p style={{ fontSize:10, color:C.error, margin:'5px 0 0' }}>{error}</p>}
+          <p style={{ fontSize:10.5, color:C.n700, margin:'4px 0 0' }}>Enter, coma o espacio agrega el correo.</p>
+          {error && <p style={{ fontSize:10.5, color:C.error, margin:'5px 0 0' }}>{error}</p>}
 
           <p style={{ fontSize:11, color:'#0F0F0F', margin:'14px 0 5px' }}>Mensaje (opcional)</p>
-          <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)} rows={3} placeholder="Agregá una nota para quien lo reciba..."
+          <textarea value={mensaje} onChange={e=>setMensaje(e.target.value)} rows={3} placeholder="Agregá una nota para quien lo reciba..." aria-label="Agregá una nota para quien lo reciba..."
             style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', resize:'vertical' }}/>
         </div>
         <div style={{ padding:'12px 24px', borderTop:`1px solid ${C.n500}`, display:'flex', justifyContent:'flex-end', gap:8 }}>
@@ -75,6 +75,10 @@ export function EnviarCorreoPermisosModal({ u, onClose, onEnviar }: { u:Usuario;
   );
 }
 // ── Modal: crear usuario ──────────────────────────────────────────────────────
+function Field({ label, children }: { label:string; children:React.ReactNode }) {
+  return <div><label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>{label}</label>{children}</div>;
+}
+
 export function CrearUsuarioModal({ plantillas, onClose, onSave }: { plantillas:PlantillaPermiso[]; onClose:()=>void; onSave:(u:Usuario)=>void }) {
   const [usuario, setUsuario] = useState('');
   const [nombre, setNombre] = useState('');
@@ -103,9 +107,6 @@ export function CrearUsuarioModal({ plantillas, onClose, onSave }: { plantillas:
       permisos: new Set(rol ? rol.permisos : ['dashboard.card_asientos']), plantillaId: rol?.id ?? null,
     });
   }
-  const Field = ({ label, children }: { label:string; children:React.ReactNode }) => (
-    <div><label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>{label}</label>{children}</div>
-  );
   const inputStyle = (err?:string): React.CSSProperties => ({ width:'100%', height:36, padding:'0 10px', border:`1px solid ${err?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box', background:'#FFFFFF' });
 
   return (
@@ -117,22 +118,22 @@ export function CrearUsuarioModal({ plantillas, onClose, onSave }: { plantillas:
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
           <Field label="Usuario">
-            <input value={usuario} onChange={e=>setUsuario(e.target.value)} placeholder="Ej: jsmith" style={inputStyle(errors.usuario)}/>
+            <input value={usuario} onChange={e=>setUsuario(e.target.value)} placeholder="Ej: jsmith" aria-label="Ej: jsmith" style={inputStyle(errors.usuario)}/>
           </Field>
           <Field label="Nombre Completo">
-            <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: John Smith" style={inputStyle(errors.nombre)}/>
+            <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: John Smith" aria-label="Ej: John Smith" style={inputStyle(errors.nombre)}/>
           </Field>
         </div>
         <div style={{ marginBottom:14 }}>
           <Field label="Correo Electrónico">
-            <input value={correo} onChange={e=>setCorreo(e.target.value)} placeholder="jsmith@empresa.com" style={inputStyle(errors.correo)}/>
+            <input value={correo} onChange={e=>setCorreo(e.target.value)} placeholder="jsmith@empresa.com" aria-label="jsmith@empresa.com" style={inputStyle(errors.correo)}/>
           </Field>
         </div>
         <div style={{ marginBottom:18 }}>
           <Field label="Contraseña">
             <div style={{ position:'relative' }}>
               <input type={verClave?'text':'password'} value={clave} onChange={e=>setClave(e.target.value)}
-                placeholder="Contraseña" style={{ ...inputStyle(errors.clave), paddingRight:36 }}/>
+                placeholder="Contraseña" aria-label="Contraseña" style={{ ...inputStyle(errors.clave), paddingRight:36 }}/>
               <button type="button" onClick={()=>setVerClave(v=>!v)} title={verClave?'Ocultar contraseña':'Mostrar contraseña'}
                 style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:C.n700, padding:4, display:'flex' }}>
                 {verClave ? <IcEyeOff className="w-3.5 h-3.5"/> : <IcEye className="w-3.5 h-3.5"/>}
@@ -145,7 +146,7 @@ export function CrearUsuarioModal({ plantillas, onClose, onSave }: { plantillas:
         <p style={{ fontSize:14, fontWeight:600, color:C.n900, margin:'0 0 10px' }}>Permisos del Usuario</p>
         <div style={{ marginBottom:6 }}>
           <Field label="Rol">
-            <select value={rolId} onChange={e=>setRolId(e.target.value?Number(e.target.value):'')} style={{ ...inputStyle(), color: rolId?C.n900:C.n700 }}>
+            <select aria-label="Permisos del Usuario" value={rolId} onChange={e=>setRolId(e.target.value?Number(e.target.value):'')} style={{ ...inputStyle(), color: rolId?C.n900:C.n700 }}>
               <option value="">Sin rol (permisos mínimos)</option>
               {plantillas.map(p=><option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select>
@@ -178,10 +179,8 @@ export function ModalConfirm({ title, message, confirmLabel, danger, onCancel, o
     </div>
   );
 }
-// Restablecer contraseña: reemplaza el campo de contraseña falso (siempre en
-// puntos, sin ninguna función real) por una acción real con su propio
-// mostrar/ocultar, en vez de fingir que se puede ver la contraseña actual -
-// eso no debería ser posible nunca, solo restablecerla.
+// Restablecer contraseña: la contraseña actual nunca se muestra, solo se puede restablecer (con
+// su propio mostrar/ocultar).
 export function ResetPasswordModal({ usuario, onClose, onSave }: { usuario:Usuario; onClose:()=>void; onSave:()=>void }) {
   const [clave, setClave] = useState('');
   const [confirmar, setConfirmar] = useState('');
@@ -208,7 +207,7 @@ export function ResetPasswordModal({ usuario, onClose, onSave }: { usuario:Usuar
             <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Nueva contraseña</label>
             <div style={{ position:'relative' }}>
               <input type={verClave?'text':'password'} value={clave} onChange={e=>{setClave(e.target.value); setError('');}}
-                placeholder="Nueva contraseña"
+                placeholder="Nueva contraseña" aria-label="Nueva contraseña"
                 style={{ width:'100%', height:36, padding:'0 36px 0 10px', border:`1px solid ${error?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               <button type="button" onClick={()=>setVerClave(v=>!v)} title={verClave?'Ocultar contraseña':'Mostrar contraseña'}
                 style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:C.n700, padding:4, display:'flex' }}>
@@ -218,7 +217,7 @@ export function ResetPasswordModal({ usuario, onClose, onSave }: { usuario:Usuar
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Confirmar contraseña</label>
-            <input type={verClave?'text':'password'} value={confirmar} onChange={e=>{setConfirmar(e.target.value); setError('');}}
+            <input aria-label="Confirmar contraseña" type={verClave?'text':'password'} value={confirmar} onChange={e=>{setConfirmar(e.target.value); setError('');}}
               style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${error?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           {error && <p style={{ fontSize:11, color:C.error, margin:0 }}>{error}</p>}
@@ -240,7 +239,7 @@ export function ModalGuardarPlantilla({ nombre, cantUsuarios, onCancel, onSoloPl
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', zIndex:600, display:'flex', alignItems:'center', justifyContent:'center' }} onClick={onCancel}>
       <div style={{ background:'#FFFFFF', borderRadius:radius.lg, width:440, padding:'28px 24px', textAlign:'center', fontFamily:F, boxShadow:'0 8px 40px rgba(0,0,0,.2)' }} onClick={e=>e.stopPropagation()}>
         <div style={{ width:44, height:44, borderRadius:'50%', border:`2px solid ${BRAND}`, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', color:BRAND, fontSize:20, fontWeight:700 }}>!</div>
-        <p style={{ fontSize:14, fontWeight:600, color:C.n900, margin:'0 0 8px' }}>¿Cómo querés guardar "{nombre}"?</p>
+        <p style={{ fontSize:14, fontWeight:600, color:C.n900, margin:'0 0 8px' }}>¿Cómo querés guardar &quot;{nombre}&quot;?</p>
         <p style={{ fontSize:12, color:C.n700, margin:'0 0 20px', lineHeight:1.5 }}>
           {cantUsuarios} usuario{cantUsuarios===1?'':'s'} tiene{cantUsuarios===1?'':'n'} este rol asociado. Podés actualizar solo el rol (no les cambia nada hasta que lo vuelvan a aplicar), o actualizar también sus permisos ahora mismo.
         </p>
@@ -271,7 +270,7 @@ export function SaveAsTemplateModal({ onClose, onSave, plantillas, defaultNombre
         </p>
         <div style={{ textAlign:'left', marginBottom:20 }}>
           <label style={{ fontSize:11, fontWeight:500, color:C.n700, display:'block', marginBottom:5 }}>Seleccionar o crear rol</label>
-          <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej. Recepcionista, Contador senior"
+          <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej. Recepcionista, Contador senior" aria-label="Ej. Recepcionista, Contador senior"
             list="plantillas-existentes" style={{ ...filterInputStyle(), width:'100%' }} autoFocus/>
           <datalist id="plantillas-existentes">{plantillas.map(p=><option key={p.id} value={p.nombre}/>)}</datalist>
         </div>

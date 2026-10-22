@@ -6,9 +6,12 @@ import { Button, Checkbox } from '@/components/suite/ui';
 import { IcChevronDown } from '@/components/suite/icons';
 import { Confirmacion, Popover, descargarCSV, descargarXLS, norm } from '@/components/configuracion/kit';
 import { HOY, fmtF } from './datos';
+import { celdaMonto } from '@/components/suite/Monto';
+import { FiltroFecha } from '@/components/suite/FiltroFecha';
 import { useEmpresa } from '@/components/layout/Shell';
 
-export const money = (n: number, m: 'USD' | 'CRC' = 'USD') => (m === 'CRC' ? `₡ ${fmtNum(n, 0)}` : `$ ${fmtNum(n)}`);
+/** Monto con signo de moneda y siempre 2 decimales («$ 1,234.00», «₡ 1,234.00»). */
+export const money = (n: number, m: 'USD' | 'CRC' = 'USD') => `${n < 0 ? '-' : ''}${m === 'CRC' ? '₡' : '$'} ${fmtNum(Math.abs(n))}`;
 
 // ── Tarjeta blanca del contenido ────────────────────────────────────────────
 export function Panel({ children, style, titulo, acciones, sub }: { children: ReactNode; style?: CSSProperties; titulo?: ReactNode; acciones?: ReactNode; sub?: ReactNode }) {
@@ -106,43 +109,10 @@ export function FechaBoton({ label, value, onChange, min }: { label: string; val
   );
 }
 
-/** Rango de fechas (Periodo de estancia, Período de fecha). */
-export function RangoBoton({ label, desde, hasta, onChange }: { label: string; desde: string; hasta: string; onChange: (d: string, h: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const activo = !!(desde || hasta);
-  return (
-    <span style={{ position: 'relative', display: 'inline-flex' }}>
-      <button type="button" onClick={() => setOpen(o => !o)} className="suite-campo"
-        style={{ height: SIZE.control, padding: '0 12px', border: `1px solid ${activo ? C.brand : C.n500}`, borderRadius: radius.control, background: activo ? C.brandBg : C.n000,
-          display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontFamily: FONT, color: activo ? C.brand : C.n900, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-        {label}{activo ? `: ${fmtF(desde) || '…'} – ${fmtF(hasta) || '…'}` : ''}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
-      </button>
-      <Popover open={open} onClose={() => setOpen(false)} width={300}>
-        <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[['Desde', desde, (v: string) => onChange(v, hasta)], ['Hasta', hasta, (v: string) => onChange(desde, v)]].map(([l, v, f]) => (
-            <label key={l as string} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: C.n700 }}>{l as string}
-              <input type="date" value={v as string} onChange={e => (f as (v: string) => void)(e.target.value)} className="suite-campo"
-                style={{ height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT }} />
-            </label>
-          ))}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {[['Hoy', 0, 0], ['Próx. 7 días', 0, 7], ['Últ. 7 días', -7, 0], ['Este mes', -1, -1]].map(([l, a, b]) => (
-              <button key={l as string} type="button" onClick={() => {
-                if (a === -1) { const m = HOY.slice(0, 8); onChange(m + '01', HOY); } else { onChange(sumar(HOY, a as number), sumar(HOY, b as number)); }
-              }} style={{ fontSize: 11, padding: '4px 8px', border: `1px solid ${C.n500}`, borderRadius: radius.pill, background: C.n000, cursor: 'pointer', fontFamily: FONT }}>{l as string}</button>
-            ))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Button variant="ghost" onClick={() => { onChange('', ''); setOpen(false); }}>Limpiar</Button>
-            <Button onClick={() => setOpen(false)}>Aplicar</Button>
-          </div>
-        </div>
-      </Popover>
-    </span>
-  );
+/** Filtro de rango de fechas estándar de la suite (ver suite/FiltroFecha). */
+export function RangoBoton({ label, desde, hasta, onChange, futuro }: { label: string; desde: string; hasta: string; onChange: (d: string, h: string) => void; futuro?: boolean }) {
+  return <FiltroFecha label={label} desde={desde} hasta={hasta} onChange={onChange} futuro={futuro} />;
 }
-const sumar = (s: string, n: number) => { const d = new Date(s + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
 
 // ── Confirmación (misma forma que todos los modales) ────────────────────────
 export function Alerta({ open, titulo, children, onClose, onConfirm, confirmar = 'Sí, confirmar', cancelar = 'Cancelar', tono = 'brand' }: {
@@ -193,7 +163,7 @@ export function TablaImpresa({ headers, filas, derecha = [] }: { headers: string
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
       <thead><tr style={{ background: '#EFEFEF' }}>{headers.map((h, i) => <th key={i} style={{ padding: '6px 6px', textAlign: derecha.includes(i) ? 'right' : 'left', fontWeight: 500, color: C.n700 }}>{h}</th>)}</tr></thead>
-      <tbody>{filas.map((f, i) => <tr key={i} style={{ borderBottom: `1px solid ${C.n500}` }}>{f.map((c, j) => <td key={j} style={{ padding: '5px 6px', textAlign: derecha.includes(j) ? 'right' : 'left' }}>{c}</td>)}</tr>)}</tbody>
+      <tbody>{filas.map((f, i) => <tr key={i} style={{ borderBottom: `1px solid ${C.n500}` }}>{f.map((c, j) => <td key={j} style={{ padding: '5px 6px', textAlign: derecha.includes(j) ? 'right' : 'left' }}>{celdaMonto(c)}</td>)}</tr>)}</tbody>
     </table>
   );
 }
@@ -257,22 +227,37 @@ export function BotonExportar({ onCSV, onPDF, disabled, label = 'Exportar', titu
 }
 
 // ── Gráficos simples (SVG propio, sin dependencias) ─────────────────────────
+/** Dona con tooltip: al pasar el cursor por un tramo muestra su nombre, cantidad y porcentaje. */
 export function Dona({ partes, size = 130, grosor = 22, centro }: { partes: { valor: number; color: string; label: string }[]; size?: number; grosor?: number; centro?: ReactNode }) {
-  const total = partes.reduce((s, p) => s + p.valor, 0) || 1;
+  const [sobre, setSobre] = useState<number | null>(null);
+  const suma = partes.reduce((s, p) => s + p.valor, 0);
+  const total = suma || 1;
   const r = (size - grosor) / 2, c = 2 * Math.PI * r;
   const largos = partes.map(p => (p.valor / total) * c);
   const offsets = largos.map((_, i) => largos.slice(0, i).reduce((a, b) => a + b, 0));
+  const p = sobre !== null ? partes[sobre] : null;
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={partes.map(p => `${p.label}: ${p.valor}`).join(', ')}>
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }} onMouseLeave={() => setSobre(null)}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={partes.map(x => `${x.label}: ${x.valor}`).join(', ')}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={C.n500} strokeWidth={grosor} />
-        {partes.map((p, i) => {
+        {partes.map((x, i) => {
           const largo = largos[i];
-          return <circle key={p.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.color} strokeWidth={grosor}
-            strokeDasharray={`${largo} ${c - largo}`} strokeDashoffset={-offsets[i]} transform={`rotate(-90 ${size / 2} ${size / 2})`}><title>{`${p.label}: ${p.valor}`}</title></circle>;
+          if (!largo) return null;
+          return <circle key={x.label} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={x.color} strokeWidth={sobre === i ? grosor + 4 : grosor}
+            strokeDasharray={`${largo} ${c - largo}`} strokeDashoffset={-offsets[i]} transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            onMouseEnter={() => setSobre(i)} style={{ cursor: 'default', opacity: sobre === null || sobre === i ? 1 : 0.45, transition: 'opacity .12s, stroke-width .12s' }} />;
         })}
       </svg>
-      {centro && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: FONT }}>{centro}</div>}
+      {centro && <div style={{ position: 'absolute', inset: grosor, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', fontFamily: FONT, pointerEvents: 'none' }}>{centro}</div>}
+      {p && (
+        <div role="tooltip" style={{ position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)', background: C.n900, color: '#fff', borderRadius: 6, padding: '6px 10px',
+          fontSize: 11.5, fontFamily: FONT, whiteSpace: 'nowrap', zIndex: 5, pointerEvents: 'none', boxShadow: '0 4px 12px rgba(0,0,0,.18)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <i style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} />{p.label}: <b style={{ fontWeight: 600 }}>{p.valor}</b>
+            <span style={{ opacity: 0.7 }}>({Math.round((p.valor / total) * 100)} %)</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

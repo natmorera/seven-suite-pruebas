@@ -1,13 +1,13 @@
 'use client';
 import { useState, useCallback, useMemo, useRef } from 'react';
-import { PageHeader, TabBar, Toast } from '../../ui/primitives';
-import { Button } from '../../ui/formulario';
-import { IcPlus, IcImport } from '../../ui/icons';
-import { C } from '../../ui/tokens';
-import { Cuenta } from './catalogoData';
+import { PageHeader, TabBar, Toast } from '@/components/ui/primitives';
+import { Button } from '@/components/ui/formulario';
+import { IcPlus, IcImport } from '@/components/ui/icons';
+import { C } from '@/components/ui/tokens';
+import { type Cuenta } from './catalogoData';
 import { CUENTAS_INIT } from './datos/cuentasIniciales';
 import { flattenTree, flattenAll, toggleNodeExpanded, addNodeToTree, updateNodeInTree, removeNodeFromTree, genId } from './datos/arbol';
-import { EnlaceAjuste, ENLACES_AJUSTE_INIT } from './datos/ajustes';
+import { type EnlaceAjuste, ENLACES_AJUSTE_INIT } from './datos/ajustes';
 import AccountDetail from './AccountDetail';
 import { TabCentrosCosto } from './CatalogoTabs';
 import { TabGrupoPatrimonio } from './ajustes/piezas';
@@ -28,15 +28,15 @@ export default function CatalogoPage() {
   const [showIO, setShowIO] = useState(false);
   const [showEst, setShowEst] = useState(false);
   const [showNuevoCentro, setShowNuevoCentro] = useState(false);
-  // Issue #7: se sube acá para que AccountDetail pueda mostrar, en el detalle de
+  // se sube acá para que AccountDetail pueda mostrar, en el detalle de
   // una cuenta, los movimientos de ajuste que la tienen enlazada.
   const [ajustes, setAjustes] = useState<EnlaceAjuste[]>(() => ENLACES_AJUSTE_INIT.map(e=>({...e})));
-  // Issue #5: los botones de Movimientos de ajuste viven en el header - se
+  // los botones de Movimientos de ajuste viven en el header - se
   // avisan a TabAjustes con un contador que se incrementa en cada click.
   const [ajusteAddSignal, setAjusteAddSignal] = useState(0);
   const [ajusteSaveSignal, setAjusteSaveSignal] = useState(0);
   const [patrimonioAddSignal, setPatrimonioAddSignal] = useState(0);
-  const toastTimer = useRef<any>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Lista plana de TODAS las cuentas (sin depender de qué esté expandido en el árbol
   // visual) - la necesitan el selector de cuenta padre y la validación de código
@@ -100,7 +100,7 @@ export default function CatalogoPage() {
           <Button variant="secondary" icon={<IcPlus className="w-3 h-3"/>} onClick={()=>setAjusteAddSignal(s=>s+1)}>Agregar movimiento</Button>
           <Button onClick={()=>{ setAjusteSaveSignal(s=>s+1); showToast('Configuración de movimientos de ajuste guardada.'); }}>Guardar configuración</Button>
         </>}
-        {/* Issue #6: el botón "Nuevo" de Grupo de patrimonio se mueve al header */}
+        {/* el botón "Nuevo" de Grupo de patrimonio se mueve al header */}
         {tab===4 && <Button icon={<IcPlus className="w-3 h-3"/>} onClick={()=>setPatrimonioAddSignal(s=>s+1)}>Nuevo</Button>}
       </PageHeader>
       <TabBar tabs={TABS} active={tab} onChange={handleTabChange}/>
@@ -130,7 +130,7 @@ export default function CatalogoPage() {
       )}
 
       {tab===1 && <TabCentrosCosto cuentas={cuentas} triggerNuevo={showNuevoCentro} onNuevoDone={()=>setShowNuevoCentro(false)}/>}
-      {tab===2 && <TabCuentasEspeciales cuentas={cuentas} onUpdateCuenta={data=>setCuentas(p=>updateNodeInTree(p,data as any))}/>}
+      {tab===2 && <TabCuentasEspeciales cuentas={cuentas} onUpdateCuenta={data=>setCuentas(p=>updateNodeInTree(p,data))}/>}
       {tab===3 && (
         <TabAjustes
           rows={ajustes} onChange={setAjustes}

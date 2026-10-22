@@ -1,4 +1,5 @@
 'use client';
+import { celdaMonto } from '@/components/suite/Monto';
 // Reporte estándar: impresión, exportación (CSV / XLS / PDF) y documento con encabezado, filtros y pie paginado.
 import { Fragment, useState, type CSSProperties, type ReactNode } from 'react';
 import { C, FONT, radius } from '@/components/suite/tokens';
@@ -173,7 +174,7 @@ export function DocumentoReporte({ titulo, periodo, linea, encabezado = true, da
               {!b.filas.length && <tr><td colSpan={b.columnas.length} style={{ ...tdD, color: '#888' }}>Sin registros.</td></tr>}
               {b.filas.map((f, i) => f.tipo === 'grupo'
                 ? <tr key={i}><td colSpan={b.columnas.length} style={{ ...tdD, fontWeight: 600, background: '#FAFAFA', paddingLeft: f.sub ? 22 : 10 }}>{f.texto}</td></tr>
-                : <tr key={i}>{f.c.map((v, j) => <td key={j} style={{ ...tdD, textAlign: b.columnas[j]?.der ? 'right' : 'left', fontWeight: f.tipo === 'subtotal' || (esDato(f) && f.negrita) ? 600 : 400, fontVariantNumeric: 'tabular-nums' }}>{v}</td>)}</tr>)}
+                : <tr key={i}>{f.c.map((v, j) => <td key={j} style={{ ...tdD, textAlign: b.columnas[j]?.der ? 'right' : 'left', fontWeight: f.tipo === 'subtotal' || (esDato(f) && f.negrita) ? 600 : 400, fontVariantNumeric: 'tabular-nums' }}>{celdaMonto(v)}</td>)}</tr>)}
             </tbody>
             {b.total && <tfoot style={{ display: 'table-row-group' }}><tr>{b.total.map((v, j) => <td key={j} style={{ ...tdD, fontWeight: 700, background: '#F2F3F5', borderBottom: 'none', textAlign: b.columnas[j]?.der ? 'right' : 'left' }}>{v}</td>)}</tr></tfoot>}
           </table>

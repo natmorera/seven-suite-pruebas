@@ -53,3 +53,12 @@ Usa las clases de Tailwind `text-h1`, `text-h2`, `text-h3`, `text-body`, `text-s
 3. **Responsive del sidebar en mobile**: actualmente se oculta en pantallas pequeñas (`hidden md:flex`); si necesitas un drawer mobile, lo agregamos.
 4. **Estados de carga/error**: los componentes asumen datos siempre presentes; al conectar API real conviene añadir skeletons y manejo de errores.
 5. **Autenticación / multi-hotel**: si Seven Analytics maneja varios hoteles, el nombre "Hotel Layan" en el header debería venir de contexto/sesión.
+
+## Configuración
+
+El menú lateral tiene **Configuración** (`/configuracion`), con el mismo encabezado, pestañas, tarjetas y campos que Configuración › Empresa en Accounting y los demás módulos de la suite:
+
+- **Empresa:** identificación (nombre legal y comercial, tipo y número de identificación, país y zona horaria) y contacto (dirección, teléfono, correo y sitio web) de la empresa elegida en el selector. Al editar aparecen **Cancelar** y **Guardar cambios** en el encabezado.
+- **API Key:** la llave con la que Management (MAN) se conecta a Seven Analytics, con **Mostrar**, **Copiar** y **Generar API Key nueva** (la anterior deja de funcionar).
+
+La empresa elegida en el selector se mantiene al pasar entre Dashboard y Configuración. Como el módulo no tiene servidor, los datos de empresa y la API Key se guardan en el navegador (`lib/empresa.ts`, `lib/apiKey.ts`). Las piezas de la pantalla están en `components/configuracion/piezas.tsx` y la sección de la API Key en `components/integracion/SeccionApiKey.tsx`, la misma de los demás módulos.

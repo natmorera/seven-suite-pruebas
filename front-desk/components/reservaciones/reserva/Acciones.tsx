@@ -240,7 +240,7 @@ export function DuplicarReserva({ g, onClose, onListo }: { g: GrupoReserva; onCl
       let hab = disponible(l.id, l.tipo);
       if (usadas.includes(hab)) hab = h.habitaciones.find(x => x.tipo === l.tipo && !usadas.includes(x.numero) && x.estado !== 'bloqueada' && habitacionLibre(h.reservas, x.numero, entrada, salida))?.numero ?? '';
       if (hab) usadas.push(hab);
-      return conSaldo(lineaNueva(orig, { numero: varias ? `RD-${base}_${i + 1}` : `RD-${base}`, grupo: varias ? `g${base}` : undefined, entrada, salida, tipo: l.tipo, habitacion: hab, adultos: l.adultos, ninos: l.ninos,
+      return conSaldo(lineaNueva(orig, { numero: varias ? `${orig.cliente === 'Agencia de Viajes' ? 'RL' : 'RE'}-${base}_${i + 1}` : `${orig.cliente === 'Agencia de Viajes' ? 'RL' : 'RE'}-${base}`, grupo: varias ? `g${base}` : undefined, entrada, salida, tipo: l.tipo, habitacion: hab, adultos: l.adultos, ninos: l.ninos,
         precio: l.tipo === orig.tipo ? orig.precio : precioTarifa(l.tipo, orig.tarifa) }));
     });
     h.crearReservaGrupo(nuevas, `Reserva duplicada de #${numeroDe(p)}`);

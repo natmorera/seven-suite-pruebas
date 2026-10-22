@@ -1,6 +1,6 @@
 'use client';
-import { C, PAGE_PAD, radius, TABLA } from '../../../ui/tokens';
-import { SearchInput, FilterDropdown, BulkActionBar } from '../../../ui/filtros';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { SearchInput, FilterDropdown, BulkActionBar } from '@/components/ui/filtros';
 import { PaginationFooter } from './PaginationFooter';
 import { BRAND, F, IMPORTE_DEFAULT, IMPORTE_MAX, MONEDAS, MON_SYM, ORIGENES, TIPOS_LABEL, USUARIOS, fmt2 } from './datos';
 import { ActBtn, DateFilter, IcBan, IcCheck, IcClip, IcCopy, IcMail, ImporteFilter, TipoPill } from './piezas';
@@ -46,7 +46,7 @@ export function TabPendientes({ e }: { e: EstadoBandeja }) {
               <thead style={{ position:'sticky', top:0, zIndex:2, background:'#FFFFFF' }}>
                 <tr style={TABLA.headRow}>
                   <th style={{ ...TABLA.th, width:40 }}>
-                    <input type="checkbox" checked={pendientes.length>0&&seleccion.size===pendientes.length} onChange={e=>handleSelectAll(e.target.checked)} style={{ width:14, height:14, accentColor:BRAND }}/>
+                    <input type="checkbox" aria-label="Seleccionar" checked={pendientes.length>0&&seleccion.size===pendientes.length} onChange={e=>handleSelectAll(e.target.checked)} style={{ width:14, height:14, accentColor:BRAND }}/>
                   </th>
                   {visibles.map(c=>(
                     <th key={c.id} style={{ ...TABLA.th, textAlign:c.id==='importe'?'right':'left' }}>{c.label}</th>
@@ -66,7 +66,7 @@ export function TabPendientes({ e }: { e: EstadoBandeja }) {
                       onMouseEnter={e=>!isSel&&(e.currentTarget.style.background='#F9F9F9')}
                       onMouseLeave={e=>!isSel&&(e.currentTarget.style.background='#FFFFFF')}>
                       <td onClick={e=>e.stopPropagation()} style={{ padding:'8px 12px' }}>
-                        <input type="checkbox" checked={isSel} onChange={()=>handleSelectOne(a.id)} style={{ width:14, height:14, accentColor:BRAND }}/>
+                        <input type="checkbox" aria-label="Seleccionar" checked={isSel} onChange={()=>handleSelectOne(a.id)} style={{ width:14, height:14, accentColor:BRAND }}/>
                       </td>
                       {visibles.map(c=>{
                         if (c.id==='tipo')        return <td key={c.id} style={{ padding:'8px 12px' }}><TipoPill tipo={a.tipo}/></td>;
@@ -125,7 +125,7 @@ export function TabPendientes({ e }: { e: EstadoBandeja }) {
               )}
             </table>
           </div>
-          {/* Footer */}
+          {/* Pie */}
           <PaginationFooter total={pendientes.length} porPagina={porPagina} setPorPagina={setPorPagina} pagina={pagina} setPagina={setPagina}/>
         </div>
   );

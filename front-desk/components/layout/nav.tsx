@@ -30,7 +30,7 @@ export const NAV: NavItem[] = [
       { label: 'Histórico de folios', href: '/facturacion/historico-de-folios' },
       { label: 'Transacciones diarias', href: '/facturacion/transacciones-diarias' },
       { label: 'Depósitos en garantía', href: '/facturacion/depositos-en-garantia' },
-      { label: 'Vouchers', href: '/facturacion/vouchers' },
+      { label: 'Vouchers y depósitos', href: '/facturacion/vouchers' },
     ],
   },
   {
@@ -67,8 +67,22 @@ export const NAV: NavItem[] = [
       { label: 'Reportes', href: '/auditoria/reportes', match: '/auditoria/reportes' },
     ],
   },
-  { id: 'historico', label: 'Histórico', icon: <SearchNormalIcon {...i} />, href: '/historico' },
-  { id: 'config', label: 'Configuración', icon: <Setting2Icon {...i} />, href: '/configuracion/empresa' },
+  {
+    id: 'historico', label: 'Histórico', icon: <SearchNormalIcon {...i} />,
+    hijos: [
+      { label: 'Estancias y huéspedes', href: '/historico/estancias' },
+      { label: 'Bitácora de cambios', href: '/historico/bitacora-de-cambios' },
+      { label: 'No-shows', href: '/historico/no-shows' },
+      { label: 'Mensajes', href: '/historico/mensajes' },
+    ],
+  },
+  {
+    id: 'config', label: 'Configuración', icon: <Setting2Icon {...i} />,
+    hijos: [
+      { label: 'Mi cuenta', href: '/mi-cuenta' },
+      { label: 'Configuración General', href: '/configuracion/empresa', match: '/configuracion' },
+    ],
+  },
 ];
 
 // Subpanel blanco de Configuración
@@ -86,7 +100,6 @@ export const CONFIG: ConfigShell = {
         { label: 'Tarifas / Contratos', href: '/configuracion/tarifas-contratos' },
         { label: 'Facturación', href: '/configuracion/facturacion' },
         { label: 'Caja y cierre', href: '/configuracion/caja' },
-        { label: 'Operaciones', href: '/configuracion/operaciones' },
         { label: 'Correo electrónico', href: '/configuracion/correo-electronico' },
         { label: 'Integraciones', href: '/configuracion/integraciones' },
       ],

@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Toast, Section, RowAction } from '../../ui/primitives';
-import { C, FONT, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { SearchInput } from '../../ui/filtros';
-import { IcPlus, IcEdit, IcTrash, IcSearch, IcClose, IcCheck } from '../../ui/icons';
+import { useState } from 'react';
+import { Toast, Section, RowAction } from '@/components/ui/primitives';
+import { C, FONT, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcEdit, IcTrash, IcClose } from '@/components/ui/icons';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 const F = FONT;
 const BRAND = C.brand;
@@ -28,7 +29,7 @@ const INIT: Afiliado[] = [
 
 function pct(n: number) { return `${fmtNum(n, 2)}%`; }
 
-// ── Modal crear/editar afiliado ───────────────────────────────────────────────
+// ── Modal para crear o editar un afiliado ───────────────────────────────────────────────
 function ModalAfiliado({ afiliado, onClose, onSave }: { afiliado: Afiliado|null; onClose:()=>void; onSave:(a:Afiliado)=>void }) {
   const isNew = !afiliado;
   const [form, setForm] = useState({
@@ -75,61 +76,61 @@ function ModalAfiliado({ afiliado, onClose, onSave }: { afiliado: Afiliado|null;
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
           <div>
             <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5 }}>Código <span style={{ color:C.error }}>*</span></label>
-            <input value={form.code} onChange={e=>set('code', e.target.value)} placeholder="AFI-004"
+            <input value={form.code} onChange={e=>set('code', e.target.value)} placeholder="AFI-004" aria-label="AFI-004"
               style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errors.code?C.error:'#ECECEC'}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
-            {errors.code && <p style={{ fontSize:10, color:C.error, margin:'4px 0 0' }}>{errors.code}</p>}
+            {errors.code && <p style={{ fontSize:10.5, color:C.error, margin:'4px 0 0' }}>{errors.code}</p>}
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5 }}># Terminal <span style={{ color:C.error }}>*</span></label>
-            <input value={form.terminal} onChange={e=>set('terminal', e.target.value)} placeholder="4654897"
+            <input value={form.terminal} onChange={e=>set('terminal', e.target.value)} placeholder="4654897" aria-label="4654897"
               style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errors.terminal?C.error:'#ECECEC'}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
-            {errors.terminal && <p style={{ fontSize:10, color:C.error, margin:'4px 0 0' }}>{errors.terminal}</p>}
+            {errors.terminal && <p style={{ fontSize:10.5, color:C.error, margin:'4px 0 0' }}>{errors.terminal}</p>}
           </div>
         </div>
 
         <div style={{ marginBottom:12 }}>
           <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5 }}>Nombre <span style={{ color:C.error }}>*</span></label>
-          <input value={form.nombre} onChange={e=>set('nombre', e.target.value)} placeholder="BAC Visa/Master"
+          <input value={form.nombre} onChange={e=>set('nombre', e.target.value)} placeholder="BAC Visa/Master" aria-label="BAC Visa/Master"
             style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errors.nombre?C.error:'#ECECEC'}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
-          {errors.nombre && <p style={{ fontSize:10, color:C.error, margin:'4px 0 0' }}>{errors.nombre}</p>}
+          {errors.nombre && <p style={{ fontSize:10.5, color:C.error, margin:'4px 0 0' }}>{errors.nombre}</p>}
         </div>
 
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
           <div>
             <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5 }}>Banco</label>
-            <input value={form.banco} onChange={e=>set('banco', e.target.value)} placeholder="BAC San José"
+            <input value={form.banco} onChange={e=>set('banco', e.target.value)} placeholder="BAC San José" aria-label="BAC San José"
               style={{ width:'100%', height:36, padding:'0 10px', border:'1px solid #ECECEC', borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5 }}>Cuenta de tránsito</label>
-            <select value={form.cuentaTransito} onChange={e=>set('cuentaTransito', e.target.value)}
+            <select aria-label="Cuenta de tránsito" value={form.cuentaTransito} onChange={e=>set('cuentaTransito', e.target.value)}
               style={{ width:'100%', height:36, padding:'0 10px', border:'1px solid #ECECEC', borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', background:'#FFFFFF' }}>
               {CUENTAS_TRANSITO.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
         </div>
 
-        <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Porcentajes aplicados a cada liquidación</p>
+        <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Porcentajes aplicados a cada liquidación</p>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:16 }}>
           <div>
             <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:5 }}>Comisión %</label>
-            <input type="number" step="0.01" value={form.comision} onChange={e=>set('comision', e.target.value)}
+            <input aria-label="Comisión %" type="number" step="0.01" value={form.comision} onChange={e=>set('comision', e.target.value)}
               style={{ width:'100%', height:34, padding:'0 8px', border:`1px solid ${errors.comision?C.error:'#ECECEC'}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div>
             <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:5 }}>Ret. fuente %</label>
-            <input type="number" step="0.01" value={form.retFuente} onChange={e=>set('retFuente', e.target.value)}
+            <input aria-label="Ret. fuente %" type="number" step="0.01" value={form.retFuente} onChange={e=>set('retFuente', e.target.value)}
               style={{ width:'100%', height:34, padding:'0 8px', border:'1px solid #ECECEC', borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div>
             <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:5 }}>Ret. IVA %</label>
-            <input type="number" step="0.01" value={form.retIVA} onChange={e=>set('retIVA', e.target.value)}
+            <input aria-label="Ret. IVA %" type="number" step="0.01" value={form.retIVA} onChange={e=>set('retIVA', e.target.value)}
               style={{ width:'100%', height:34, padding:'0 8px', border:'1px solid #ECECEC', borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
         </div>
 
         <label style={{ display:'flex', alignItems:'center', gap:8, marginBottom:20, cursor:'pointer' }}>
-          <input type="checkbox" checked={form.activo} onChange={e=>set('activo', e.target.checked)} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
+          <input type="checkbox" aria-label="Seleccionar" checked={form.activo} onChange={e=>set('activo', e.target.checked)} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
           <span style={{ fontSize:12, color:'#0F0F0F' }}>Afiliado activo</span>
         </label>
 
@@ -166,11 +167,8 @@ export default function Afiliados({ addSignal, onAddHandled }: { addSignal?: num
     setConfirmDel(null);
   }
 
-  // Issue #10: "Nuevo afiliado" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { setModal('nuevo'); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo afiliado» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { setModal('nuevo'); });
 
   return (
     <Section title="Afiliados" hint="Terminales de tarjeta (datáfonos) y las cuentas donde se registran sus depósitos y comisiones.">

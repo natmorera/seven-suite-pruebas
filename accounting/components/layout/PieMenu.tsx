@@ -3,9 +3,9 @@
 // onboarding (demostración) y cerrar sesión.
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { IcBell, IcLogout, IcChevronDown } from '../ui/icons';
-import { C, FONT, radius } from '../ui/tokens';
-import { verOnboarding } from '../pages/onboarding/datos/obligatorio';
+import { IcBell, IcLogout, IcChevronDown } from '@/components/ui/icons';
+import { C, FONT, radius } from '@/components/ui/tokens';
+import { verOnboarding } from '@/components/pages/onboarding/datos/obligatorio';
 import ModulosSuiteModal, { IcModulos } from './modulos/ModulosSuite';
 import { GlobeIcon, IcPlay } from './iconosMenu';
 import { filaMenu } from './estiloMenu';

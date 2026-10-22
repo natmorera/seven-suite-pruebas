@@ -7,11 +7,12 @@ import { Celda, Fila, Tabla, TextArea } from '@/components/configuracion/kit';
 import { useHotel } from '@/components/hotel/store';
 import { fmtF } from '@/components/hotel/datos';
 import { ADMIN, TC, fmtCRC, fmtUSD, horaReal, r2, type Turno } from '@/components/hotel/finanzas';
-import { Banda, PaginaFact, Tarjeta, Visor, useAhora } from '../comun';
+import { AvisoPie, Banda, PaginaFact, Tarjeta, Visor, useAhora } from '../comun';
 import { consolidadoDia } from './calc';
 import { ReporteCierreCaja, TicketTurno } from './Reportes';
 import { FirmaModal, Linea, Renglon, Volver, type P } from './piezas';
 import { ForzarCierre } from './Cajeros';
+import { MontoCelda, celdaMonto } from '@/components/suite/Monto';
 
 // ── Cierre de caja del día ──────────────────────────────────────────────────
 export function CierreDia({ ir, toast, obsInicial }: P & { obsInicial?: string }) {
@@ -24,8 +25,9 @@ export function CierreDia({ ir, toast, obsInicial }: P & { obsInicial?: string }
   const pendientes = c.turnos.filter(t => t.fin && Math.abs(t.diferencia) >= 0.01).length;
   return (
     <PaginaFact titulo={`Cierre de caja del día · ${fmtF(h.cajaDia.fecha)}`} izquierda={<Volver onClick={() => ir({ v: 'inicio' })} />}
-      pie={<><Button variant="secondary" onClick={() => ir({ v: 'inicio' })}>Cancelar</Button><Button disabled={c.activos.length > 0} onClick={() => ir({ v: 'resumenDia', obs })} title={c.activos.length ? 'Cierra o fuerza el cierre de los turnos activos' : undefined}>Revisar y resumen final →</Button></>}>
-      {c.activos.length > 0 && <Banda tono="error"><b>{c.activos.length} {c.activos.length === 1 ? 'cajero aún tiene' : 'cajeros aún tienen'} turno activo.</b> Para cerrar la caja del día, primero deben cerrar sus turnos o tú debes forzar el cierre.</Banda>}
+      pie={<>{c.activos.length > 0 && <AvisoPie tono="warn">Falta cerrar {c.activos.length === 1 ? `el turno de ${c.activos[0].cajero}` : `${c.activos.length} turnos`} para continuar.</AvisoPie>}
+        <Button variant="secondary" onClick={() => ir({ v: 'inicio' })}>Cancelar</Button><Button disabled={c.activos.length > 0} onClick={() => ir({ v: 'resumenDia', obs })}>Revisar resumen final</Button></>}>
+      {c.activos.length > 0 && <Banda tono="error"><b>{c.activos.length} {c.activos.length === 1 ? 'cajero aún tiene' : 'cajeros aún tienen'} turno activo.</b> Ciérralo{c.activos.length === 1 ? '' : 's'} desde la tabla: tu turno con «Cerrar mi turno» y el de otro cajero con «Forzar cierre».</Banda>}
       <Tarjeta titulo="Estado de turnos al cierre">
         <Tabla headers={['Cajero', 'Inicio de turno', 'Ingresos', 'Egresos', 'Diferencia', 'Estado turno', '']} alinearDerecha={[2, 3, 4]}>
           {c.filas.map(({ t, r }) => {
@@ -34,10 +36,10 @@ export function CierreDia({ ir, toast, obsInicial }: P & { obsInicial?: string }
             return (
               <Fila key={t.id}>
                 <Celda style={{ fontWeight: 600 }}>{t.cajero}</Celda><Celda>{t.inicio.slice(11, 16)}</Celda>
-                <Celda derecha style={{ color: '#2E7D32' }}>{fmtUSD(r.ingresos, true)}</Celda><Celda derecha style={{ color: C.error }}>{fmtUSD(-r.egresos)}</Celda>
+                <Celda derecha style={{ color: '#2E7D32' }}><MontoCelda texto={fmtUSD(r.ingresos, true)} /></Celda><Celda derecha style={{ color: C.error }}><MontoCelda texto={fmtUSD(-r.egresos)} /></Celda>
                 <Celda derecha>{t.fin ? <StatusBadge label={fmtUSD(t.diferencia)} color={conDif ? 'red' : 'green'} /> : '—'}</Celda>
                 <Celda>{t.fin ? <StatusBadge label={`${t.forzado ? 'Cerrado (forzado)' : 'Cerrado'} ${t.fin.slice(11, 16)}`} color="green" /> : <StatusBadge label={t.precierre ? 'Activo — en precierre' : 'Activo — precierre pendiente'} color={t.precierre ? 'yellow' : 'brand'} />}</Celda>
-                <Celda derecha>{t.fin ? <Button variant="secondary" onClick={() => setVer(t)}>Ver reporte</Button> : mio ? <Button variant="secondary" onClick={() => ir({ v: 'arqueo', turnoId: t.id })}>Ir a mi precierre</Button>
+                <Celda derecha>{t.fin ? <Button variant="secondary" onClick={() => setVer(t)}>Ver reporte</Button> : mio ? <Button onClick={() => ir({ v: 'arqueo', turnoId: t.id, desde: 'cierreDia' })}>Cerrar mi turno</Button>
                   : <Button onClick={() => setForzar(t)} style={{ background: C.error, borderColor: C.error }}>Forzar cierre</Button>}</Celda>
               </Fila>
             );
@@ -101,20 +103,20 @@ export function ResumenDia({ ir, toast, obs }: P & { obs: string }) {
         <Tabla headers={['Cajero', 'Saldo inicial', 'Cobrado', 'Egresos', 'Saldo esperado', 'Declarado', 'Diferencia']} alinearDerecha={[1, 2, 3, 4, 5, 6]}>
           {c.filas.map(f => (
             <Fila key={f.t.id} style={f.diferencia && Math.abs(f.diferencia) >= 0.01 ? { background: 'rgba(244,67,54,.03)' } : undefined}>
-              <Celda style={{ fontWeight: 600 }}>{f.t.cajero}</Celda><Celda derecha>{f.saldoInicial !== null ? fmtUSD(f.saldoInicial) : '—'}</Celda>
-              <Celda derecha style={{ color: '#2E7D32' }}>{fmtUSD(f.r.ingresos, true)}</Celda><Celda derecha style={{ color: C.error }}>{fmtUSD(-f.r.egresos)}</Celda>
-              <Celda derecha>{fmtUSD(f.esperado)}</Celda><Celda derecha>{fmtUSD(f.declarado ?? f.esperado)}</Celda>
+              <Celda style={{ fontWeight: 600 }}>{f.t.cajero}</Celda><Celda derecha>{celdaMonto(f.saldoInicial !== null ? fmtUSD(f.saldoInicial) : '—')}</Celda>
+              <Celda derecha style={{ color: '#2E7D32' }}><MontoCelda texto={fmtUSD(f.r.ingresos, true)} /></Celda><Celda derecha style={{ color: C.error }}><MontoCelda texto={fmtUSD(-f.r.egresos)} /></Celda>
+              <Celda derecha><MontoCelda texto={fmtUSD(f.esperado)} /></Celda><Celda derecha><MontoCelda texto={fmtUSD(f.declarado ?? f.esperado)} /></Celda>
               <Celda derecha><StatusBadge label={fmtUSD(f.diferencia ?? 0)} color={f.diferencia && Math.abs(f.diferencia) >= 0.01 ? 'red' : 'green'} /></Celda>
             </Fila>
           ))}
-          <tr style={{ background: '#EEF2FA', fontWeight: 700 }}><td style={{ padding: 10 }}>Total del día</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(c.saldoInicial)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(c.ingresos, true)}</td>
-            <td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(-c.egresos)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(c.esperado)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(c.declarado)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(c.diferencia)}</td></tr>
+          <tr style={{ background: '#EEF2FA', fontWeight: 700 }}><td style={{ padding: 10 }}>Total del día</td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(c.saldoInicial)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(c.ingresos, true)} /></td>
+            <td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(-c.egresos)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(c.esperado)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(c.declarado)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(c.diferencia)} /></td></tr>
         </Tabla>
       </Tarjeta>
       <Tarjeta titulo="Desglose por método de pago">
         <Tabla headers={['Método', 'CRC (₡)', 'USD ($)', 'Total USD']} alinearDerecha={[1, 2, 3]}>
-          {metodos.map(([l, crc, usd, tot]) => <Fila key={l}><Celda>{l}</Celda><Celda derecha>{crc === null ? '—' : fmtCRC(crc)}</Celda><Celda derecha>{usd === null ? '—' : fmtUSD(usd)}</Celda><Celda derecha>{fmtUSD(tot)}</Celda></Fila>)}
-          <tr style={{ background: '#EEF2FA', fontWeight: 700 }}><td style={{ padding: 10 }}>Total declarado</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtCRC(m.efCRC + m.pos2)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(m.efUSD + m.pos1 + m.transf + m.link)}</td><td style={{ padding: 10, textAlign: 'right' }}>{fmtUSD(totUSD)}</td></tr>
+          {metodos.map(([l, crc, usd, tot]) => <Fila key={l}><Celda>{l}</Celda><Celda derecha>{celdaMonto(crc === null ? '—' : fmtCRC(crc))}</Celda><Celda derecha>{celdaMonto(usd === null ? '—' : fmtUSD(usd))}</Celda><Celda derecha><MontoCelda texto={fmtUSD(tot)} /></Celda></Fila>)}
+          <tr style={{ background: '#EEF2FA', fontWeight: 700 }}><td style={{ padding: 10 }}>Total declarado</td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtCRC(m.efCRC + m.pos2)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(m.efUSD + m.pos1 + m.transf + m.link)} /></td><td style={{ padding: 10, textAlign: 'right' }}><MontoCelda texto={fmtUSD(totUSD)} /></td></tr>
         </Tabla>
         <Linea l="C1 · Diferencia final de la caja del día" v={fmtUSD(c.diferencia)} rojo={Math.abs(c.diferencia) >= 0.01} verde={Math.abs(c.diferencia) < 0.01} bold />
       </Tarjeta>

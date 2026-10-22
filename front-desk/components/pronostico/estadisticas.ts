@@ -28,7 +28,7 @@ export function ingresoNoche(r: Reserva) {
 
 /** Celda del pronóstico: un tipo en una fecha. */
 export interface CeldaPron { tipo: string; total: number; fueraOrden: number; ocupadas: number; reservadas: number; libres: number; salidas: number; llegadas: number }
-export interface OpcPron { estados: string[]; tarifa?: string; titulo?: string; modo: 'Real' | 'Proyectado'; fuente: 'Hotel' | 'Tarifa'; respetarCupos: boolean; respetarRelease: boolean }
+export interface OpcPron { estados: string[]; tarifa?: string; titulo?: string; modo: 'Real' | 'Proyectado'; fuente: 'Hotel' | 'Tarifa'; respetarCupos: boolean }
 
 export function pronostico(h: H, desde: string, hasta: string, o: OpcPron) {
   const filtra = (r: Reserva) => (!o.tarifa || r.tarifa === o.tarifa) && (!o.titulo || `${r.grupo ?? ''} ${r.empresa} ${r.nombre} ${r.numero}`.toLowerCase().includes(o.titulo.toLowerCase()));
@@ -36,7 +36,6 @@ export function pronostico(h: H, desde: string, hasta: string, o: OpcPron) {
     const bloq = bloqueadasEn(h.habitaciones, h.tareas, d, h.bloqueos);
     const delDia = h.reservas.filter(r => r.habitacion !== undefined && ocupaNoche(r, d) && filtra(r));
     const cupo = o.tarifa ? CUPOS[o.tarifa] : undefined;
-    const liberado = !!cupo && o.respetarRelease && cupo.release > 0 && noches(HOY, d) < cupo.release;
     const celdas: CeldaPron[] = TIPOS.map(t => {
       const habs = h.habitaciones.filter(x => x.tipo === t.id);
       const fueraOrden = habs.filter(x => bloq.has(x.numero)).length;
@@ -47,9 +46,8 @@ export function pronostico(h: H, desde: string, hasta: string, o: OpcPron) {
       const llegadas = h.reservas.filter(r => r.tipo === t.id && r.entrada === d && filtra(r) && (r.estado === 'In-House' || r.estado === 'Completada' || o.estados.includes(r.estado))).length;
       let total = habs.length;
       let libres = total - fueraOrden - ocupadas - reservadas;
-      if (o.fuente === 'Tarifa' && cupo) { total = cupo.cupos; libres = liberado ? 0 : cupo.cupos - ocupadas - reservadas; }
-      else if (o.respetarCupos && cupo) libres = Math.min(libres, liberado ? 0 : cupo.cupos - ocupadas - reservadas);
-      else if (liberado) libres = Math.min(libres, 0);
+      if (o.fuente === 'Tarifa' && cupo) { total = cupo.cupos; libres = cupo.cupos - ocupadas - reservadas; }
+      else if (o.respetarCupos && cupo) libres = Math.min(libres, cupo.cupos - ocupadas - reservadas);
       return { tipo: t.id, total, fueraOrden, ocupadas, reservadas, libres, salidas, llegadas };
     });
     const total = celdas.reduce((s, c) => s + c.total, 0);

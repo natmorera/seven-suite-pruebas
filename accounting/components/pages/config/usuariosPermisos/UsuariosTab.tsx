@@ -1,15 +1,15 @@
 'use client';
 import React, { useState } from 'react';
-import { Toast, Section, RowAction } from '../../../ui/primitives';
-import { C, radius, TABLA } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { IcTrash, IcLock, IcNoCircle } from '../../../ui/icons';
-import { Usuario, PlantillaPermiso } from '../permissionsData';
+import { Toast, Section, RowAction } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcTrash, IcLock, IcNoCircle } from '@/components/ui/icons';
+import { type Usuario, type PlantillaPermiso } from '../permissionsData';
 import { BRAND, F } from './datos';
 import { ModalConfirm, ResetPasswordModal } from './modales';
 import { DateCell, DetalleUsuarioPermisos, SwitchActivo } from './piezas';
 
-export function UsuariosTab({ usuarios, setUsuarios, onGestionarPermisos, plantillas, busq, setBusq, mostrarInactivos, setMostrarInactivos }: {
+export function UsuariosTab({ usuarios, setUsuarios, plantillas, busq, setBusq, mostrarInactivos, setMostrarInactivos }: {
   usuarios: Usuario[]; setUsuarios: React.Dispatch<React.SetStateAction<Usuario[]>>; onGestionarPermisos:(u:Usuario)=>void;
   plantillas: PlantillaPermiso[];
   busq:string; setBusq:(v:string)=>void; mostrarInactivos:boolean; setMostrarInactivos:(v:boolean)=>void;
@@ -32,14 +32,7 @@ export function UsuariosTab({ usuarios, setUsuarios, onGestionarPermisos, planti
     setLimpiarUser(null);
   }
 
-  // Acciones cuadradas de 32x32 con el icono centrado (antes eran 26x26).
-  const actionBtnStyle = (opts?: { danger?: boolean }): React.CSSProperties => ({
-    // Mismo botón de acción que el resto de tablas: 28px, solo ícono, sin borde.
-    width:28, height:28, borderRadius:radius.sm,
-    border:'none', background:'transparent',
-    cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-    color:opts?.danger?C.error:C.n700, padding:0, flexShrink:0,
-  });
+  // Acciones cuadradas de 32x32 con el ícono centrado.
 
   return (
     <Section title="Usuarios" hint="Tocá una fila para ver el detalle de permisos del usuario.">
@@ -48,7 +41,7 @@ export function UsuariosTab({ usuarios, setUsuarios, onGestionarPermisos, planti
           <SearchInput value={busq} onChange={setBusq} placeholder="Buscar usuario…" width="100%" />
         </div>
         <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer' }}>
-          <input type="checkbox" checked={mostrarInactivos} onChange={e=>setMostrarInactivos(e.target.checked)} style={{ width:15, height:15, accentColor:BRAND, cursor:'pointer' }}/>
+          <input type="checkbox" aria-label="Seleccionar" checked={mostrarInactivos} onChange={e=>setMostrarInactivos(e.target.checked)} style={{ width:15, height:15, accentColor:BRAND, cursor:'pointer' }}/>
           <span style={{ fontSize:12.5, color:C.n900 }}>Mostrar inactivos</span>
         </label>
       </div>
@@ -74,7 +67,7 @@ export function UsuariosTab({ usuarios, setUsuarios, onGestionarPermisos, planti
                 <td style={{ padding:'8px 12px', color:C.n900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{u.usuario}</td>
                 <td style={{ padding:'8px 12px', color:C.n900, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                   {u.descripcion}
-                  {!u.activo && <span style={{ marginLeft:8, fontSize:10, padding:'2px 7px', borderRadius:10, background:'#F9F9F9', color:C.n700, fontWeight:600 }}>Inactivo</span>}
+                  {!u.activo && <span style={{ marginLeft:8, fontSize:10.5, padding:'2px 7px', borderRadius:10, background:'#F9F9F9', color:C.n700, fontWeight:600 }}>Inactivo</span>}
                 </td>
                 <DateCell value={u.fechaCreacion}/>
                 <td style={{ padding:'8px 12px' }} onClick={e=>e.stopPropagation()}>

@@ -11,6 +11,7 @@ import { turnoAbiertoDe } from '@/components/hotel/accionesFinanzas';
 import { Banda, Bloque } from '../comun';
 import { diferencias30, resumenTurno } from './calc';
 import { Etq, type P } from './piezas';
+import { MontoCelda } from '@/components/suite/Monto';
 
 // ── Cajeros (vista del responsable) ─────────────────────────────────────────
 export function Cajeros({ toast, ahora, onVerMovs, onVerHist, ir }: P & { ahora: string | null; onVerMovs: (u: string) => void; onVerHist: (u: string) => void }) {
@@ -40,8 +41,8 @@ export function Cajeros({ toast, ahora, onVerMovs, onVerHist, ir }: P & { ahora:
                 acciones={<>
                   <Button variant="secondary" onClick={() => onVerMovs(c.nombre)}>Ver movimientos</Button>
                   {inactivo && <Button onClick={() => toast(`Alerta enviada a ${c.nombre}: sin transacciones hace ${minSin} min.`)} style={{ background: '#E0A800', borderColor: '#E0A800' }}>Enviar alerta</Button>}
-                  {c.nombre === h.sesion ? <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => ir({ v: 'arqueo', turnoId: abierto.id })}>Cerrar mi turno</Button>
-                    : <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setForzar(abierto)}>Forzar cierre</Button>}
+                  {c.nombre === h.sesion ? <Button variant="secondary" onClick={() => ir({ v: 'arqueo', turnoId: abierto.id })}>Cerrar mi turno</Button>
+                    : <Button variant="secondary" onClick={() => setForzar(abierto)}>Forzar cierre</Button>}
                 </>} />
             );
           }
@@ -111,9 +112,9 @@ function RevisarDiferencias({ cajero, onClose }: { cajero: string; onClose: () =
   return (
     <Modal open title={`Diferencias últimos 30 días · ${cajero}`} onClose={onClose} width={640} footer={<Button variant="secondary" onClick={onClose}>Cerrar</Button>}>
       <Tabla headers={['Turno', 'Saldo esperado', 'Declarado', 'Diferencia', 'Motivo']} alinearDerecha={[1, 2, 3]}>
-        {d.faltantes.map(t => <Fila key={t.id}><Celda>{fmtFH(t.inicio)} – {t.fin?.slice(11, 16)}</Celda><Celda derecha>{fmtUSD(t.esperado ?? 0)}</Celda><Celda derecha>{fmtUSD(t.declarado ?? 0)}</Celda>
-          <Celda derecha style={{ color: C.error, fontWeight: 600 }}>{fmtUSD(t.diferencia)}</Celda><Celda muted>{t.motivo ?? '—'}</Celda></Fila>)}
-        <Fila><Celda><b>Total</b></Celda><Celda /><Celda /><Celda derecha style={{ color: C.error, fontWeight: 700 }}>{fmtUSD(d.total)}</Celda><Celda muted>{d.faltantes.length} turnos con faltante</Celda></Fila>
+        {d.faltantes.map(t => <Fila key={t.id}><Celda>{fmtFH(t.inicio)} – {t.fin?.slice(11, 16)}</Celda><Celda derecha><MontoCelda texto={fmtUSD(t.esperado ?? 0)} /></Celda><Celda derecha><MontoCelda texto={fmtUSD(t.declarado ?? 0)} /></Celda>
+          <Celda derecha style={{ color: C.error, fontWeight: 600 }}><MontoCelda texto={fmtUSD(t.diferencia)} /></Celda><Celda muted>{t.motivo ?? '—'}</Celda></Fila>)}
+        <Fila><Celda><b>Total</b></Celda><Celda /><Celda /><Celda derecha style={{ color: C.error, fontWeight: 700 }}><MontoCelda texto={fmtUSD(d.total)} /></Celda><Celda muted>{d.faltantes.length} turnos con faltante</Celda></Fila>
       </Tabla>
     </Modal>
   );

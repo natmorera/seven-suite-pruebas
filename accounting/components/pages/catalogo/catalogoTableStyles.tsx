@@ -1,10 +1,7 @@
-import { TABLA, C } from '../../ui/tokens';
+import { TABLA, C } from '@/components/ui/tokens';
 
-// ── Estilos de tabla del módulo de Catálogo ──────────────────────────────────
-// Este módulo tenía su propia variante de tabla (títulos 10px #757575, celdas
-// 11px, padding 7/12 y 9/12, radio 10) distinta del resto de la app. Ahora es
-// solo un alias del estilo único TABLA de primitives, para no tener que tocar
-// todos los usos de TBL.* en CatalogoTabs / CatalogoTabs2.
+// ── Estilos de tabla del módulo de Catálogo ── Alias del estilo único TABLA, usado por las
+// tablas del catálogo como TBL.*.
 export const TBL = {
   wrap:    TABLA.wrap,
   table:   TABLA.table,

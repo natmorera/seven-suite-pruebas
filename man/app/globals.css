@@ -1,0 +1,191 @@
+@import "@fontsource/montserrat/400.css";
+@import "@fontsource/montserrat/500.css";
+@import "@fontsource/montserrat/600.css";
+@import "@fontsource/montserrat/700.css";
+@import "tailwindcss";
+
+/* Mismos tokens generales que el resto de la suite; el único bloque propio
+   de este módulo (Management) es --brand / --brand-dark / --brand-bg / --brand-border. */
+:root {
+  /* Verde de Management (degradado #8ADD88 → #34723A), más claro y suave que el del POS. */
+  --brand: #3e8045;
+  --brand-dark: #34723a;
+  --brand-bg: #eff8ee;
+  --brand-border: #c2e4c0;
+  --brand-on-dark: #8add88; /* ítem activo del menú oscuro */
+
+  --n900: #0f0f0f;
+  --n700: #757575;
+  --n500: #ececec;
+  --n200: #f9f9f9;
+  --n000: #ffffff;
+
+  --success: #4caf50;
+  --error: #f44336;
+  --warning: #eeb300;
+  --info: #2196f3;
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-border: var(--brand-border);
+
+  --color-n900: var(--n900);
+  --color-n700: var(--n700);
+  --color-n500: var(--n500);
+  --color-n200: var(--n200);
+  --color-n000: var(--n000);
+
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --color-background: var(--n200);
+  --color-foreground: var(--n900);
+  --font-sans: "Montserrat", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--n200);
+  color: var(--n900);
+  font-family: "Montserrat", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--n500);
+  border-radius: 4px;
+}
+
+/* Impresión (catálogos, bitácora): solo se imprime el contenido */
+@media print {
+  .suite-shell aside, .suite-shell nav, .suite-shell footer, .no-print, header { display: none !important; }
+  body, html { height: auto !important; overflow: visible !important; }
+  main, main * { overflow: visible !important; height: auto !important; max-height: none !important; }
+}
+
+/* Reportes impresos (usePrint): solo se imprime el área del reporte */
+#area-impresion { display: none; }
+@media print {
+  body.imprimiendo > *:not(#area-impresion) { display: none !important; }
+  body.imprimiendo #area-impresion { display: block !important; }
+  body.imprimiendo, html:has(body.imprimiendo) { background: #fff !important; }
+  @page { margin: 14mm; }
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* Barra de acciones masivas (oscura): una acción que no aplica a la selección
+   se ve atenuada sobre el fondo oscuro en lugar de un bloque gris. */
+.barra-masiva button:disabled {
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.tabla-config > tbody > tr:last-child { border-bottom: 0 !important; }
+
+/* La flecha para ver el detalle de una fila solo aparece en el celular. */
+.fila-detalle { display: none; }
+
+/* Listas desplegables: espacio a la derecha para la flecha, igual que a la izquierda para el texto. */
+select.suite-campo {
+  appearance: none; -webkit-appearance: none;
+  padding-right: 34px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23424242' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important; background-position: right 12px center !important; background-size: 12px 12px !important;
+}
+
+/* ── Pantallas angostas ──────────────────────────────────────────────────────
+   Bajo 1024 px el menú lateral se oculta y aparece la barra del menú móvil.
+   Bajo 720 px las grillas de formulario pasan a una columna y se reducen los márgenes. */
+.solo-movil { display: none !important; }
+@media (max-width: 1023px) {
+  .solo-movil { display: flex !important; }
+}
+@media (max-width: 720px) {
+  .kit-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .kit-grid > * { grid-column: auto !important; }
+  .pantalla-header { padding: 8px 16px !important; row-gap: 8px; }
+  .pantalla-header > div:first-child { min-height: 36px !important; }
+  .pantalla-tabs > div, .pantalla-filtros > div { padding-left: 16px !important; padding-right: 16px !important; }
+  .pantalla-cuerpo { padding: 16px !important; }
+  .config-card-cabecera { padding: 14px 16px 12px !important; flex-wrap: wrap; }
+  .config-card-cuerpo { padding: 16px !important; }
+  .grid-tarjetas { grid-template-columns: minmax(0, 1fr) !important; }
+}
+/* En el celular cada fila de tabla es una tarjeta: el título de la columna a la izquierda y el valor a la derecha.
+   La paginación queda fija al pie y la barra de filtros se mantiene en una sola línea con desplazamiento lateral. */
+@media (max-width: 720px) {
+  .tabla-config { min-width: 0 !important; }
+  .tabla-marco { overflow-x: hidden !important; }
+  .tabla-config > thead { display: none; }
+  .tabla-config, .tabla-config > tbody, .tabla-config > tbody > tr { display: block; width: 100% !important; }
+  .tabla-config > tbody > tr > td { width: auto !important; }
+  .tabla-config > tbody > tr { padding: 10px 14px; display: flex !important; flex-wrap: wrap; align-items: center; column-gap: 8px; }
+  .tabla-config > tbody > tr > td { flex: 1 0 100%; order: 2; }
+  .tabla-config > tbody > tr > td:is([data-movil='titulo'], [data-titulo]) { flex: 1 1 0; order: 0; min-width: 0; }
+  .tabla-config > tbody > tr[data-colapsable] > td.fila-detalle { display: flex !important; flex: 0 0 auto; order: 1; padding: 0 !important; min-height: 0; }
+  .tabla-config > tbody > tr[data-colapsable] > td.fila-detalle::before { display: none; }
+  .tabla-config > tbody > tr[data-colapsable]:not(.abierta) > td:not([data-movil='titulo']):not([data-movil='bloque']):not([data-titulo]):not(.fila-detalle) { display: none !important; }
+  .tabla-config > tbody > tr > td {
+    display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); column-gap: 12px; row-gap: 2px;
+    justify-items: end; align-items: center; padding: 4px 0 !important; text-align: right !important; white-space: normal !important; min-height: 28px;
+  }
+  .tabla-config > tbody > tr > td > * { grid-column: 2; min-width: 0; }
+  .tabla-config > tbody > tr > td::before {
+    content: attr(data-label); grid-column: 1; grid-row: 1; justify-self: start; text-align: left; font-size: 11.5px; color: var(--n700);
+  }
+  .tabla-config > tbody > tr > td[data-label='']::before { display: none; }
+  .tabla-config > tbody > tr > td[data-label=''] { grid-template-columns: minmax(0, 1fr); }
+  .tabla-config > tbody > tr > td[data-label=''] > * { grid-column: 1; }
+  .tabla-config > tbody > tr > td[colspan] { justify-items: center; text-align: center !important; }
+  .tabla-config > tbody > tr > td[data-movil='ocultar'] { display: none !important; }
+  .tabla-config > tbody > tr > td:is([data-movil='titulo'], [data-titulo], [data-movil='bloque']) { grid-template-columns: minmax(0, 1fr); justify-items: start; text-align: left !important; }
+  .tabla-config > tbody > tr > td:is([data-movil='titulo'], [data-titulo], [data-movil='bloque'])::before { display: none; }
+  .tabla-config > tbody > tr > td:is([data-movil='titulo'], [data-titulo], [data-movil='bloque']) > * { grid-column: 1; }
+  .tabla-config > tbody > tr > td:is([data-movil='titulo'], [data-titulo]) { font-size: 13.5px; }
+  .tabla-config > tbody > tr > td[data-movil='bloque'] { padding-bottom: 8px !important; }
+  .paginacion-pie { padding: 8px 16px !important; }
+  .reporte-franja { padding-left: 16px !important; padding-right: 16px !important; }
+  .pantalla-filtros > div { flex-wrap: wrap !important; overflow: visible !important; row-gap: 8px; }
+  .pantalla-filtros .boton-filtros { display: inline-flex !important; }
+  .pantalla-filtros > div > span > *:first-child { flex: 1 1 0; min-width: 0; width: auto !important; }
+  .pantalla-filtros:not(.abiertos) > div > span > *:not(:first-child) { display: none !important; }
+  .pantalla-filtros.abiertos > div > span > * { max-width: 100%; }
+  .pantalla-filtros.abiertos > div > span > *:first-child { flex-basis: 100%; }
+  .paginacion-pie { flex-wrap: nowrap !important; }
+  .paginacion-pie .pag-texto, .paginacion-pie .pag-otra { display: none !important; }
+  .paginacion-pie nav { width: auto !important; }
+}
+@media (max-width: 900px) {
+  .editor-usuario { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@media (max-width: 720px) {
+  .editor-pie { margin: auto -16px -16px !important; bottom: -16px !important; }
+}
+@media (max-width: 1180px) {
+  .maestro-detalle { grid-template-columns: minmax(0, 1fr) !important; }
+  .lista-lateral { position: static !important; max-height: 280px !important; }
+}

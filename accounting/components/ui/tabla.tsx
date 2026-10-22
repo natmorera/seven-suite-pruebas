@@ -1,5 +1,5 @@
 'use client';
-import { ReactNode, CSSProperties } from 'react';
+import { type ReactNode, type CSSProperties } from 'react';
 import { C, FONT, TABLA, radius } from './tokens';
 
 // ── DataTable ─────────────────────────────────────────────────────────────────
@@ -43,9 +43,9 @@ export function Td({ children, muted, right, width }: {
     </td>
   );
 }
-// ── Status badge ──────────────────────────────────────────────────────────────
-export type BadgeColor = 'green' | 'yellow' | 'red' | 'blue' | 'gray' | 'brand';
-export const BADGE_COLORS: Record<BadgeColor, { bg: string; color: string; border: string }> = {
+// ── Etiqueta de estado ──────────────────────────────────────────────────────────────
+type BadgeColor = 'green' | 'yellow' | 'red' | 'blue' | 'gray' | 'brand';
+const BADGE_COLORS: Record<BadgeColor, { bg: string; color: string; border: string }> = {
   green:  { bg: 'rgba(76,175,80,.08)',   color: '#2e7d32', border: 'rgba(76,175,80,.25)'  },
   yellow: { bg: 'rgba(238,179,0,.08)',   color: '#7a5c00', border: 'rgba(238,179,0,.25)'  },
   red:    { bg: 'rgba(244,67,54,.08)',   color: '#c62828', border: 'rgba(244,67,54,.25)'  },
@@ -57,18 +57,13 @@ export function StatusBadge({ label, color }: { label: string; color: BadgeColor
   const s = BADGE_COLORS[color];
   return (
     <span style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}`,
-      padding: '2px 8px', borderRadius: radius.pill, fontSize: 10, fontWeight: 500, fontFamily: FONT }}>
+      padding: '2px 8px', borderRadius: radius.pill, fontSize: 10.5, fontWeight: 500, fontFamily: FONT }}>
       {label}
     </span>
   );
 }
-// ── Pagination ────────────────────────────────────────────────────────────────
-// Componente único de paginación para toda la app. Reemplaza los ~13 footers
-// distintos que existían por pantalla (algunos con un <input> para digitar el
-// número de página exacto, otros con texto "Pág. 1/1" fijo sin funcionar).
-// En vez de escribir el número de página, el usuario ve y toca directamente
-// los números de página disponibles (con elipsis cuando hay muchas), además
-// de Anterior/Siguiente - sin necesidad de digitar ni adivinar cuántas hay.
+// ── Pagination ── Paginación única de la app: números de página (con elipsis cuando hay
+// muchas), Anterior/Siguiente y filas por página.
 export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChange, pageSizeOptions = [10, 25, 50] }: {
   page: number; pageSize: number; total: number;
   onPageChange: (p: number) => void; onPageSizeChange?: (n: number) => void; pageSizeOptions?: number[];
@@ -106,7 +101,7 @@ export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChan
         {onPageSizeChange && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
             Filas por página
-            <select value={pageSize} onChange={e => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
+            <select aria-label="Filas por página" value={pageSize} onChange={e => { onPageSizeChange(Number(e.target.value)); onPageChange(1); }}
               style={{ height: 28, border: `1px solid ${C.n500}`, borderRadius: radius.sm, fontSize: 12, fontFamily: FONT, padding: '0 6px', outline: 'none', cursor: 'pointer' }}>
               {pageSizeOptions.map(n => <option key={n} value={n}>{n}</option>)}
             </select>

@@ -6,10 +6,10 @@ import MultiSelect from '@/components/ui/MultiSelect';
 import { PAISES, TIPOS_ID, ZONAS_HORARIAS, MONEDAS_CONTABLES, paisPorCodigo } from './datos/paises';
 import { type DatosEmpresa } from './datos/empresa';
 
-export type CamposEmpresa = Pick<DatosEmpresa, 'nombreLegal' | 'nombreComercial' | 'tipoId' | 'numeroId' | 'pais' | 'numeroLegalizacion' | 'citasPresentacion' | 'zonaHoraria'>;
+type CamposEmpresa = Pick<DatosEmpresa, 'nombreLegal' | 'nombreComercial' | 'tipoId' | 'numeroId' | 'pais' | 'numeroLegalizacion' | 'citasPresentacion' | 'zonaHoraria'>;
 
 // En el onboarding se eligen la moneda primaria y las secundarias en vez de mostrar la del país
-export interface MonedasEmpresa { primaria: string; secundarias: string[]; cambiar: (primaria: string, secundarias: string[]) => void }
+interface MonedasEmpresa { primaria: string; secundarias: string[]; cambiar: (primaria: string, secundarias: string[]) => void }
 
 export default function CamposIdentificacion({ config, patch, monedas }: {
   config: CamposEmpresa; patch: (p: Partial<CamposEmpresa>) => void; monedas?: MonedasEmpresa;

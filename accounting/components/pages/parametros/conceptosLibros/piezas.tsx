@@ -1,14 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Modal, Section, RowAction } from '../../../ui/primitives';
-import { Button, FormField, Input, Select, Checkbox } from '../../../ui/formulario';
-import { StatusBadge } from '../../../ui/tabla';
-import { radius, TABLA } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { IcEdit, IcTrash } from '../../../ui/icons';
-import { C } from '../../../ui/tokens';
-import { useVisualizacionAsientosDefault, VisualizacionAsiento } from '../../config/visualizacionAsientos';
+import { useState } from 'react';
+import { Modal, Section, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select, Checkbox } from '@/components/ui/formulario';
+import { StatusBadge } from '@/components/ui/tabla';
+import { radius, TABLA , C } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcEdit, IcTrash } from '@/components/ui/icons';
+import { useVisualizacionAsientosDefault, type VisualizacionAsiento } from '@/components/pages/config/visualizacionAsientos';
 import { BLANK_C, BLANK_L, BLANK_TA, CATS, C_INIT, type Concepto, F, L_INIT, type Libro, TA_INIT, type TipoAsiento } from './datos';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 export function ConfirmDelete({ onConfirm, onCancel, label }: { onConfirm:()=>void; onCancel:()=>void; label:string }) {
   return (
@@ -24,7 +24,7 @@ export function ConfirmDelete({ onConfirm, onCancel, label }: { onConfirm:()=>vo
     </div>
   );
 }
-// ── Tab Conceptos ─────────────────────────────────────────────────────────────
+// ── Pestaña Conceptos ─────────────────────────────────────────────────────────────
 export function TabConceptos({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
   const [rows,setRows]=useState<Concepto[]>(C_INIT);
   const [search,setSearch]=useState('');
@@ -38,11 +38,8 @@ export function TabConceptos({ addSignal, onAddHandled }: { addSignal?: number; 
   function openEdit(r:Concepto){ setForm({codigo:r.codigo,descripcion:r.descripcion,categoria:r.categoria,activo:r.activo}); setEditId(r.id); setModal(true); }
   function save(){ if(!form.codigo||!form.descripcion)return; if(editId===null) setRows(p=>[...p,{id:Date.now(),...form}]); else setRows(p=>p.map(x=>x.id===editId?{...x,...form}:x)); setModal(false); }
 
-  // Issue #9: "Nuevo concepto" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { openNew(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo concepto» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { openNew(); });
 
   return (
     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
@@ -57,7 +54,7 @@ export function TabConceptos({ addSignal, onAddHandled }: { addSignal?: number; 
                 <tr key={r.id} style={{ borderBottom:'1px solid #ECECEC' }}>
                   <td style={{ padding:'8px 12px', fontFamily:F, fontWeight:600, color:C.n900 }}>{r.codigo}</td>
                   <td style={{ padding:'8px 12px', fontFamily:F }}>{r.descripcion}</td>
-                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10,padding:'2px 8px',borderRadius:4,background:'#F9F9F9',color:C.n700,fontFamily:F }}>{r.categoria}</span></td>
+                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10.5,padding:'2px 8px',borderRadius:4,background:'#F9F9F9',color:C.n700,fontFamily:F }}>{r.categoria}</span></td>
                   <td style={{ padding:'8px 12px' }}>
                     <button onClick={()=>setRows(p=>p.map(x=>x.id===r.id?{...x,activo:!x.activo}:x))}
                       title="Clic para cambiar el estado"
@@ -93,9 +90,9 @@ export function TabConceptos({ addSignal, onAddHandled }: { addSignal?: number; 
     </div>
   );
 }
-// ── Tab Libros ────────────────────────────────────────────────────────────────
+// ── Pestaña Libros ────────────────────────────────────────────────────────────────
 // ── Visualización de asientos (Detallado / Consolidado) ─────────────────────
-export function VisualizacionAsientosConfig() {
+function VisualizacionAsientosConfig() {
   const { default_, setDefault } = useVisualizacionAsientosDefault();
   const opciones: { value: VisualizacionAsiento; label:string; desc:string }[] = [
     { value:'detallado',   label:'Detallado',   desc:'Cada línea del asiento tal cual la mandó el módulo de origen (Front Desk, Tour Operator, POS, etc.).' },
@@ -123,7 +120,7 @@ export function VisualizacionAsientosConfig() {
   );
 }
 // ── Tipos de asiento ──────────────────────────────────────────────────────────
-export function TabTiposAsiento({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
+function TabTiposAsiento({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
   const [rows,setRows]=useState<TipoAsiento[]>(TA_INIT);
   const [modal,setModal]=useState(false);
   const [editId,setEditId]=useState<number|null>(null);
@@ -134,11 +131,8 @@ export function TabTiposAsiento({ addSignal, onAddHandled }: { addSignal?: numbe
   function openEdit(r:TipoAsiento){ setForm({codigo:r.codigo,nombre:r.nombre,descripcion:r.descripcion,activo:r.activo}); setEditId(r.id); setModal(true); }
   function save(){ if(!form.codigo||!form.nombre)return; if(editId===null) setRows(p=>[...p,{id:Date.now(),...form}]); else setRows(p=>p.map(x=>x.id===editId?{...x,...form}:x)); setModal(false); }
 
-  // Issue #9: "Nuevo tipo" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { openNew(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo tipo» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { openNew(); });
 
   return (
     <Section title="Tipos de asiento" hint="Clasifican el origen de cada asiento en Bandeja de asientos.">
@@ -207,11 +201,8 @@ export function TabLibrosContables({ addSignal, onAddHandled }: { addSignal?: nu
   function openEdit(r:Libro){ setForm({codigo:r.codigo,nombre:r.nombre,descripcion:r.descripcion,activo:r.activo}); setEditId(r.id); setModal(true); }
   function save(){ if(!form.codigo||!form.nombre)return; if(editId===null) setRows(p=>[...p,{id:Date.now(),...form}]); else setRows(p=>p.map(x=>x.id===editId?{...x,...form}:x)); setModal(false); }
 
-  // Issue #9: "Nuevo libro" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { openNew(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo libro» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { openNew(); });
 
   return (
     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>

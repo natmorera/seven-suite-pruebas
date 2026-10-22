@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { C, radius } from '../../../ui/tokens';
-import { IcChevronDown, IcChevronRight } from '../../../ui/icons';
+import { C, radius } from '@/components/ui/tokens';
+import { IcChevronDown, IcChevronRight } from '@/components/ui/icons';
 import { type PermModule, type PermGroup, type PermLeaf, type PermCategory } from '../permisos/tipos';
-import { countLeaves, countChecked, allLeafKeysOfModule, leafIsChecked, allLeafKeysOfCategory, countCategory, countCheckedCategory, Firmantes, Usuario } from '../permissionsData';
+import { countLeaves, countChecked, allLeafKeysOfModule, leafIsChecked, allLeafKeysOfCategory, countCategory, countCheckedCategory, type Firmantes, type Usuario } from '../permissionsData';
 import { F, matchesSearch } from './datos';
 import { CategorizedLeaves, CountBadge, InfoNote, MarcarQuitar } from './piezas';
 
@@ -24,11 +24,7 @@ export function GroupCard({ group, perms, onToggleLeaf, onSetMany, search, usuar
       <div style={{ marginBottom:16 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
           <span style={{ fontSize:13, fontWeight:600, color:C.n900, fontFamily:F }}>{group.label}</span>
-          {/* Se quitó el "Marcar todo / Quitar todo" de este nivel (sub-sección
-              dentro de un módulo) - con 4 niveles seguidos (global, categoría,
-              módulo, sub-sección) era demasiado ruido visual repetido para
-              secciones que casi siempre tienen pocos permisos. El de Módulo,
-              que ya cubre estos leaves, sigue disponible arriba. */}
+          {/* Las sub-secciones no tienen «Marcar todo / Quitar todo»: lo cubre el del módulo. */}
           <CountBadge n={n} total={total}/>
         </div>
         {group.info && <InfoNote>{group.info}</InfoNote>}
@@ -41,7 +37,7 @@ export function GroupCard({ group, perms, onToggleLeaf, onSetMany, search, usuar
   return <GroupCardAccordion group={group} perms={perms} onToggleLeaf={onToggleLeaf} onSetMany={onSetMany}
     leaves={leaves} n={n} total={total} search={search} usuarios={usuarios} firmantes={firmantes} onToggleFirmante={onToggleFirmante}/>;
 }
-export function GroupCardAccordion({ group, perms, onToggleLeaf, onSetMany, leaves, n, total, search, usuarios, firmantes, onToggleFirmante }: {
+function GroupCardAccordion({ group, perms, onToggleLeaf, onSetMany, leaves, n, total, search, usuarios, firmantes, onToggleFirmante }: {
   group: PermGroup; perms: Set<string>; onToggleLeaf:(k:string)=>void; onSetMany:(keys:string[], value:boolean)=>void;
   leaves: PermLeaf[]; n:number; total:number; search:string;
   usuarios: Usuario[]; firmantes: Firmantes; onToggleFirmante:(leafKey:string, usuarioId:number)=>void;

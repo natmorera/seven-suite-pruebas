@@ -1,14 +1,14 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { TipoMovimientoAjuste } from '../../catalogo/datos/ajustes';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { type TipoMovimientoAjuste } from '@/components/pages/catalogo/datos/ajustes';
 
 export const F = FONT;
 export const BRAND = C.brand;
 export function fmt2(n: number) { return fmtNum(n, 2); }
 // ── Types ─────────────────────────────────────────────────────────────────────
-export type TipoOp = 'Cobro' | 'Pago';
-export type EstadoOp = 'Pendiente' | 'Aplicado' | 'Borrador' | 'Anulado' | 'Contabilizado';
+type TipoOp = 'Cobro' | 'Pago';
+type EstadoOp = 'Pendiente' | 'Aplicado' | 'Borrador' | 'Anulado' | 'Contabilizado';
 export interface Factura {
   id: string;
   documento: string;
@@ -24,10 +24,9 @@ export interface LineaAjuste {
   documento: string;
   moneda: string;
   monto: number;
-  // Tipo de movimiento (dashboard: ajustes predefinidos): con esto el sistema
-  // ya sabe si el monto suma o resta en la operación (crédito/débito), así la
-  // persona nunca tiene que escribir el signo a mano. '' = línea manual, como
-  // funcionaba antes (sin tipo, cuenta libre, signo a criterio de quien la carga).
+  // Tipo de movimiento (ajustes predefinidos): define si el monto suma o resta en la operación
+  // (crédito/débito), así nunca hay que escribir el signo. '' = línea manual: sin tipo, cuenta
+  // libre y signo a criterio de quien la carga.
   tipoMovimiento: TipoMovimientoAjuste | '';
   justificacion: string;
 }
@@ -50,7 +49,7 @@ export interface Operacion {
   facturas: Factura[];
   lineasAjuste: LineaAjuste[];
 }
-// ── Mock data ─────────────────────────────────────────────────────────────────
+// ── Datos de ejemplo ─────────────────────────────────────────────────────────────────
 export const BANCOS = ['BAC ¢ - Cta. 4646545466888', 'BNCR ¢ - Cta. 5565545547777', 'BAC $ - Cta. 4563212454587'];
 export const FACTURAS_MOCK: Factura[] = [
   { id:'f1', documento:'FE00000001', fecha:'10/04/2026', descripcion:'Servicio hospedaje abril',  importeOriginal:380000, saldoPendiente:380000 },

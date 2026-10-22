@@ -33,7 +33,7 @@ export interface Cuenta {
   entornoFiscal?: { tipoIdentificacion:string; numeroIdentificacion:string; regimen:string };
   bancarias?: { id:string; banco:string; numero:string; moneda:string; tipo:string }[];
   diasCredito?: number;
-  // Fecha del último asiento contabilizado que afectó el saldo - Issue #7
+  // Fecha del último asiento contabilizado que afectó el saldo
   fechaUltimoAsiento?: string;
   // Configuración de impuestos (dashboard 1.6): identifica qué cuentas captan
   // impuesto acreditable (crédito fiscal) vs. débito fiscal (impuesto por pagar),
@@ -94,7 +94,7 @@ export const NIVELES = [
   { value:'detalle',  label:'Detalle'  },
   { value:'auxiliar', label:'Auxiliar' },
 ];
-// Nivel labels for display
+// Etiquetas de nivel
 export const NIVEL_LABELS: Record<string, string> = {
   grupo:       'Grupo NIIF',
   subgrupo:    'Sub grupo',
@@ -104,16 +104,6 @@ export const NIVEL_LABELS: Record<string, string> = {
   detalle:     'Detalle',
   auxiliar:    'Auxiliar',
 };
-// Descriptions per level
-export const NIVEL_DESC: Record<string, string> = {
-  grupo:       'Grupo NIIF (1–7). Clasificación fija, no editable.',
-  subgrupo:    'Sub grupo NIIF. Clasificación fija, no editable.',
-  subsubgrupo: 'Sub sub grupo NIIF. Clasificación fija, no editable.',
-  mayor:       'Primer nivel configurable (ej. 100). 3 dígitos.',
-  submajor:    'Sub mayor (ej. 100-001). 3 dígitos adicionales.',
-  detalle:     'Detalle (ej. 100-001-0001). 4 dígitos. Acepta asientos.',
-  auxiliar:    'Cliente o proveedor específico. Acepta asientos.',
-};
 // Segment lengths by level
 export const LONGITUD: Record<string, number> = {
   mayor:    3,
@@ -121,23 +111,10 @@ export const LONGITUD: Record<string, number> = {
   detalle:  4,
   auxiliar: 4,
 };
-// Niveles que el usuario puede crear (no incluye grupo/subgrupo/subsubgrupo que son fijos NIIF)
-export const NIVELES_CONFIGURABLES: Nivel[] = ['mayor', 'submajor', 'detalle', 'auxiliar'];
-export const NIVELES_FIJOS: Nivel[] = ['grupo', 'subgrupo', 'subsubgrupo'];
-export function esNivelFijo(nivel: Nivel): boolean {
-  return NIVELES_FIJOS.includes(nivel);
-}
 // Groups that always require centro de costo
-export const GRUPOS_CC_OBLIGATORIO = ['4','5','6'];
+const GRUPOS_CC_OBLIGATORIO = ['4','5','6'];
 export function isCCObligatorioBySpec(grupo: string, tipoEspecial?: string | null) {
   return GRUPOS_CC_OBLIGATORIO.includes(grupo) || tipoEspecial === '07';
-}
-// Centro de costo only applies to auxiliar level (or detalle for some special types)
-export function requiresCentroCosto(nivel: Nivel, grupo: string, tipoEspecial?: string | null): boolean {
-  if (nivel === 'auxiliar') return true;
-  if (nivel === 'detalle' && GRUPOS_CC_OBLIGATORIO.includes(grupo)) return true;
-  if (tipoEspecial === '07') return true;
-  return false;
 }
 export const MONEDAS = [
   { value:'CRC', label:'Colón costarricense', symbol:'₡' },

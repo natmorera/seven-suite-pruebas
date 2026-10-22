@@ -1,10 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { C, radius, TABLA } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
 import { type AsientoDC, BRAND, F, GREEN, RED, fmt } from './datos';
 
-// ── Detalle del asiento - Issue #24: mostrar claramente qué está en el Debe
+// ── Detalle del asiento: mostrar claramente qué está en el Debe
 // y qué está en el Haber, con el nombre de cada cuenta ──────────────────────
 export function ModalDetalleAsiento({ lineas, onClose }: { lineas:AsientoDC[]; onClose:()=>void }) {
   const totalDebe  = lineas.reduce((s,l)=>s+l.debe,0);
@@ -52,7 +52,7 @@ export function ModalDetalleAsiento({ lineas, onClose }: { lineas:AsientoDC[]; o
             </tr>
           </tfoot>
         </table>
-        <p style={{ fontSize:10, color: Math.abs(totalDebe-totalHaber)<0.005?GREEN:RED, margin:0 }}>
+        <p style={{ fontSize:10.5, color: Math.abs(totalDebe-totalHaber)<0.005?GREEN:RED, margin:0 }}>
           {Math.abs(totalDebe-totalHaber)<0.005 ? '✓ El asiento cuadra (Debe = Haber)' : '⚠ El asiento no cuadra'}
         </p>
         <div style={{ display:'flex', justifyContent:'flex-end', marginTop:18 }}>
@@ -62,7 +62,7 @@ export function ModalDetalleAsiento({ lineas, onClose }: { lineas:AsientoDC[]; o
     </div>
   );
 }
-// ── Modal crear / editar movimiento cambiario ────────────────────────────────
+// ── Modal para crear o editar un movimiento cambiario ────────────────────────────────
 export function ModalCrearMovimiento({ onClose, editar }: { onClose:()=>void; editar?: { fecha:string; tipoCuenta:string; tc:string } }) {
   const [fecha,   setFecha]   = useState(editar?.fecha ?? '');
   const [tipoCta, setTipoCta] = useState(editar?.tipoCuenta ?? 'Cuentas por cobrar');
@@ -73,7 +73,7 @@ export function ModalCrearMovimiento({ onClose, editar }: { onClose:()=>void; ed
       display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'#FFFFFF', borderRadius:radius.lg, width:420, padding:24, fontFamily:F,
         boxShadow:'0 8px 40px rgba(0,0,0,.2)' }}>
-        {/* Header modal */}
+        {/* Encabezado del modal */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
           <span style={{ fontSize:14, fontWeight:600, color:'#0F0F0F', fontFamily:F }}>{editar ? 'Editar movimiento cambiario' : 'Crear movimiento cambiario'}</span>
           <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'#757575', fontSize:18, lineHeight:1, padding:0 }}>×</button>
@@ -85,7 +85,7 @@ export function ModalCrearMovimiento({ onClose, editar }: { onClose:()=>void; ed
             Fecha del ajuste <span style={{ color:'#F44336' }}>*</span>
           </label>
           <div style={{ position:'relative' }}>
-            <input type="date" value={fecha} onChange={e=>setFecha(e.target.value)}
+            <input aria-label="Fecha del ajuste" type="date" value={fecha} onChange={e=>setFecha(e.target.value)}
               style={{ width:'100%', height:36, padding:'0 34px 0 10px', border:`1px solid ${C.n500}`,
                 borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', color: fecha?'#0F0F0F':'#757575', boxSizing:'border-box' }}/>
             <svg style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
@@ -101,7 +101,7 @@ export function ModalCrearMovimiento({ onClose, editar }: { onClose:()=>void; ed
             Tipo de cuenta <span style={{ color:'#F44336' }}>*</span>
           </label>
           <div style={{ position:'relative' }}>
-            <select value={tipoCta} onChange={e=>setTipoCta(e.target.value)}
+            <select aria-label="Tipo de cuenta" value={tipoCta} onChange={e=>setTipoCta(e.target.value)}
               style={{ width:'100%', height:36, padding:'0 30px 0 10px', border:`1px solid ${C.n500}`,
                 borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', appearance:'none', background:'#FFFFFF', color:'#0F0F0F' }}>
               <option>Cuentas por cobrar</option>
@@ -120,12 +120,12 @@ export function ModalCrearMovimiento({ onClose, editar }: { onClose:()=>void; ed
           <label style={{ fontSize:11, fontWeight:500, color:'#757575', display:'block', marginBottom:5, fontFamily:F }}>
             Tipo de cambio nuevo <span style={{ color:'#F44336' }}>*</span>
           </label>
-          <input value={tc} onChange={e=>setTc(e.target.value)}
+          <input aria-label="Tipo de cambio nuevo" value={tc} onChange={e=>setTc(e.target.value)}
             style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`,
               borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', fontVariantNumeric:'tabular-nums', boxSizing:'border-box' }}/>
         </div>
 
-        {/* Footer */}
+        {/* Pie */}
         <div style={{ display:'flex', justifyContent:'flex-end', gap:10 }}>
           <button onClick={onClose}
             style={{ height:36, padding:'0 18px', border:`1px solid ${C.n500}`, borderRadius:radius.md,
