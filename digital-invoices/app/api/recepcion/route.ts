@@ -11,7 +11,7 @@ async function manejarGET() {
       id, proveedor, numero_factura, fecha_emision, fecha_aceptacion, estado, total_factura,
       subtotal, iva, tarifa, tipo_credito_fiscal, origen, clave, tipo, proveedor_identificacion, proveedor_correo,
       receptor_identificacion, moneda, tipo_cambio, total_exento, total_descuentos, total_otros_cargos,
-      actividad_economica, lineas_json, correo_id, tipo_acuse, mensaje_acuse, ultimo_error,
+      actividad_economica, lineas_json, correo_id, tipo_acuse, mensaje_acuse, ultimo_error, tipo_dte,
       cuenta_proveedor, cuenta_proveedor_nombre, clasificacion, actividad_proveedor
     FROM documentos_recibidos ORDER BY fecha_emision DESC`);
   return NextResponse.json(rows);

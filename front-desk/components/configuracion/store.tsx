@@ -1,6 +1,6 @@
 'use client';
-// Estado de toda la Configuración. Vive en el layout de /configuracion, así
-// que sobrevive al cambiar de sección. «Guardar cambios» fija una copia y
+// Estado de toda la Configuración. Vive en el shell de la aplicación, así
+// que sobrevive al cambiar de sección y lo leen otras pantallas (Mi cuenta). «Guardar cambios» fija una copia y
 // «Cancelar» vuelve a ella. Para conectar el backend basta con cargar INICIAL
 // desde la API y persistir en `guardar()`.
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
@@ -12,6 +12,8 @@ interface Ctx {
   datos: Datos;
   set: <K extends keyof Datos>(k: K, v: Datos[K] | ((prev: Datos[K]) => Datos[K])) => void;
   sucio: boolean;
+  /** Aplica un cambio y lo da por guardado al instante, sin tocar los demás cambios pendientes. */
+  fijar: <K extends keyof Datos>(k: K, f: (prev: Datos[K]) => Datos[K]) => void;
   guardar: () => void;
   descartar: () => void;
 }
@@ -29,13 +31,18 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const fijar = useCallback<Ctx['fijar']>((k, f) => {
+    setDatos(prev => ({ ...prev, [k]: f(prev[k]) }));
+    setGuardado(prev => ({ ...prev, [k]: f(prev[k]) }));
+  }, []);
+
   const valor = useMemo<Ctx>(() => ({
-    datos, set,
+    datos, set, fijar,
     // cambios reales: si el usuario vuelve al valor original, deja de estar «sucio»
     sucio: datos !== guardado && JSON.stringify(datos) !== JSON.stringify(guardado),
     guardar: () => setGuardado(datos),
     descartar: () => setDatos(guardado),
-  }), [datos, guardado, set]);
+  }), [datos, guardado, set, fijar]);
 
   return <ConfigCtx.Provider value={valor}>{children}</ConfigCtx.Provider>;
 }

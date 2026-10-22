@@ -62,6 +62,8 @@ export function FormReserva({ prefill, onCancelar, onGuardado }: { prefill: Pref
     const varias = f.lineas.length > 1;
     const ota = ['BOOKING', 'EXPEDIA', 'DESPEGAR', 'HOTELBEDS'].includes(f.tarifa);
     const cliente: Reserva['cliente'] = ota ? 'Agencia de Viajes' : esEmpresa || f.tarifa === 'CORP' ? 'Tarifa Corporativa' : 'Huésped Individual';
+    // Consecutivos: RL = reservas de agencia (rooming list), RE = reservas de cliente.
+    const prefijo = cliente === 'Agencia de Viajes' ? 'RL' : 'RE';
     const empresa = esEmpresa ? f.perfil!.nombre : contratoDeTarifa(f.tarifa) === 'Directo' ? '' : contratoDeTarifa(f.tarifa);
     const ahora = (() => { const d = new Date(); return `${HOY}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; })();
     return f.lineas.map((l, i) => {
@@ -71,7 +73,7 @@ export function FormReserva({ prefill, onCancelar, onGuardado }: { prefill: Pref
       const { vip, tNombre, tNumero, tMes, tAnio, cheque, envio, ...detalles } = f.otras;
       void tMes; void tAnio; void cheque; void envio; void tNombre;
       return conSaldo({
-        id, numero: varias ? `RD-${numero}_${i + 1}` : `RD-${numero}`, rooming: false, perfilId: f.perfil?.tipo === 'cliente' ? f.perfil.id : null, nombre, empresa, cliente,
+        id, numero: varias ? `${prefijo}-${numero}_${i + 1}` : `${prefijo}-${numero}`, rooming: false, perfilId: f.perfil?.tipo === 'cliente' ? f.perfil.id : null, nombre, empresa, cliente,
         habitacion: l.hab, tipo: l.tipo, entrada: l.entrada, salida: l.salida, adultos: l.adultos, ninos: l.ninos, tarifa: f.tarifa, precio: l.precio, regimen: l.regimen, moneda: f.moneda, estado,
         pagado: 0, depGarantia: 0, credito: esEmpresa && !!f.perfil?.extra.credito && (!varias || f.modalidad === 'grupo'), condiciones: f.condiciones, observaciones: [f.obs, l.obs].filter(Boolean).join('\n'), observacionesInternas: f.internas,
         nacionalidad: hu.nacionalidad || 'CRI', identificacion: hu.identificacion, email: hu.email, telefono: hu.telefono, vip: i === 0 ? vip : false, tarjetaLista: !!tNumero.replace(/\D/g, ''), checkinEn: null, checkoutEn: null,
@@ -178,7 +180,7 @@ export function FormReserva({ prefill, onCancelar, onGuardado }: { prefill: Pref
                   {f.perfil ? <span style={{ ...ctl, height: 32, display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>{f.perfil.nombre}<span style={{ marginLeft: 'auto' }}><StatusBadge label={f.perfil.tipo === 'empresa' ? 'Empresa' : 'Cliente'} color="brand" /></span>
                     <button type="button" aria-label="Quitar perfil" onClick={() => cambiar(x => ({ ...x, perfil: null }))} style={{ border: 'none', background: 'none', color: C.n700, cursor: 'pointer' }}>⊗</button></span>
                     : <Input value={f.nombreLibre} onChange={v => setF({ ...f, nombreLibre: v })} placeholder="Nombre completo" />}
-                  <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setDlg('perfil')}>Buscar perfil</Button>
+                  <Button variant="secondary" onClick={() => setDlg('perfil')}>Buscar perfil</Button>
                 </div>
               </Campo>
               <Campo label="Tarifa" required><Select value={f.tarifa} onChange={setTarifa} options={[{ value: '', label: 'Seleccionar tarifa' }, ...TARIFAS_NOMBRES.map(t => ({ value: t, label: contratoDeTarifa(t) === 'Directo' ? 'Directo (DIR)' : `${contratoDeTarifa(t)} (${t})` }))]} /></Campo>

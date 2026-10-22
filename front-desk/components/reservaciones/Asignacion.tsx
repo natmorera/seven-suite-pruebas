@@ -15,6 +15,7 @@ import { bloqueaHabitacion, habitacionLibre, numeroDe, usoDe, type Preasignacion
 import { fmtMon } from '@/components/hotel/finanzas';
 import { Exportar, HojaSistema, PaginaFact, TablaReporte, Tarjeta, tdR } from '@/components/facturacion/comun';
 import { DisponibilidadCupos, SeleccionHabitacion } from './comun';
+import { MontoCelda } from '@/components/suite/Monto';
 
 const TABS = ['Asignación de habitación', 'Preasignación de habitación'] as const;
 
@@ -54,7 +55,7 @@ export default function Asignacion() {
     ? exportarCSV('asignacion-habitaciones', cab, filas.map(r => [r.numero, fmtF(r.entrada), fmtF(r.salida), nombre(r), r.estado, `${r.tipo}_${usoDe(r)}`, r.adultos + r.ninos, r.precio, r.moneda, r.habitacion || 'Sin asignar']))
     : exportarCSV('preasignaciones', ['Habitación', 'Desde', 'Hasta', 'Descripción'], preas.map(p => [p.habitacion, fmtF(p.desde), fmtF(p.hasta), p.descripcion]));
   const pdf = () => imprimir(esAsig
-    ? <HojaSistema titulo="Asignación de habitaciones" criterio={`Entrada del ${fmtF(desde)} al ${fmtF(hasta)}${sinHab ? ' · Solo sin habitación' : ''}`}><TablaReporte headers={cab} derecha={[6, 7]}>{filas.map(r => <tr key={r.id}><td style={tdR()}>{r.numero}</td><td style={tdR()}>{fmtF(r.entrada)}</td><td style={tdR()}>{fmtF(r.salida)}</td><td style={tdR()}>{nombre(r)}</td><td style={tdR()}>{r.estado}</td><td style={tdR()}>{r.tipo}_{usoDe(r)}</td><td style={tdR(true)}>{r.adultos + r.ninos}</td><td style={tdR(true)}>{fmtMon(r.precio, r.moneda)}</td><td style={tdR()}>{r.moneda}</td><td style={tdR()}>{r.habitacion || 'Sin asignar'}</td></tr>)}</TablaReporte></HojaSistema>
+    ? <HojaSistema titulo="Asignación de habitaciones" criterio={`Entrada del ${fmtF(desde)} al ${fmtF(hasta)}${sinHab ? ' · Solo sin habitación' : ''}`}><TablaReporte headers={cab} derecha={[6, 7]}>{filas.map(r => <tr key={r.id}><td style={tdR()}>{r.numero}</td><td style={tdR()}>{fmtF(r.entrada)}</td><td style={tdR()}>{fmtF(r.salida)}</td><td style={tdR()}>{nombre(r)}</td><td style={tdR()}>{r.estado}</td><td style={tdR()}>{r.tipo}_{usoDe(r)}</td><td style={tdR(true)}>{r.adultos + r.ninos}</td><td style={tdR(true)}><MontoCelda texto={fmtMon(r.precio, r.moneda)} /></td><td style={tdR()}>{r.moneda}</td><td style={tdR()}>{r.habitacion || 'Sin asignar'}</td></tr>)}</TablaReporte></HojaSistema>
     : <HojaSistema titulo="Preasignaciones de habitación"><TablaReporte headers={['Habitación', 'Desde', 'Hasta', 'Descripción']}>{preas.map(p => <tr key={p.id}><td style={tdR()}>{p.habitacion}</td><td style={tdR()}>{fmtF(p.desde)}</td><td style={tdR()}>{fmtF(p.hasta)}</td><td style={tdR()}>{p.descripcion || '—'}</td></tr>)}</TablaReporte></HojaSistema>);
   return (
     <PaginaFact titulo="Asignación de habitaciones" acciones={<>
@@ -78,7 +79,7 @@ export default function Asignacion() {
                 <Celda style={{ width: 28 }}><CheckFila s={s} id={r.id} label={`Seleccionar ${r.numero}`} /></Celda>
                 <Celda><Link href={`/reservaciones/reservas?id=${r.id}`} style={{ color: C.brand }}>{r.numero}</Link></Celda><Celda>{fmtF(r.entrada)}</Celda><Celda>{fmtF(r.salida)}</Celda>
                 <Celda>{nombre(r)}{r.estado !== 'Confirmada' && <span style={{ fontSize: 11, color: C.n700 }}> · {r.estado}</span>}</Celda><Celda>{r.tipo}_{usoDe(r)}</Celda><Celda derecha>1</Celda><Celda derecha>{r.adultos + r.ninos}</Celda>
-                <Celda derecha>{fmtMon(r.precio, r.moneda)}</Celda>
+                <Celda derecha><MontoCelda texto={fmtMon(r.precio, r.moneda)} /></Celda>
                 <Celda>{r.habitacion
                   ? <button type="button" onClick={() => setAsignar(r)} title="Cambiar habitación" style={{ border: 'none', background: 'none', padding: 0, color: C.n900, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, fontSize: 12 }}>{r.habitacion}</button>
                   : <button type="button" onClick={() => setAsignar(r)} disabled={r.estado === 'Lista de espera'} style={{ border: 'none', background: 'none', padding: 0, color: r.estado === 'Lista de espera' ? C.n700 : C.brand, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, fontSize: 12, fontWeight: 500 }}>Asignar</button>}</Celda>

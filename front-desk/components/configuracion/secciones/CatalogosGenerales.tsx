@@ -1,30 +1,10 @@
 'use client';
-import { TabsEnBarra } from '@/components/layout/Pantalla';
-import { useState } from 'react';
+// Catálogos de Parámetros generales: tipos de tareas de Hospedaje y nacionalidades.
 import { useDato } from '../store';
 import { CrudCatalogo } from '../CrudCatalogo';
-import { ConfigCard } from '../kit';
 import { IDIOMAS } from '../datos';
 
-// Las monedas pasaron a Parámetros generales › Monedas (junto con el tipo de cambio), como en Accounting.
-const TABS = ['Tipos de tareas', 'Nacionalidades'] as const;
-const AYUDA: Record<(typeof TABS)[number], string> = {
-  'Tipos de tareas': 'Clasificación de las tareas de Hospedaje (mantenimiento, transporte, ama de llaves…).',
-  'Nacionalidades': 'Países e idioma que se usan en perfiles, tarjetas de registro y estadísticas.',
-};
-
-export default function Operaciones() {
-  const [tab, setTab] = useState<(typeof TABS)[number]>('Tipos de tareas');
-  return <>
-    <TabsEnBarra items={TABS} activo={tab} onChange={setTab} />
-    <ConfigCard title={tab} subtitle={AYUDA[tab]}>
-      {tab === 'Tipos de tareas' && <TiposTarea />}
-      {tab === 'Nacionalidades' && <Nacionalidades />}
-    </ConfigCard>
-  </>;
-}
-
-function TiposTarea() {
+export function TiposTarea() {
   const [l, set] = useDato('tiposTarea');
   return (
     <CrudCatalogo entidad="tipo de tarea" filas={l} onChange={set} nombre={t => t.descripcion} buscarEn={['descripcion']} nuevo={() => ({ descripcion: '' })}
@@ -33,7 +13,7 @@ function TiposTarea() {
   );
 }
 
-function Nacionalidades() {
+export function Nacionalidades() {
   const [l, set] = useDato('nacionalidades');
   return (
     <CrudCatalogo entidad="nacionalidad" femenino filas={[...l].sort((a, b) => a.pais.localeCompare(b.pais))} onChange={set} nombre={n => n.pais}

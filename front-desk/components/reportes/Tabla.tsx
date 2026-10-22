@@ -2,21 +2,22 @@
 // Reporte estándar: tabla en pantalla con encabezados de grupo, subtotales y fila de total fija.
 import { useEffect, useState, type CSSProperties } from 'react';
 import { C, PAGE_PAD } from '@/components/suite/tokens';
+import { celdaMonto } from '@/components/suite/Monto';
 import { type BloqueRep, type Columna, type FilaRep, type Valor } from './modelo';
 
 // ── Estilos de tabla (pantalla) ─────────────────────────────────────────────
-export const th = (der?: boolean): CSSProperties => ({ position: 'sticky', top: 0, zIndex: 2, padding: '10px 12px', textAlign: der ? 'right' : 'left', fontSize: 12, fontWeight: 400, color: C.n700, background: C.n000, whiteSpace: 'nowrap', borderBottom: `1px solid ${C.n500}` });
+export const th = (der?: boolean): CSSProperties => ({ position: 'sticky', top: 0, zIndex: 2, padding: '10px 12px', textAlign: der ? 'right' : 'left', fontSize: 12, fontWeight: 400, color: C.n700, background: C.n200, whiteSpace: 'nowrap', borderBottom: `1px solid ${C.n500}` });
 export const td = (der?: boolean): CSSProperties => ({ padding: '10px 12px', textAlign: der ? 'right' : 'left', fontSize: 12.5, color: C.n900, borderBottom: '1px solid #EDEDF0', whiteSpace: 'nowrap', fontVariantNumeric: der ? 'tabular-nums' : undefined });
 
 /** Textos largos en una sola línea con puntos suspensivos (el valor completo queda en el título). */
 function Texto({ v }: { v: Valor }) {
-  if (typeof v !== 'string' || v.length <= 34) return <>{v}</>;
+  if (typeof v !== 'string' || v.length <= 34) return <>{celdaMonto(v)}</>;
   return <span title={v} style={{ display: 'inline-block', maxWidth: 260, overflow: 'hidden', textOverflow: 'ellipsis', verticalAlign: 'bottom' }}>{v}</span>;
 }
 export function FilaVista({ f, columnas, conAccion }: { f: FilaRep; columnas: Columna[]; conAccion: boolean }) {
   const n = columnas.length + (conAccion ? 1 : 0);
   if (f.tipo === 'grupo') return <tr><td colSpan={n} style={{ ...td(), background: f.sub ? '#FAFAFA' : '#F5F5F7', fontWeight: f.sub ? 500 : 600, paddingLeft: f.sub ? 28 : 12 }}>{f.texto}</td></tr>;
-  if (f.tipo === 'subtotal') return <tr>{f.c.map((v, j) => <td key={j} style={{ ...td(columnas[j]?.der), fontWeight: 600, background: '#FCFCFD' }}>{v}</td>)}{conAccion && <td style={td()} />}</tr>;
+  if (f.tipo === 'subtotal') return <tr>{f.c.map((v, j) => <td key={j} style={{ ...td(columnas[j]?.der), fontWeight: 600, background: '#FCFCFD' }}>{celdaMonto(v)}</td>)}{conAccion && <td style={td()} />}</tr>;
   return (
     <tr className="suite-fila" onClick={f.onClick} style={{ cursor: f.onClick ? 'pointer' : undefined }}>
       {f.c.map((v, j) => <td key={j} style={{ ...td(columnas[j]?.der), fontWeight: f.negrita ? 600 : 400, color: f.tenue ? C.n700 : typeof v === 'string' && /^-\s?[$₡\d]/.test(v) ? C.error : C.n900 }}><Texto v={v} /></td>)}
@@ -60,20 +61,23 @@ export function TablaConTotal({ b, filas, conAccion }: { b: BloqueRep; filas: Fi
     ro.observe(tab);
     return () => ro.disconnect();
   }, [tab, filas]);
-  return <>
-    <div onScroll={e => setX(e.currentTarget.scrollLeft)} style={{ flex: 1, minHeight: 0, overflow: 'auto', margin: `0 ${PAGE_PAD}px` }}>
+  // Tabla en tarjeta blanca sobre el fondo gris de la pantalla (igual que el resto de tablas de la suite)
+  return <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: C.n200, padding: `12px ${PAGE_PAD}px` }}>
+   <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: C.n000, border: `1px solid ${C.n500}`, borderRadius: 10, overflow: 'hidden' }}>
+    <div onScroll={e => setX(e.currentTarget.scrollLeft)} style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
       <table ref={setTab} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
         <Cabecera b={b} conAccion={conAccion} />
         <tbody>{filas.map((f, i) => <FilaVista key={i} f={f} columnas={b.columnas} conAccion={conAccion} />)}</tbody>
       </table>
     </div>
     {b.total && (
-      <div aria-label="Total" style={{ flexShrink: 0, overflow: 'hidden', margin: `0 ${PAGE_PAD}px`, borderTop: `1px solid ${C.n500}` }}>
+      <div aria-label="Total" style={{ flexShrink: 0, overflow: 'hidden', borderTop: `1px solid ${C.n500}`, background: C.n200 }}>
         <table style={{ tableLayout: 'fixed', width: anchos.reduce((s, w) => s + w, 0) || '100%', borderCollapse: 'separate', borderSpacing: 0, transform: `translateX(${-x}px)` }}>
-          <tbody><tr>{b.total.map((v, j) => <td key={j} style={{ ...td(b.columnas[j]?.der), fontWeight: 600, fontSize: 13, borderBottom: 'none', padding: '12px', boxSizing: 'border-box', width: anchos[j], minWidth: anchos[j], maxWidth: anchos[j], overflow: 'visible' }}>{v}</td>)}
+          <tbody><tr>{b.total.map((v, j) => <td key={j} style={{ ...td(b.columnas[j]?.der), fontWeight: 600, fontSize: 13, borderBottom: 'none', padding: '12px', boxSizing: 'border-box', width: anchos[j], minWidth: anchos[j], maxWidth: anchos[j], overflow: 'visible' }}>{celdaMonto(v)}</td>)}
             {conAccion && <td style={{ ...td(), borderBottom: 'none', boxSizing: 'border-box', width: anchos[b.total.length] }} />}</tr></tbody>
         </table>
       </div>
     )}
-  </>;
+   </div>
+  </div>;
 }

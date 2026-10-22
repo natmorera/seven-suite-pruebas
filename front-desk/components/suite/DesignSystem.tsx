@@ -1,6 +1,6 @@
 'use client';
 // Página /design-system: referencia viva para desarrollo. Todo lo que se ve
-// aquí son los componentes reales de components/suite, no capturas.
+// aquí son los componentes reales de components/suite, no imágenes.
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { C, FONT, SIDEBAR, SIZE, TEMAS, TYPE, radius, variablesDe, fmtNum, fmtMoney, fmtDate, type ModuloId } from './tokens';
 import {

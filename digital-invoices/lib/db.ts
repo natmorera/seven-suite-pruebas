@@ -1239,6 +1239,12 @@ async function migrarRonda6(db: Client, gt: boolean) {
   });
   // Al final, cuando ya existen todos los grupos
   if (gt) await unaVez(db, 'grupos_clasificacion_gt_v2', () => migrarGruposGT(db));
+  // Guatemala: tipo de DTE de cada compra (FACT, FCAM, FPEQ, SCOM…) y datos de ejemplo propios de FEL
+  await agregarColumnas(db, 'documentos_recibidos', [['tipo_dte', 'TEXT']]);
+  if (gt) await unaVez(db, 'ejemplos_guatemala_v1', async () => {
+    const { sembrarEjemplosGT } = await import('@/lib/ejemplosGT');
+    await sembrarEjemplosGT(db);
+  });
 }
 
 /** Base de la empresa elegida (o la del país indicado, para las tareas automáticas). */

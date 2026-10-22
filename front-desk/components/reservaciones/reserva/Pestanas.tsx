@@ -15,6 +15,7 @@ import { AnularDeposito, Comprobante, FormDeposito } from '@/components/facturac
 import { DocumentoFolio } from '@/components/facturacion/folios/Pagos';
 import { folioDeReservaVista } from '@/components/facturacion/folios/modelo';
 import { SeleccionarPerfil, nombreTipo, totales } from '../comun';
+import { MontoCelda } from '@/components/suite/Monto';
 
 function Pie({ children }: { children: ReactNode }) {
   return <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${C.n500}`, paddingTop: 14, marginTop: 4 }}>{children}</div>;
@@ -58,7 +59,7 @@ export function TabHuesped({ g, onToast }: { g: GrupoReserva; onToast: (t: strin
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr auto 1fr', gap: 12, alignItems: 'end' }}>
               <Campo label="Nombre del huésped principal" required><Input value={x.nombre} disabled={soloLectura} onChange={v => set(x.id, { nombre: v })} /></Campo>
               <span style={{ display: 'flex', gap: 10, alignItems: 'center', height: 32 }}>
-                <Button variant="secondary" disabled={soloLectura} style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setPerfilPara(x.id)}>⌕ Perfil de cliente</Button>
+                <Button variant="secondary" disabled={soloLectura} onClick={() => setPerfilPara(x.id)}>⌕ Perfil de cliente</Button>
                 <Checkbox checked={x.vip} onChange={b => !soloLectura && set(x.id, { vip: b })} label="VIP" />
               </span>
               <Campo label="Identificación"><Input value={x.identificacion} disabled={soloLectura} onChange={v => set(x.id, { identificacion: v })} /></Campo>
@@ -246,7 +247,7 @@ export function TabDepositos({ g, onToast }: { g: GrupoReserva; onToast: (t: str
         {vis.map(d => (
           <Fila key={d.id}>
             <Celda><button type="button" onClick={() => setVer(d.id)} style={{ border: 'none', background: 'none', padding: 0, color: C.brand, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, fontSize: 12 }}>#{String(d.numero).padStart(6, '0')}</button></Celda>
-            <Celda>{fmtFH(d.recibido)}</Celda><Celda derecha style={{ textDecoration: d.estado === 'Anulado' ? 'line-through' : undefined }}>{fmtMon(d.importe, d.moneda)}</Celda>
+            <Celda>{fmtFH(d.recibido)}</Celda><Celda derecha style={{ textDecoration: d.estado === 'Anulado' ? 'line-through' : undefined }}><MontoCelda texto={fmtMon(d.importe, d.moneda)} /></Celda>
             <Celda>{d.tipo}</Celda><Celda><StatusBadge label={d.estado} color={d.estado === 'Activo' ? 'green' : 'gray'} /></Celda><Celda>{d.usuario}</Celda>
             <Celda derecha>{d.estado === 'Activo' && <Button variant="secondary" style={{ color: C.error }} onClick={() => setAnular(d.id)}>Anular</Button>}</Celda>
           </Fila>
@@ -271,14 +272,14 @@ export function TabEmpresa({ g }: { g: GrupoReserva }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {titulo(<>{p.empresa} <span style={{ fontWeight: 400, color: C.n700 }}>| Hospedaje general</span></>, <>
         <span style={{ fontSize: 12, color: C.n700 }}>Factura empresa: <StatusBadge label={abierta ? 'Abierta' : 'Pagada'} color={abierta ? 'yellow' : 'green'} /></span>
-        <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setVer(true)}>Ver factura ↗</Button></>)}
+        <Button variant="secondary" onClick={() => setVer(true)}>Ver factura ↗</Button></>)}
       <Tabla headers={['Folio', 'Habitación', 'Huésped', 'Noches', 'Importe', 'Pagado', 'Pendiente', 'Estado']} alinearDerecha={[3, 4, 5, 6]}>
         {folios.map(f => (
           <Fila key={f.id}><Celda>{f.numero}</Celda><Celda>{f.habitacion || '—'}</Celda><Celda>{f.nombre}</Celda><Celda derecha>{noches(f.reserva!.entrada, f.reserva!.salida)}</Celda>
-            <Celda derecha>{fmtMon(f.totalCargos, f.moneda)}</Celda><Celda derecha>{fmtMon(f.totalPagado, f.moneda)}</Celda><Celda derecha>{fmtMon(Math.max(0, f.saldo), f.moneda)}</Celda>
+            <Celda derecha><MontoCelda texto={fmtMon(f.totalCargos, f.moneda)} /></Celda><Celda derecha><MontoCelda texto={fmtMon(f.totalPagado, f.moneda)} /></Celda><Celda derecha><MontoCelda texto={fmtMon(Math.max(0, f.saldo), f.moneda)} /></Celda>
             <Celda><StatusBadge label={f.saldo > 0.005 ? 'Pendiente' : 'Pagada'} color={f.saldo > 0.005 ? 'yellow' : 'green'} /></Celda></Fila>
         ))}
-        <Fila><Celda style={{ fontWeight: 600 }}>Total</Celda><Celda /><Celda /><Celda /><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(t.subtotalII, p.moneda)}</Celda><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(t.pagado, p.moneda)}</Celda><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(t.pendiente, p.moneda)}</Celda><Celda /></Fila>
+        <Fila><Celda style={{ fontWeight: 600 }}>Total</Celda><Celda /><Celda /><Celda /><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(t.subtotalII, p.moneda)} /></Celda><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(t.pagado, p.moneda)} /></Celda><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(t.pendiente, p.moneda)} /></Celda><Celda /></Fila>
       </Tabla>
       <p style={{ margin: 0, fontSize: 12, color: C.n700 }}>El alojamiento se factura a {p.empresa} (crédito {p.credito ? 'aprobado' : 'no aplicado'}). Los consumos extra quedan en el folio de cada habitación.</p>
       {ver && <Visor titulo={abierta ? 'Prefactura empresa' : 'Factura empresa'} sub={p.empresa} onClose={() => setVer(false)}>

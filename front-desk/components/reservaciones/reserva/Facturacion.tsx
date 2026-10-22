@@ -1,8 +1,9 @@
 'use client';
+import { PanelLateral } from '@/components/suite/PanelLateral';
 // Reserva › pestaña Facturación: cuentas, agrupación por concepto, nueva cuenta y documentos emitidos.
 import { useState, type ReactNode } from 'react';
 import { C, FONT, radius } from '@/components/suite/tokens';
-import { Button, Checkbox, Input, Modal, Select, StatusBadge } from '@/components/suite/ui';
+import { Button, Checkbox, Input, Select, StatusBadge } from '@/components/suite/ui';
 import { Campo, Celda, Fila, IcTrash, Tabla } from '@/components/configuracion/kit';
 import { Alerta } from '@/components/hotel/ui';
 import { useHotel, nuevoId } from '@/components/hotel/store';
@@ -14,6 +15,7 @@ import { DetalleFolio } from '@/components/facturacion/folios/Detalle';
 import { DocumentoFolio } from '@/components/facturacion/folios/Pagos';
 import { folioDeCuenta, folioDeReservaVista, type FolioVista, type LineaFolio } from '@/components/facturacion/folios/modelo';
 import { nombreTipo, totales } from '../comun';
+import { MontoCelda } from '@/components/suite/Monto';
 
 // ── Facturación (folio por habitación + cuentas adicionales) ────────────────
 // Reserva grupal: la cuenta 1 es siempre el folio de agencia (hospedaje de todas las
@@ -48,20 +50,27 @@ export function TabFacturacion({ g, sel, onSel, onCheckout }: { g: GrupoReserva;
   if (!folios.length) return <p style={{ fontSize: 12, color: C.n700 }}>La reserva no tiene cuentas activas.</p>;
   const estadoCta = (f: FolioVista) => (f.estado === 'Cerrado' ? 'Cerrada' : f.saldo <= 0.005 && f.totalPagado > 0 ? 'Pagada' : 'Abierta');
   const vacia = (f: FolioVista) => !f.reserva && !f.lineas.length && !f.pagos.length;
-  const kpi = (l: string, v: ReactNode) => <div style={{ flex: 1, minWidth: 100, padding: '10px 12px', borderRight: `1px solid ${C.n500}` }}><span style={{ display: 'block', fontSize: 11.5, color: C.n700 }}>{l}</span><span style={{ fontSize: 13 }}>{v}</span></div>;
+  const kpi = (l: string, v: ReactNode, tono?: 'saldo' | 'ok') => <div style={{ background: tono === 'saldo' ? '#FFF4ED' : tono === 'ok' ? '#EEF8F3' : C.n200, borderRadius: radius.md, padding: '9px 12px', minWidth: 0 }}>
+    <span style={{ display: 'block', fontSize: 11.5, color: C.n700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{l}</span>
+    <span style={{ display: 'block', fontSize: 14, fontWeight: 600, marginTop: 2, whiteSpace: 'nowrap', color: tono === 'saldo' ? '#B45309' : tono === 'ok' ? '#0E7A57' : C.n900 }}>{v}</span></div>;
   const off = agrupada ? 1 : 0;
   const etiqueta = (f: FolioVista) => (f.reserva ? `${esGrupo ? 'Consumos · ' : ''}Hab ${f.habitacion || '—'}` : f.nombre);
   const cerradas = reales.every(f => f.estado === 'Cerrado');
   const totalAgr = r2(reales.reduce((s, f) => s + f.saldo, 0));
+  /** Cuenta en la lista lateral: dos líneas (número y nombre · estado, folio y saldo) para que muchas cuentas quepan sin crecer. */
   const tarjetaCta = (key: string, on: boolean, n: number, nombre: string, estado: string, numero: string, moneda: string, importe: number, extra?: ReactNode) => (
     <div key={key} style={{ position: 'relative' }}>
-      <button type="button" onClick={() => onSel(key)} aria-current={on || undefined}
-        style={{ width: '100%', textAlign: 'left', border: `1px solid ${on ? C.brandBd : C.n500}`, background: on ? C.brandBg : C.n000, borderRadius: radius.md, padding: '8px 10px', cursor: 'pointer', fontFamily: FONT }}>
-        <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>{n}<span style={{ fontWeight: 400, fontSize: 11, color: C.n700 }}> · {nombre}</span></span>
-        <span style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: estado === 'Abierta' ? C.n900 : '#2E7D32' }}>{estado}</span>
-        <span style={{ display: 'block', fontSize: 10.5, color: C.n700 }}>{numero}</span>
-        <span style={{ display: 'block', fontSize: 10.5, color: C.n700 }}>Moneda: {moneda}</span>
-        <span style={{ display: 'block', fontSize: 10.5, color: C.n700 }}>Importe {fmtMon(importe, moneda)}</span>
+      <button type="button" onClick={() => onSel(key)} aria-current={on || undefined} title={`${n} · ${nombre} · ${numero} · ${estado}`}
+        style={{ width: '100%', textAlign: 'left', border: `1px solid ${on ? C.brandBd : C.n500}`, background: on ? C.brandBg : C.n000, borderRadius: radius.md, padding: extra ? '6px 28px 6px 10px' : '6px 10px', cursor: 'pointer', fontFamily: FONT, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, minWidth: 0 }}>
+          <b style={{ fontWeight: 600 }}>{n}</b>
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: C.n900 }}>{nombre}</span>
+          <i style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: estado === 'Abierta' ? C.warning : C.success }} aria-label={estado} />
+        </span>
+        <span style={{ display: 'flex', justifyContent: 'space-between', gap: 6, fontSize: 11, color: C.n700 }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{numero.replace('Nro. Folio ', 'Folio ')}</span>
+          <span style={{ whiteSpace: 'nowrap', color: C.n900 }}>{fmtMon(importe, moneda)}</span>
+        </span>
       </button>
       {extra}
     </div>
@@ -78,8 +87,8 @@ export function TabFacturacion({ g, sel, onSel, onCheckout }: { g: GrupoReserva;
               : g.principal.facturaUnica ? 'Definido en el check-in: una sola factura para todas las habitaciones.' : 'Definido en el check-in: factura separada por habitación.'}
         </div>
       )}
-      <div style={{ display: 'grid', gridTemplateColumns: '170px minmax(0,1fr)', gap: 0, minHeight: 360 }}>
-        <div style={{ borderRight: `1px solid ${C.n500}`, paddingRight: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '200px minmax(0,1fr)', gap: 0, minHeight: 360 }}>
+        <div style={{ borderRight: `1px solid ${C.n500}`, paddingRight: 12, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 520, overflowY: 'auto' }}>
           <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
             <span style={{ fontSize: 12.5, fontWeight: 600 }}>Cuentas</span>
             <button type="button" aria-label="Nueva cuenta" title="Nueva cuenta" disabled={g.lineas.every(reservaCerrada)} onClick={() => setNueva(true)} style={{ width: 28, height: 28, border: `1px solid ${C.brandBd}`, borderRadius: radius.control, background: C.n000, color: C.brand, cursor: 'pointer', fontSize: 15 }}>+</button>
@@ -88,22 +97,30 @@ export function TabFacturacion({ g, sel, onSel, onCheckout }: { g: GrupoReserva;
           {folios.map((f, i) => tarjetaCta(f.reserva ? f.reserva.id : f.id, !verAgrupada && f.id === actual?.id, i + 1 + off, etiqueta(f), estadoCta(f), `Nro. Folio ${f.numero}`, f.moneda, f.saldo,
             !f.reserva ? <button type="button" aria-label={`Eliminar cuenta ${f.numero}`} title="Eliminar cuenta"
               onClick={() => (vacia(f) && Math.abs(f.saldo) < 0.005 ? setEliminar(f.id) : setAviso('Sólo se puede eliminar una cuenta si está en 0 y sin movimientos.'))}
-              style={{ position: 'absolute', top: 6, right: 6, border: 'none', background: 'none', color: C.error, cursor: 'pointer' }}><IcTrash /></button> : undefined))}
+              style={{ position: 'absolute', top: 6, right: 4, border: 'none', background: 'none', color: C.error, cursor: 'pointer' }}><IcTrash /></button> : undefined))}
         </div>
         <div style={{ paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           {verAgrupada || !actual ? <CuentaAgrupada g={g} folios={reales} esGrupo={esGrupo} /> : <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, marginRight: 'auto' }}>Cuenta {folios.indexOf(actual) + 1 + off} · {esGrupo && actual.reserva ? `Consumos hab ${actual.habitacion || '—'}` : actual.nombre}{!actual.reserva && actual.cta?.habitacion ? ` · Hab ${actual.cta.habitacion}` : ''}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ marginRight: 'auto', minWidth: 0 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600 }}>Cuenta {folios.indexOf(actual) + 1 + off} · {esGrupo && actual.reserva ? `Consumos hab ${actual.habitacion || '—'}` : actual.nombre}{!actual.reserva && actual.cta?.habitacion ? ` · Hab ${actual.cta.habitacion}` : ''}
+                  <StatusBadge label={actual.estado} color={actual.estado === 'Abierto' ? 'green' : 'gray'} /></span>
+                <span style={{ fontSize: 12, color: C.n700 }}>Folio {actual.numero}{actual.factura ? ` · Factura ${actual.factura}` : ''}{actual.limite ? ` · Crédito ${fmtMon(actual.limite, actual.moneda)}` : ''}</span>
+              </div>
               {actual.reserva && r.estado === 'In-House' && <Button style={{ background: '#4CAF50', color: '#fff', border: 'none' }} onClick={() => onCheckout(r)}>Check-out ↦</Button>}
             </div>
-            <DetalleFolio key={actual.id} folio={actual} agrupado={agrupada ? (esGrupo ? 'Folio de agencia' : 'Factura única') : undefined} onEliminado={() => onSel(lineas[0]?.id ?? '')} />
-            {actual.reserva && !esGrupo && <>
-              <div style={{ display: 'flex', flexWrap: 'wrap', border: `1px solid ${C.n500}`, borderRadius: radius.md }}>
-                {kpi('Importe Hab. i.i.', fmtMon(t.alojamiento, r.moneda))}{kpi('Cargos Adic.', fmtMon(t.cargos, r.moneda))}{kpi('Descuento i.i.', fmtMon(t.descuento, r.moneda))}
-                {kpi('Importe a Cobrar', fmtMon(t.aCobrar, r.moneda))}{kpi('Dep. Garantía', fmtMon(t.deposito, r.moneda))}{kpi('Facturado', fmtMon(actual.totalPagado, r.moneda))}{kpi('Pendiente', fmtMon(Math.max(0, actual.saldo), r.moneda))}
+            {actual.reserva && !esGrupo ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 8 }}>
+                {kpi('Importe hab. i.i.', fmtMon(t.alojamiento, r.moneda))}{kpi('Cargos adicionales', fmtMon(t.cargos, r.moneda))}{kpi('Descuento i.i.', fmtMon(t.descuento, r.moneda))}{kpi('Importe a cobrar', fmtMon(t.aCobrar, r.moneda))}
+                {kpi('Depósito en garantía', fmtMon(t.deposito, r.moneda))}{kpi('Facturado', fmtMon(actual.totalPagado, r.moneda))}{kpi('Pendiente', fmtMon(Math.max(0, actual.saldo), r.moneda), actual.saldo > 0.005 ? 'saldo' : 'ok')}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 4px' }}><Checkbox checked={incluir} onChange={setIncluir} label="Incluir depósito al cerrar" /></div>
               </div>
-              <span style={{ alignSelf: 'flex-end' }}><Checkbox checked={incluir} onChange={setIncluir} label="Incluir depósito en el cierre de la factura" /></span>
-            </>}
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 8 }}>
+                {kpi('Cargos', fmtMon(actual.totalCargos, actual.moneda))}{kpi('Pagado', fmtMon(actual.totalPagado, actual.moneda))}{kpi('Saldo', fmtMon(actual.saldo, actual.moneda), actual.saldo > 0.005 ? 'saldo' : 'ok')}
+              </div>
+            )}
+            <DetalleFolio key={actual.id} folio={actual} sinCabecera agrupado={agrupada ? (esGrupo ? 'Folio de agencia' : 'Factura única') : undefined} onEliminado={() => onSel(lineas[0]?.id ?? '')} />
             <span style={{ fontSize: 11, color: C.n700 }}>Folio {actual.numero} · también disponible en Facturación › {actual.reserva ? 'Folios' : 'Folios externos'}.</span>
           </>}
         </div>
@@ -161,9 +178,9 @@ function CuentaAgrupada({ g, folios, esGrupo }: { g: GrupoReserva; folios: Folio
       <Tabla headers={['Cuenta', 'Huésped', 'Hospedaje', 'Régimen', 'Consumos', 'Total']} alinearDerecha={[2, 3, 4, 5]}>
         {filas.map(({ f, hosp, reg, cons, total }) => (
           <Fila key={f.id}><Celda>{f.reserva ? `Hab ${f.habitacion || '—'} · Folio ${f.numero}` : `${f.nombre} · Folio ${f.numero}`}</Celda><Celda>{f.reserva?.nombre ?? '—'}</Celda>
-            <Celda derecha>{fmtMon(hosp, m)}</Celda><Celda derecha>{fmtMon(reg, m)}</Celda><Celda derecha>{fmtMon(cons, m)}</Celda><Celda derecha>{fmtMon(total, m)}</Celda></Fila>
+            <Celda derecha><MontoCelda texto={fmtMon(hosp, m)} /></Celda><Celda derecha><MontoCelda texto={fmtMon(reg, m)} /></Celda><Celda derecha><MontoCelda texto={fmtMon(cons, m)} /></Celda><Celda derecha><MontoCelda texto={fmtMon(total, m)} /></Celda></Fila>
         ))}
-        <Fila><Celda style={{ fontWeight: 600 }}>Total</Celda><Celda /><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(tot.hosp, m)}</Celda><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(tot.reg, m)}</Celda><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(tot.cons, m)}</Celda><Celda derecha style={{ fontWeight: 600 }}>{fmtMon(tot.total, m)}</Celda></Fila>
+        <Fila><Celda style={{ fontWeight: 600 }}>Total</Celda><Celda /><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(tot.hosp, m)} /></Celda><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(tot.reg, m)} /></Celda><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(tot.cons, m)} /></Celda><Celda derecha style={{ fontWeight: 600 }}><MontoCelda texto={fmtMon(tot.total, m)} /></Celda></Fila>
       </Tabla>
       <div style={{ display: 'flex', gap: 24, fontSize: 12.5 }}>
         <span style={{ color: C.n700 }}>Pagado <b style={{ color: C.n900, fontWeight: 500 }}>{fmtMon(pagado, m)}</b></span>
@@ -203,12 +220,13 @@ function NuevaCuenta({ g, onClose, onListo }: { g: GrupoReserva; onClose: () => 
     onListo(id);
   };
   return (
-    <Modal open title="Nueva cuenta" onClose={onClose} width={440} footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={crear}>Guardar</Button></>}>
+    <PanelLateral title="Nueva cuenta" sub={`Reserva ${numeroDe(p)} · los cargos se pueden trasladar a esta cuenta`} onClose={onClose} width="clamp(420px, 36vw, 560px)"
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={crear}>Crear cuenta</Button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <Campo label="Nombre de cuenta (opcional)" hint="Puedes agregar el número de orden o habitación"><Input value={f.nombre} onChange={v => setF({ ...f, nombre: v })} placeholder={`Cuenta ${g.lineas.length + extras + 1}`} /></Campo>
         <Campo label="Moneda" required><Select value={f.moneda} onChange={v => setF({ ...f, moneda: v as 'USD' | 'CRC' })} options={[{ value: 'USD', label: 'USD $' }, { value: 'CRC', label: 'CRC ₡' }]} /></Campo>
         <Campo label="Habitación (opcional)" hint="Asocia esta cuenta a una habitación de la reserva."><Select value={f.hab} onChange={v => setF({ ...f, hab: v })} options={[{ value: '', label: 'Seleccionar habitación' }, ...g.lineas.filter(l => l.habitacion && l.estado !== 'Anulada').map(l => ({ value: l.habitacion, label: `${l.habitacion} · ${nombreTipo(l.tipo)}` }))]} /></Campo>
       </div>
-    </Modal>
+    </PanelLateral>
   );
 }

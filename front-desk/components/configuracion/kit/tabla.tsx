@@ -1,5 +1,7 @@
 'use client';
 // Kit de Configuración: tabla, paginación, color e importación / exportación de archivos.
+import { celdaMonto } from '@/components/suite/Monto';
+import { Paginacion as PaginacionSuite, PieFijo } from '@/components/suite/Paginacion';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { C, FONT, radius, SIZE } from '@/components/suite/tokens';
 
@@ -36,7 +38,7 @@ export function Celda({ children, derecha, muted, style, colSpan, onClick }: {
 }) {
   return (
     <td colSpan={colSpan} onClick={onClick} style={{ padding: '8px 12px', color: muted ? C.n700 : C.n900, textAlign: derecha ? 'right' : 'left',
-      fontVariantNumeric: derecha ? 'tabular-nums' : undefined, verticalAlign: 'middle', ...style }}>{children}</td>
+      fontVariantNumeric: derecha ? 'tabular-nums' : undefined, verticalAlign: 'middle', ...style }}>{celdaMonto(children)}</td>
   );
 }
 export function FilaVacia({ cols, texto = 'No hay registros que coincidan.' }: { cols: number; texto?: string }) {
@@ -73,30 +75,16 @@ export function ColorInput({ value, onChange }: { value: string; onChange: (v: s
 }
 
 /** Paginación del pie (« ‹ [1] de N › »). */
-export function Paginacion({ pagina, total, onChange }: { pagina: number; total: number; onChange: (p: number) => void }) {
-  const t = Math.max(1, total);
-  const btn = (label: string, destino: number, contenido: ReactNode, disabled: boolean) => (
-    <button type="button" aria-label={label} disabled={disabled} onClick={() => onChange(destino)}
-      style={{ width: 26, height: 28, border: 'none', background: 'none', color: disabled ? C.n500 : C.n700, cursor: disabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>
-      {contenido}
-    </button>
-  );
-  const grupo: CSSProperties = { display: 'flex', border: `1px solid ${C.n500}`, borderRadius: radius.control, overflow: 'hidden' };
-  return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, fontSize: 12, color: C.n700, fontFamily: FONT }}>
-      <div style={grupo}>{btn('Primera página', 1, '«', pagina <= 1)}{btn('Página anterior', pagina - 1, '‹', pagina <= 1)}</div>
-      <span style={{ minWidth: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${C.n500}`, borderRadius: radius.control, color: C.n900 }}>{pagina}</span>
-      <span>de {t}</span>
-      <div style={grupo}>{btn('Página siguiente', pagina + 1, '›', pagina >= t)}{btn('Última página', t, '»', pagina >= t)}</div>
-    </div>
-  );
+/** Paginación estándar en la barra fija al pie (ver suite/Paginacion). `filas` y `porPagina` muestran «1–10 de 57». */
+export function Paginacion({ pagina, total, onChange, filas, porPagina }: { pagina: number; total: number; onChange: (p: number) => void; filas?: number; porPagina?: number }) {
+  return <PieFijo><PaginacionSuite pagina={pagina} paginas={total} onChange={onChange} filas={filas} porPagina={porPagina} /></PieFijo>;
 }
 
 export function usePaginado<T>(filas: T[], tam = 10) {
   const [pagina, setPagina] = useState(1);
   const total = Math.max(1, Math.ceil(filas.length / tam));
   const actual = Math.min(pagina, total);
-  return { pagina: actual, total, setPagina, visibles: filas.slice((actual - 1) * tam, actual * tam) };
+  return { pagina: actual, total, setPagina, visibles: filas.slice((actual - 1) * tam, actual * tam), filas: filas.length, tam };
 }
 
 /** Descarga un CSV generado en el navegador (plantillas, exportaciones). */

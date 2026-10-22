@@ -2,7 +2,7 @@
 // Reservas: listado (Directa / Agencia) con búsqueda y filtros avanzados a la
 // izquierda, detalle de la reserva a la derecha y alta de reservas.
 import { Suspense, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { C, FONT, radius } from '@/components/suite/tokens';
 import { Button, Checkbox, Input, Modal, Toast } from '@/components/suite/ui';
 import { CheckFila, CheckTodos, Pantalla as PantallaStd, useSeleccion } from '@/components/layout/Pantalla';
@@ -12,12 +12,13 @@ import { useHotel, totalReserva } from '@/components/hotel/store';
 import { CONDICIONES, ESTADOS_RESERVA, NACIONALIDADES, REGIMENES, TARIFAS_NOMBRES, TIPOS, USUARIOS, contratoDeTarifa, fmtF, noches, type EstadoReserva, type Reserva } from '@/components/hotel/datos';
 import { AGENTES, MERCADOS, ORIGENES, USOS, agrupar, esAgencia, estadoGrupo, mercadoDe, numeroDe, usoDe, type GrupoReserva } from '@/components/hotel/reservas';
 import { fmtMon } from '@/components/hotel/finanzas';
-import { TarjetaRegistro, QRCheckIn } from '@/components/hotel/TarjetaRegistro';
+import { TarjetaRegistro } from '@/components/hotel/TarjetaRegistro';
 import { HojaSistema, TablaReporte, tdR } from '@/components/facturacion/comun';
 import { ChipEstado, totales } from './comun';
 import { DetalleReserva } from './reserva/Detalle';
 import { EnviarCorreo } from './reserva/Acciones';
 import { FormReserva, type Prefill } from './FormReserva';
+import { MontoCelda } from '@/components/suite/Monto';
 
 export default function Reservas() {
   return <Suspense fallback={null}><Pantalla /></Suspense>;
@@ -73,6 +74,9 @@ const POR_PAGINA = 120;
 function Pantalla() {
   const h = useHotel();
   const sp = useSearchParams();
+  const router = useRouter();
+  // Si el formulario se abrió desde otra pantalla (?nueva=1), Cancelar vuelve a esa pantalla.
+  const [vieneDeFuera] = useState(() => !!sp.get('nueva'));
   const grupos = useMemo(() => agrupar(h.reservas), [h.reservas]);
   const buscarClave = (v: string | null) => {
     if (!v) return null;
@@ -87,7 +91,7 @@ function Pantalla() {
   const [verFiltros, setVerFiltros] = useState(false);
   const [limite, setLimite] = useState(POR_PAGINA);
   const [nueva, setNueva] = useState<Prefill | null>(() => (sp.get('nueva') ? { hab: sp.get('hab') ?? '', entrada: sp.get('entrada') ?? '', salida: sp.get('salida') ?? '', tipo: sp.get('tipo') ?? '', perfilId: sp.get('perfil') ?? '' } : null));
-  const [modal, setModal] = useState<null | 'tarjeta' | 'web' | 'correo'>(null);
+  const [modal, setModal] = useState<null | 'tarjeta' | 'correo'>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [masivo, setMasivo] = useState<null | 'confirmar' | 'anular'>(null);
   const s = useSeleccion();
@@ -117,10 +121,10 @@ function Pantalla() {
         {detallado ? filasListado.flatMap(({ g, nombre }) => g.lineas.map((r, i) => (
           <tr key={r.id}><td style={tdR(false, { fontWeight: 600 })}>{i === 0 ? numeroDe(r) : ''}</td><td style={tdR()}>{r.estado}</td><td style={tdR()}>{i === 0 ? nombre : r.nombre}</td><td style={tdR()}>{r.tarifa}</td><td style={tdR()}>{r.habitacion || '—'}</td><td style={tdR()}>{r.tipo}</td>
             <td style={tdR()}>{fmtF(r.entrada)}</td><td style={tdR()}>{fmtF(r.salida)}</td><td style={tdR(true)}>{noches(r.entrada, r.salida)}</td><td style={tdR(true)}>{r.adultos + r.ninos}</td><td style={tdR()}>{r.regimen}</td>
-            <td style={tdR(true)}>{fmtMon(totalReserva(r), r.moneda)}</td><td style={tdR(true)}>{fmtMon(r.pagado, r.moneda)}</td><td style={tdR(true)}>{fmtMon(Math.max(0, totalReserva(r) - r.pagado - r.depGarantia), r.moneda)}</td></tr>
+            <td style={tdR(true)}><MontoCelda texto={fmtMon(totalReserva(r), r.moneda)} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(r.pagado, r.moneda)} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(Math.max(0, totalReserva(r) - r.pagado - r.depGarantia), r.moneda)} /></td></tr>
         ))) : filasListado.map(({ g, t, nombre }) => (
           <tr key={g.clave}><td style={tdR(false, { fontWeight: 600 })}>{numeroDe(g.principal)}</td><td style={tdR()}>{estadoGrupo(g.lineas)}</td><td style={tdR()}>{nombre}</td><td style={tdR()}>{g.principal.tarifa}</td>
-            <td style={tdR()}>{g.lineas.map(r => r.habitacion || '—').join(', ')}</td><td style={tdR()}>{fmtF(g.principal.entrada)}</td><td style={tdR()}>{fmtF(g.principal.salida)}</td><td style={tdR(true)}>{fmtMon(t.subtotalII, g.principal.moneda)}</td></tr>
+            <td style={tdR()}>{g.lineas.map(r => r.habitacion || '—').join(', ')}</td><td style={tdR()}>{fmtF(g.principal.entrada)}</td><td style={tdR()}>{fmtF(g.principal.salida)}</td><td style={tdR(true)}><MontoCelda texto={fmtMon(t.subtotalII, g.principal.moneda)} /></td></tr>
         ))}
       </TablaReporte>
     </HojaSistema>);
@@ -132,14 +136,14 @@ function Pantalla() {
     gs.flatMap(g => g.lineas.map(r => [numeroDe(r), r.numero, r.idExterno ?? '', r.estado, r.nombre, r.empresa, r.tarifa, contratoDeTarifa(r.tarifa), r.habitacion, r.tipo, usoDe(r), fmtF(r.entrada), fmtF(r.salida), noches(r.entrada, r.salida), r.adultos, r.ninos, r.regimen, r.precio, totalReserva(r), r.pagado, r.depGarantia, r.creada?.replace('T', ' ') ?? ''])));
 
   if (nueva) {
-    return <FormReserva prefill={nueva} onCancelar={() => setNueva(null)}
+    return <FormReserva prefill={nueva} onCancelar={() => { if (vieneDeFuera && window.history.length > 1) router.back(); else setNueva(null); }}
       onGuardado={(c, t) => { setNueva(null); setClave(c); const g = h.reservas.find(r => (r.grupo ?? r.id) === c); if (g) setTab(esAgencia(g) ? 'Agencia' : 'Directa'); setToast(t); }} />;
   }
 
   return (
     <PantallaStd titulo="Reservas" sinPadding cuerpoStyle={{ flexDirection: 'row', gap: 0, overflow: 'hidden' }}
       acciones={<>
-        <MenuBoton label="Tarjeta de registro" opciones={[{ label: 'Tarjeta de registro', onClick: () => setModal('tarjeta'), disabled: !sel }, { label: 'Web Check-In', onClick: () => setModal('web'), disabled: !sel }, { label: 'Enviar por correo', onClick: () => setModal('correo'), disabled: !sel }]} />
+        <MenuBoton label="Tarjeta de registro" opciones={[{ label: sel && !sel.principal.tarjetaLista ? 'Registro pendiente (Web Check-In)' : 'Ver tarjeta de registro', onClick: () => setModal('tarjeta'), disabled: !sel }, { label: 'Enviar por correo', onClick: () => setModal('correo'), disabled: !sel }]} />
         <BotonExportar disabled={!lista.length} titulo={`Reservas ${tab === 'Directa' ? 'directas' : 'de agencia'}`} criterio={`${lista.length} reservas · ${nf ? `${nf} filtros aplicados` : 'Sin filtros'}${q ? ` · Búsqueda: «${q}»` : ''}`}
           onCSV={() => sinFormato()} onPDF={() => listado(false)} masOpciones={{ label: 'Listado detallado (PDF)', onClick: () => listado(true) }} />
         <Button onClick={() => setNueva({})}>Nueva reserva</Button>
@@ -188,7 +192,6 @@ function Pantalla() {
         </div>
       {verFiltros && <ModalFiltros inicial={filtros} agencia={tab === 'Agencia'} onClose={() => setVerFiltros(false)} onAplicar={f => { setFiltros(f); setVerFiltros(false); setLimite(POR_PAGINA); }} />}
       {modal === 'tarjeta' && sel && <TarjetaRegistro reservaId={sel.principal.id} onClose={() => setModal(null)} />}
-      {modal === 'web' && sel && <QRCheckIn reservaId={sel.principal.id} onClose={() => setModal(null)} />}
       {modal === 'correo' && sel && <EnviarCorreo g={sel} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
       {masivo === 'confirmar' && <Alerta open titulo={`¿Confirmar ${confirmables.length} reservas?`} onClose={() => setMasivo(null)} confirmar="Confirmar reservas"
         onConfirm={() => { confirmables.forEach(g => h.cambiarEstado(g.lineas.filter(l => l.estado === 'Solicitada' || l.estado === 'Lista de espera').map(l => l.id), 'Confirmada')); setMasivo(null); s.limpiar(); setToast(`${confirmables.length} reservas confirmadas`); }}>

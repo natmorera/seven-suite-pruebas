@@ -12,7 +12,7 @@
 // · Bandeja «Hoy»: llegadas sin habitación, llegadas por registrar y salidas.
 // · Vista Tarjetas o Compacta (para hoteles grandes).
 // ─────────────────────────────────────────────────────────────────────────────
-import { useEffect, useMemo, useState, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { C, FONT, radius, shadow, Z } from '@/components/suite/tokens';
 import { Button, Toast } from '@/components/suite/ui';
@@ -20,10 +20,10 @@ import { CheckTodos, Pantalla, useSeleccion } from '@/components/layout/Pantalla
 import { Buscador } from '@/components/configuracion/kit';
 import { useHotel } from '@/components/hotel/store';
 import { HOY, TIPOS, noches, type Habitacion, type Reserva } from '@/components/hotel/datos';
+import { FiltroUno } from '@/components/facturacion/comun';
 import { Alerta, BotonExportar, FiltroChecks, HojaReporte, TablaImpresa, exportarCSV, money, usePrint } from '@/components/hotel/ui';
 import { DetalleReserva } from '@/components/hotel/checkin';
 import { FormularioCheckIn } from '@/components/hotel/CheckInFormulario';
-import { NuevaReservaModal } from './NuevaReserva';
 import { EST, LABEL, SUCIA, nombreTipo, titulo, type ModalMapa } from './mapa/comun';
 import { AsignarLlegada, BloquearHab, BloquearVarias, MoverHuesped, Prepago } from './mapa/Modales';
 import { Ficha, TarjetaHab } from './mapa/Tarjetas';
@@ -60,6 +60,8 @@ export default function Mapa() {
   const [toast, setToast] = useState<string | null>(null);
   const [arr, setArr] = useState<Arrastre | null>(null);
   const [sobre, setSobre] = useState<string | null>(null);
+  const [qHoy, setQHoy] = useState('');
+  const secciones = useRef<Record<string, HTMLElement | null>>({});
 
   const reservaDe = (x: Habitacion) => (x.reservaId ? h.reservas.find(r => r.id === x.reservaId) : undefined);
   const llegadasHoy = useMemo(() => h.reservas.filter(r => r.estado === 'Confirmada' && r.entrada === HOY), [h.reservas]);
@@ -83,6 +85,8 @@ export default function Mapa() {
     return () => { window.removeEventListener('click', cerrar); window.removeEventListener('scroll', cerrar, true); window.removeEventListener('keydown', esc); };
   }, [menu]);
 
+  /** Ver reserva: abre la reserva completa en Reservas (con «atrás» se vuelve al Mapa). */
+  const verReserva = (id: string) => router.push(`/reservaciones/reservas?id=${id}`);
   const limpia = (x: Habitacion) => { h.toggleSucia(x.numero); setToast(`Habitación ${x.numero} marcada como ${x.sucia ? 'limpia' : 'sucia'}`); };
   const opcionesMenu = (x: Habitacion) => {
     const r = reservaDe(x);
@@ -90,14 +94,14 @@ export default function Mapa() {
     const sucia = { label: x.sucia ? 'Marcar como limpia' : 'Marcar como sucia', fn: () => limpia(x) };
     const info = { label: 'Ver información', fn: () => { setSel(x.numero); setModal({ tipo: 'panel', hab: x.numero }); } };
     switch (x.estado) {
-      case 'libre': return [info, ...(sinHab.length ? [{ label: 'Asignar llegada de hoy', fn: () => setModal({ tipo: 'asignar', hab: x.numero }) }] : []), { label: 'Nueva reserva (walk-in)', fn: () => setModal({ tipo: 'reserva', hab: x.numero }) }, sucia, { label: 'Bloquear habitación', fn: () => setModal({ tipo: 'bloquear', hab: x.numero }) }];
-      case 'ocupada': return [info, { label: 'Ver reserva', fn: () => r && setModal({ tipo: 'ver', reserva: r.id }) }, { label: 'Cambio de habitación', fn: () => r && setModal({ tipo: 'mover', reserva: r.id }) },
+      case 'libre': return [info, ...(sinHab.length ? [{ label: 'Asignar llegada de hoy', fn: () => setModal({ tipo: 'asignar', hab: x.numero }) }] : []), { label: 'Nueva reserva (walk-in)', fn: () => router.push(`/reservaciones/reservas?nueva=1&hab=${x.numero}`) }, sucia, { label: 'Bloquear habitación', fn: () => setModal({ tipo: 'bloquear', hab: x.numero }) }];
+      case 'ocupada': return [info, { label: 'Ver reserva', fn: () => r && verReserva(r.id) }, { label: 'Cambio de habitación', fn: () => r && setModal({ tipo: 'mover', reserva: r.id }) },
         { label: 'Registrar prepago', fn: () => r && setModal({ tipo: 'prepago', reserva: r.id }) }, { label: 'Check-out', fn: () => r && pedirCheckout(r) }, sucia];
-      case 'bloqueada': return [info, { label: 'Desbloquear habitación', fn: () => desbloquear(x) }, sucia];
-      case 'checkin': case 'checkinRL': return [info, { label: 'Hacer check-in', fn: () => ll && setModal({ tipo: 'checkin', reserva: ll.id }) }, { label: 'Ver reserva', fn: () => ll && setModal({ tipo: 'ver', reserva: ll.id }) },
+      case 'bloqueada': return [info, { label: 'Editar bloqueo', fn: () => setModal({ tipo: 'bloquear', hab: x.numero, editar: true }) }, { label: 'Desbloquear habitación', fn: () => desbloquear(x) }, sucia];
+      case 'checkin': case 'checkinRL': return [info, { label: 'Hacer check-in', fn: () => ll && setModal({ tipo: 'checkin', reserva: ll.id }) }, { label: 'Ver reserva', fn: () => ll && verReserva(ll.id) },
         { label: 'Cambiar de habitación', fn: () => ll && setModal({ tipo: 'mover', reserva: ll.id }) },
         { label: 'Quitar asignación', fn: () => setAlerta({ titulo: '¿Quitar la asignación?', texto: `Las llegadas de hoy quedan sin habitación y la ${x.numero} queda libre.`, ok: () => h.cancelarCheckIn(x.numero), peligro: true }) }, sucia];
-      case 'checkout': return [info, { label: 'Hacer check-out', fn: () => r && pedirCheckout(r) }, { label: 'Ver reserva', fn: () => r && setModal({ tipo: 'ver', reserva: r.id }) }, sucia];
+      case 'checkout': return [info, { label: 'Hacer check-out', fn: () => r && pedirCheckout(r) }, { label: 'Ver reserva', fn: () => r && verReserva(r.id) }, sucia];
     }
   };
   const pedirCheckout = (r: Reserva) => {
@@ -155,20 +159,8 @@ export default function Mapa() {
         <Button onClick={() => router.push('/reservaciones/reservas?nueva=1')}>Nueva reserva</Button></>}
       filtros={<>
         <Buscador value={q} onChange={setQ} placeholder="Número o huésped" width={180} />
-        <span role="radiogroup" aria-label="Estado" style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
-          {FILTROS.map(f => {
-            const on = filtro === f.id;
-            const n = base.filter(f.de).length;
-            return (
-              <button key={f.id} type="button" role="radio" aria-checked={on} onClick={() => setFiltro(f.id)}
-                style={{ height: 32, padding: '0 11px', borderRadius: 999, border: `1px solid ${on ? C.brand : C.n500}`, background: on ? C.brand : C.n000, color: on ? '#fff' : C.n900,
-                  display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12, fontFamily: FONT, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                {f.color && <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: on ? '#fff' : f.color }} />}
-                {f.label}<span style={{ color: on ? 'rgba(255,255,255,.8)' : C.n700 }}>{n}</span>
-              </button>
-            );
-          })}
-        </span>
+        <FiltroUno label="Estado" value={filtro === 'todas' ? '' : filtro} onChange={v => setFiltro((v || 'todas') as Filtro)} todos={`Todas (${base.length})`} ancho={240}
+          opciones={FILTROS.filter(f => f.id !== 'todas').map(f => ({ value: f.id, label: `${f.label} (${base.filter(f.de).length})` }))} />
         <FiltroChecks label="Tipo de habitación" value={tipos} onChange={setTipos} opciones={TIPOS.map(t => ({ value: t.id, label: t.nombre }))} />
         {hayFiltros && <Button variant="ghost" onClick={limpiarFiltros}>Limpiar</Button>}
       </>}
@@ -240,29 +232,50 @@ export default function Mapa() {
             <button type="button" aria-label={bandeja ? 'Ocultar bandeja' : 'Mostrar bandeja'} onClick={() => setBandeja(b => !b)} style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', color: C.n700, fontSize: 14 }}>{bandeja ? '›' : '‹'}</button>
             {bandeja && <span style={{ fontSize: 13, fontWeight: 600 }}>Hoy</span>}
           </div>
-          {bandeja && (
-            <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 18 }}>
-              <Bandeja titulo="Llegadas sin habitación" n={sinHab.length} ayuda="Arrástralas a una habitación libre.">
-                {sinHab.map(r => (
-                  <div key={r.id} {...arrastrable(r, '', false)} className="hab-card" title="Arrastra a una habitación libre"
-                    style={{ border: `1px dashed ${EST.checkin.color}`, background: EST.checkin.bg, borderRadius: radius.md, padding: '8px 10px', cursor: 'grab' }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo(r.nombre)}</div>
-                    <div style={{ fontSize: 11, color: C.n700 }}>{nombreTipo(r.tipo)} · {r.adultos + r.ninos} pers. · {noches(r.entrada, r.salida)} n.</div>
-                  </div>
-                ))}
-              </Bandeja>
-              <Bandeja titulo="Por registrar (check-in)" n={llegadasHoy.filter(r => r.habitacion).length}>
-                {llegadasHoy.filter(r => r.habitacion).map(r => (
-                  <FilaHoy key={r.id} hab={r.habitacion} nombre={titulo(r.nombre)} det={`${nombreTipo(r.tipo)} · ${noches(r.entrada, r.salida)} n.`} accion="Check-in" onAccion={() => setModal({ tipo: 'checkin', reserva: r.id })} onIr={() => { setSel(r.habitacion); setModal({ tipo: 'panel', hab: r.habitacion }); }} />
-                ))}
-              </Bandeja>
-              <Bandeja titulo="Salidas pendientes" n={salidasHoy.length}>
-                {salidasHoy.map(r => (
-                  <FilaHoy key={r.id} hab={r.habitacion} nombre={titulo(r.nombre)} det={`Saldo ${money(r.cuentas.reduce((s, c) => s + c.saldo, 0))}`} accion="Check-out" onAccion={() => pedirCheckout(r)} onIr={() => { setSel(r.habitacion); setModal({ tipo: 'panel', hab: r.habitacion }); }} />
-                ))}
-              </Bandeja>
-            </div>
-          )}
+          {bandeja && (() => {
+            const t = qHoy.trim().toLowerCase();
+            const ok = (r: Reserva) => !t || `${r.nombre} ${r.habitacion} ${r.numero}`.toLowerCase().includes(t);
+            const sh = sinHab.filter(ok), pr = llegadasHoy.filter(r => r.habitacion).filter(ok), sa = salidasHoy.filter(ok);
+            const ir = (k: string) => secciones.current[k]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const salto = (k: string, label: string, n: number) => (
+              <button type="button" onClick={() => ir(k)} style={{ flex: 1, padding: '5px 4px', border: `1px solid ${C.n500}`, borderRadius: radius.control, background: C.n000, fontSize: 11, fontFamily: FONT, cursor: 'pointer', color: C.n900, lineHeight: 1.3 }}>
+                <b style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>{n}</b>{label}
+              </button>
+            );
+            return <>
+              <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.n500}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <Buscador value={qHoy} onChange={setQHoy} placeholder="Buscar huésped o habitación" width="100%" />
+                <div style={{ display: 'flex', gap: 6 }}>{salto('sh', 'Sin hab.', sh.length)}{salto('pr', 'Por registrar', pr.length)}{salto('sa', 'Salidas', sa.length)}</div>
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <Bandeja refSec={el => { secciones.current.sh = el; }} titulo="Llegadas sin habitación" n={sh.length} ayuda="Arrástralas a una habitación libre o haz clic para ver el detalle.">
+                  {sh.map(r => (
+                    <div key={r.id} {...arrastrable(r, '', false)} className="hab-card" title="Clic para ver el detalle · arrastra a una habitación libre" role="button" tabIndex={0}
+                      onClick={() => setModal({ tipo: 'ver', reserva: r.id })} onKeyDown={e => { if (e.key === 'Enter') setModal({ tipo: 'ver', reserva: r.id }); }}
+                      style={{ border: `1px dashed ${EST.checkin.color}`, background: EST.checkin.bg, borderRadius: radius.md, padding: '8px 10px', cursor: 'grab' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ flex: 1, fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo(r.nombre)}</span>
+                        {(r.observaciones || r.condiciones.length > 0) && <span title="Tiene observaciones o condiciones especiales" style={{ fontSize: 10.5, color: C.brand, background: C.n000, borderRadius: 10, padding: '1px 6px' }}>Notas</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.n700 }}>{nombreTipo(r.tipo)} · {r.adultos + r.ninos} pers. · {noches(r.entrada, r.salida)} n.</div>
+                    </div>
+                  ))}
+                </Bandeja>
+                <Bandeja refSec={el => { secciones.current.pr = el; }} titulo="Por registrar (check-in)" n={pr.length}>
+                  {pr.map(r => (
+                    <FilaHoy key={r.id} hab={r.habitacion} nombre={titulo(r.nombre)} det={`${nombreTipo(r.tipo)} · ${noches(r.entrada, r.salida)} n.`} accion="Check-in" onAccion={() => setModal({ tipo: 'checkin', reserva: r.id })}
+                      onIr={() => { setSel(r.habitacion); setModal({ tipo: 'panel', hab: r.habitacion }); }} onDetalle={() => setModal({ tipo: 'ver', reserva: r.id })} />
+                  ))}
+                </Bandeja>
+                <Bandeja refSec={el => { secciones.current.sa = el; }} titulo="Salidas pendientes" n={sa.length}>
+                  {sa.map(r => (
+                    <FilaHoy key={r.id} hab={r.habitacion} nombre={titulo(r.nombre)} det={`Saldo ${money(r.cuentas.reduce((x, c) => x + c.saldo, 0))}`} accion="Check-out" onAccion={() => pedirCheckout(r)}
+                      onIr={() => { setSel(r.habitacion); setModal({ tipo: 'panel', hab: r.habitacion }); }} onDetalle={() => setModal({ tipo: 'ver', reserva: r.id })} />
+                  ))}
+                </Bandeja>
+              </div>
+            </>;
+          })()}
         </aside>
       </div>
 
@@ -281,13 +294,12 @@ export default function Mapa() {
 
       {modal?.tipo === 'panel' && habModal && (
         <PanelHabitacion hab={habModal} onClose={() => { setModal(null); setSel(null); }}
-          abrir={setModal} desbloquear={() => desbloquear(habModal)} pedirCheckout={pedirCheckout}
+          abrir={m => (m?.tipo === 'reserva' ? router.push(`/reservaciones/reservas?nueva=1&hab=${m.hab}`) : m?.tipo === 'ver' ? verReserva(m.reserva) : setModal(m))} desbloquear={() => desbloquear(habModal)} pedirCheckout={pedirCheckout}
           anular={r => setAlerta({ titulo: '¿Anular la reserva?', texto: `La reserva ${r.numero} de ${titulo(r.nombre)} se cancelará y la habitación ${r.habitacion} quedará libre.`, ok: () => { h.anular(r.id); setModal(null); setToast(`Reserva ${r.numero} anulada`); }, peligro: true })} />
       )}
       {modal?.tipo === 'mover' && <MoverHuesped reservaId={modal.reserva} destino={modal.destino} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
       {modal?.tipo === 'asignar' && habModal && <AsignarLlegada hab={habModal} llegadas={sinHab} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
-      {modal?.tipo === 'bloquear' && habModal && <BloquearHab hab={habModal} onClose={() => setModal(null)} onListo={() => { setModal(null); setToast(`Habitación ${habModal.numero} bloqueada`); }} />}
-      {modal?.tipo === 'reserva' && habModal && <NuevaReservaModal hab={habModal.numero} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
+      {modal?.tipo === 'bloquear' && habModal && <BloquearHab hab={habModal} editar={modal.editar} onClose={() => setModal(null)} onListo={() => { setModal(null); setToast(modal.editar ? `Bloqueo de la ${habModal.numero} actualizado` : `Habitación ${habModal.numero} bloqueada`); }} />}
       {modal?.tipo === 'ver' && <DetalleReserva reservaId={modal.reserva} onClose={() => setModal(null)} />}
       {modal?.tipo === 'prepago' && <Prepago reservaId={modal.reserva} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
       {modal?.tipo === 'checkin' && <FormularioCheckIn reservaId={modal.reserva} onClose={() => setModal(null)} />}
@@ -300,20 +312,20 @@ export default function Mapa() {
   );
 }
 
-function Bandeja({ titulo: t, n, ayuda, children }: { titulo: string; n: number; ayuda?: string; children: ReactNode }) {
+function Bandeja({ titulo: t, n, ayuda, children, refSec }: { titulo: string; n: number; ayuda?: string; children: ReactNode; refSec?: (el: HTMLElement | null) => void }) {
   return (
-    <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <section ref={refSec} style={{ display: 'flex', flexDirection: 'column', gap: 8, scrollMarginTop: 8 }}>
       <h3 style={{ margin: 0, fontSize: 11, fontWeight: 600, letterSpacing: '.06em', color: C.n700, display: 'flex', justifyContent: 'space-between' }}>{t.toUpperCase()}<span style={{ color: n ? C.n900 : C.n700 }}>{n}</span></h3>
       {n === 0 ? <span style={{ fontSize: 12, color: C.n700 }}>Nada pendiente.</span> : <>{ayuda && <span style={{ fontSize: 11, color: C.n700 }}>{ayuda}</span>}{children}</>}
     </section>
   );
 }
-function FilaHoy({ hab, nombre, det, accion, onAccion, onIr }: { hab: string; nombre: string; det: string; accion: string; onAccion: () => void; onIr: () => void }) {
+function FilaHoy({ hab, nombre, det, accion, onAccion, onIr, onDetalle }: { hab: string; nombre: string; det: string; accion: string; onAccion: () => void; onIr: () => void; onDetalle: () => void }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: `1px solid ${C.n500}` }}>
       <button type="button" onClick={onIr} aria-label={`Ver habitación ${hab}`} style={{ width: 40, height: 30, borderRadius: radius.sm, border: `1px solid ${C.n500}`, background: C.n200, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, flexShrink: 0 }}>{hab}</button>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</span>
+        <button type="button" onClick={onDetalle} title="Ver el detalle de la reserva" style={{ display: 'block', maxWidth: '100%', border: 'none', background: 'none', padding: 0, textAlign: 'left', fontSize: 12.5, fontFamily: FONT, color: C.brand, cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre}</button>
         <span style={{ display: 'block', fontSize: 11, color: C.n700 }}>{det}</span>
       </span>
       <button type="button" className="hab-accion" onClick={onAccion}>{accion}</button>

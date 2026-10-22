@@ -1,55 +1,25 @@
 'use client';
-// Actualización colectiva del Tarifario: operaciones de precio y piezas de la interfaz (pasos, bloques, casillas, chips y campos).
-import { type CSSProperties, type ReactNode } from 'react';
-import { C, FONT, fmtNum, radius } from '@/components/suite/tokens';
-import { Switch } from '@/components/suite/ui';
-import { fecha, r2, sumar } from '../tarifario';
+// Actualización masiva del Tarifario: operaciones de precio y piezas de la interfaz (casillas, listas, tarjetas y campos).
+import { useState, type ReactNode } from 'react';
+import { C, FONT, radius } from '@/components/suite/tokens';
+import { r2 } from '../tarifario';
 
 export type Op = 'fijar' | 'mas' | 'menos' | 'masPct' | 'menosPct';
-export const OPS: { id: Op; label: string; afijo: string }[] = [
-  { id: 'fijar', label: 'Fijar precio en', afijo: '$' },
-  { id: 'mas', label: 'Aumentar monto', afijo: '+$' },
-  { id: 'menos', label: 'Disminuir monto', afijo: '−$' },
-  { id: 'masPct', label: 'Aumentar %', afijo: '+%' },
-  { id: 'menosPct', label: 'Disminuir %', afijo: '−%' },
+export const OPS: { id: Op; label: string; campo: string }[] = [
+  { id: 'fijar', label: 'Tarifa', campo: 'A' },
+  { id: 'mas', label: 'Aumentar monto', campo: 'Monto' },
+  { id: 'menos', label: 'Disminuir monto', campo: 'Monto' },
+  { id: 'masPct', label: 'Aumentar %', campo: 'Porcentaje' },
+  { id: 'menosPct', label: 'Disminuir %', campo: 'Porcentaje' },
 ];
 export const aplicarOp = (actual: number | null, op: Op, v: number): number | null => {
   if (op === 'fijar') return v;
   if (actual === null) return null;
   return r2(Math.max(0, op === 'mas' ? actual + v : op === 'menos' ? actual - v : op === 'masPct' ? actual * (1 + v / 100) : actual * (1 - v / 100)));
 };
-export type Tri = '' | 'si' | 'no';
 export const num = (s: string) => (s.trim() === '' || isNaN(Number(s.replace(',', '.'))) ? null : Number(s.replace(',', '.')));
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-export const corto = (d: string) => `${fecha(d).getDate()} ${MESES[fecha(d).getMonth()]}`;
-export const finDeMes = (d: string) => { const f = fecha(d); return sumar(d, new Date(f.getFullYear(), f.getMonth() + 1, 0).getDate() - f.getDate()); };
 
-// ── Piezas ──────────────────────────────────────────────────────────────────
-export const thM: CSSProperties = { position: 'sticky', top: 0, background: C.n000, padding: '8px 6px', fontSize: 11.5, fontWeight: 500, color: C.n900, borderBottom: `1px solid ${C.n500}`, zIndex: 2 };
-export const tdP: CSSProperties = { padding: '6px 8px', whiteSpace: 'nowrap' };
-export const selectS: CSSProperties = { height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT, background: C.n000, width: '100%' };
-
-export function Paso({ n, titulo, sub }: { n: number; titulo: string; sub?: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ width: 20, height: 20, borderRadius: '50%', background: C.brand, color: '#fff', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{n}</span>
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{titulo}</span>
-      {sub && <span style={{ fontSize: 12, color: C.n700, marginLeft: 'auto' }}>{sub}</span>}
-    </div>
-  );
-}
-export function Bloque({ titulo, on, onChange, children }: { titulo: string; on: boolean; onChange: (b: boolean) => void; children: ReactNode }) {
-  return (
-    <section aria-label={titulo} style={{ border: `1px solid ${on ? C.brandBd : C.n500}`, borderRadius: radius.md, padding: 12, display: 'flex', flexDirection: 'column', gap: 10, background: on ? C.n000 : C.n200 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: on ? C.n900 : C.n700 }}>{titulo}</span>
-        <Switch checked={on} onChange={onChange} label={<span style={{ fontSize: 11.5, color: C.n700 }}>{on ? 'Se actualiza' : 'Sin cambios'}</span>} />
-      </div>
-      {on && children}
-    </section>
-  );
-}
-/** Casilla con estado parcial (mismo aspecto que las casillas de tablas: borde gris claro, marca de la marca). */
+/** Casilla con estado parcial (borde gris claro, se rellena con el color de marca). */
 export function Casilla({ estado, label, onChange }: { estado: 'todo' | 'parcial' | 'nada'; label: string; onChange: (b: boolean) => void }) {
   const lleno = estado !== 'nada';
   return (
@@ -63,40 +33,60 @@ export function Casilla({ estado, label, onChange }: { estado: 'todo' | 'parcial
     </span>
   );
 }
-export function Chip({ on, onClick, children, cuadrado }: { on: boolean; onClick: () => void; children: ReactNode; cuadrado?: boolean }) {
+
+/** Lista con buscador y casilla «todos» en el encabezado (Tipo de habitación, Tarifa). «Todos» marca lo que se ve en la búsqueda. */
+export function ListaChecks({ titulo, items, sel, onChange, alto = 220 }: {
+  titulo: string; items: { id: string; label: string; nota?: string; resaltado?: boolean }[]; sel: string[]; onChange: (ids: string[]) => void; alto?: number | string;
+}) {
+  const [q, setQ] = useState('');
+  const norm = (x: string) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const visibles = items.filter(i => !q.trim() || norm(i.label).includes(norm(q.trim())));
+  const ids = visibles.map(i => i.id);
+  const n = ids.filter(id => sel.includes(id)).length;
+  const estado = n === 0 ? 'nada' : n === ids.length ? 'todo' : 'parcial';
   return (
-    <button type="button" aria-pressed={on} onClick={onClick}
-      style={{ height: 28, minWidth: cuadrado ? 40 : undefined, padding: '0 10px', borderRadius: cuadrado ? radius.control : radius.pill, border: `1px solid ${on ? C.brand : C.n500}`, background: on ? C.brandBg : C.n000, color: on ? C.brand : C.n900, fontSize: 12, fontFamily: FONT, cursor: 'pointer', whiteSpace: 'nowrap' }}>{children}</button>
+    <div style={{ border: `1px solid ${C.n500}`, borderRadius: radius.md, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: C.brandBg, borderBottom: `1px solid ${C.n500}`, fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }}>
+        <Casilla estado={estado} label={`Seleccionar todos: ${titulo}`} onChange={b => onChange(b ? [...new Set([...sel, ...ids])] : sel.filter(x => !ids.includes(x)))} />{titulo}
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: C.n700, fontWeight: 400 }}>{sel.length}/{items.length}</span>
+      </label>
+      <div style={{ padding: '6px 8px', borderBottom: `1px solid ${C.n500}` }}>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar" aria-label={`Buscar en ${titulo}`} className="suite-campo"
+          style={{ width: '100%', height: 28, boxSizing: 'border-box', border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT, outline: 'none' }} />
+      </div>
+      <div style={{ height: alto, overflowY: 'auto', padding: '4px 0' }}>
+        {visibles.length === 0 && <p style={{ margin: 0, padding: '10px', fontSize: 12, color: C.n700 }}>Sin resultados.</p>}
+        {visibles.map(i => (
+          <label key={i.id} title={i.nota} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>
+            <Casilla estado={sel.includes(i.id) ? 'todo' : 'nada'} label={i.label} onChange={b => onChange(b ? [...sel, i.id] : sel.filter(x => x !== i.id))} />
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: i.resaltado ? C.brand : C.n900, fontStyle: i.resaltado ? 'italic' : 'normal' }}>{i.label}</span>
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }
-export const LinkBtn = ({ onClick, children }: { onClick: () => void; children: ReactNode }) =>
-  <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', color: C.brand, fontSize: 12, fontFamily: FONT, cursor: 'pointer', padding: '2px 4px', alignSelf: 'flex-start' }}>{children}</button>;
-export const Nota = ({ children }: { children: ReactNode }) => <p style={{ margin: 0, fontSize: 11, color: C.n700, lineHeight: 1.5 }}>{children}</p>;
-export function Num({ value, onChange, label, afijo, sufijo }: { value: string; onChange: (v: string) => void; label: string; afijo: string; sufijo?: boolean }) {
+
+/** Sección del formulario: título y contenido, separada de la anterior por una línea (la primera, sin línea). */
+export function Seccion({ titulo, children, primera }: { titulo: string; children: ReactNode; primera?: boolean }) {
   return (
-    <span className="suite-afijo" style={{ display: 'flex', alignItems: 'center', height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, background: C.n000, padding: '0 8px', gap: 6 }}>
-      {!sufijo && <span style={{ fontSize: 11.5, color: C.n700 }}>{afijo}</span>}
-      <input value={value} onChange={e => onChange(e.target.value.replace(/[^\d.,]/g, ''))} inputMode="decimal" placeholder="0.00" aria-label={label}
-        style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', fontSize: 12, fontFamily: FONT, textAlign: 'right', background: 'transparent' }} />
-      {sufijo && <span style={{ fontSize: 11.5, color: C.n700 }}>{afijo}</span>}
+    <section aria-label={titulo} style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: primera ? 0 : 14, borderTop: primera ? undefined : `1px solid ${C.n500}` }}>
+      <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: C.n900 }}>{titulo}</h3>
+      {children}
+    </section>
+  );
+}
+
+export const LinkBtn = ({ onClick, children }: { onClick: () => void; children: ReactNode }) =>
+  <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', color: C.brand, fontSize: 12, fontFamily: FONT, cursor: 'pointer', padding: '2px 0', alignSelf: 'flex-start' }}>{children}</button>;
+export const Nota = ({ children }: { children: ReactNode }) => <p style={{ margin: 0, fontSize: 11, color: C.n700, lineHeight: 1.5 }}>{children}</p>;
+
+export function Num({ value, onChange, label, afijo, placeholder = '0.00' }: { value: string; onChange: (v: string) => void; label: string; afijo?: string; placeholder?: string }) {
+  return (
+    <span className="suite-afijo" style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, boxSizing: 'border-box', border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 10px', background: C.n000 }}>
+      {afijo && <span style={{ fontSize: 11.5, color: C.n700 }}>{afijo}</span>}
+      <input value={value} onChange={e => onChange(e.target.value.replace(/[^\d.,]/g, ''))} inputMode="decimal" placeholder={placeholder} aria-label={label}
+        style={{ flex: 1, minWidth: 0, border: 'none', fontSize: 12, fontFamily: FONT, textAlign: 'right', outline: 'none', background: 'transparent' }} />
     </span>
   );
-}
-export function CampoFecha({ label, value, onChange, min }: { label: string; value: string; onChange: (v: string) => void; min?: string }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: C.n700 }}>{label}
-      <span style={{ position: 'relative', height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: C.n900, background: C.n000 }}>
-        {value ? value.split('-').reverse().join('/') : 'dd/mm/aaaa'}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
-        <input type="date" value={value} min={min} onChange={e => onChange(e.target.value)} aria-label={label}
-          onClick={e => (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.()}
-          style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%' }} />
-      </span>
-    </label>
-  );
-}
-export function Cambio({ a, b }: { a: number | boolean | null; b: number | boolean | null }) {
-  const f = (v: number | boolean | null) => (typeof v === 'number' ? fmtNum(v) : '---');
-  if (f(a) === f(b)) return <span style={{ color: C.n700 }}>{f(a)}</span>;
-  return <span><span style={{ color: C.n700, textDecoration: 'line-through' }}>{f(a)}</span> <span aria-hidden>→</span> <b style={{ fontWeight: 600, color: C.brand }}>{f(b)}</b></span>;
 }

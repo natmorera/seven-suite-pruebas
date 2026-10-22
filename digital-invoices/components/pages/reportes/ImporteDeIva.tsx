@@ -23,8 +23,12 @@ export default function ImporteDeIva() {
   const [pageSize, setPageSize] = useState(10);
 
   const esVentas = tab === 0;
+  // En Guatemala lo que va fuera del IVA es el impuesto de turismo (no hay otros cargos)
+  const otrosLabel = esGuatemalaActual() ? 'Impuesto de turismo' : 'Otros cargos';
   const sym = simbolo(filtros);
-  const filtrados = useMemo(() => aplicarFiltros(comprobantes, filtros, { excluirIncompletos: true }), [comprobantes, filtros]);
+  // Guatemala: el recibo de anticipos no es una venta (como en los libros); el impuesto va en la factura
+  const filtrados = useMemo(() => aplicarFiltros(comprobantes, filtros, { excluirIncompletos: true })
+    .filter(c => !(esGuatemalaActual() && c.tipoDte === 'RANT')), [comprobantes, filtros]);
   const ventas = useMemo(() => filtrados.filter(c => c.lado === 'venta'), [filtrados]);
   const compras = useMemo(() => filtrados.filter(c => c.lado === 'compra'), [filtrados]);
   const lista = esVentas ? ventas : compras;
@@ -73,7 +77,8 @@ export default function ImporteDeIva() {
         <Resumen items={[
           { label: 'Débito fiscal', valor: <Monto n={ivaVentas} sym={sym} /> },
           { label: 'Crédito fiscal pleno', valor: <Monto n={ivaPleno} sym={sym} /> },
-          { label: 'Crédito fiscal parcial', valor: <Monto n={ivaParcial} sym={sym} />, nota: 'Sujeto a proporcionalidad' },
+          // Guatemala no tiene crédito parcial (proporcionalidad de Costa Rica)
+          ...(esGuatemalaActual() ? [] : [{ label: 'Crédito fiscal parcial', valor: <Monto n={ivaParcial} sym={sym} />, nota: 'Sujeto a proporcionalidad' }]),
           { label: neto >= 0 ? 'Diferencia estimada a pagar' : 'Saldo a favor estimado', valor: <Monto n={Math.abs(neto)} sym={sym} />, destacado: true,
             nota: 'Débito menos crédito pleno' },
         ]} />
@@ -95,7 +100,7 @@ export default function ImporteDeIva() {
           {!esVentas && <Th>Crédito fiscal</Th>}
           <Th right>Gravado</Th><Th right>Exento</Th><Th right>Descuentos</Th>
           {tarifas.map(t => <Th key={t} right>{fmtTarifa(t)}</Th>)}
-          <Th right>Total IVA</Th><Th right>Otros cargos</Th><Th right>Total</Th>
+          <Th right>Total IVA</Th><Th right>{otrosLabel}</Th><Th right>Total</Th>
         </Encabezado>
         <tbody>
           {pagina.length === 0 ? <FilaVacia span={nCols} /> : pagina.map((g, i) => {
@@ -137,7 +142,7 @@ export default function ImporteDeIva() {
             { key: 'gravado', label: 'Gravado', align: 'right' as const }, { key: 'exento', label: 'Exento', align: 'right' as const },
             { key: 'descuentos', label: 'Descuentos', align: 'right' as const },
             ...tarifas.map(t => ({ key: `t${t}`, label: fmtTarifa(t), align: 'right' as const })),
-            { key: 'iva', label: 'Total IVA', align: 'right' as const }, { key: 'otros', label: 'Otros cargos', align: 'right' as const },
+            { key: 'iva', label: 'Total IVA', align: 'right' as const }, { key: 'otros', label: otrosLabel, align: 'right' as const },
             { key: 'total', label: 'Total', align: 'right' as const },
           ]}
           rows={[

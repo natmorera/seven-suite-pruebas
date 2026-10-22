@@ -105,7 +105,7 @@ export function CrudCatalogo<T extends Registro>(p: Props<T>) {
     (!campoActivo || inactivos || val(f, campoActivo) !== false) &&
     (!p.filtrar || p.filtrar(f)) &&
     (!q || buscarEn.some(k => norm(val(f, k)).includes(norm(q))))), [filas, q, inactivos, campoActivo, buscarEn, p]);
-  const { pagina, total, setPagina, visibles } = usePaginado(filtradas, porPagina);
+  const { pagina, total, setPagina, visibles, filas: nFilas, tam } = usePaginado(filtradas, porPagina);
 
   const articulo = femenino ? 'Nueva' : 'Nuevo';
 
@@ -261,7 +261,7 @@ export function CrudCatalogo<T extends Registro>(p: Props<T>) {
           </Fragment>
         ))}
       </Tabla>
-      {total > 1 && <Paginacion pagina={pagina} total={total} onChange={setPagina} />}
+      <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
 
       <Modal open={!!editando} onClose={cerrar} width={modalAncho}
         title={editando?.esNuevo ? `${articulo} ${entidad}` : `Editar ${entidad}`}

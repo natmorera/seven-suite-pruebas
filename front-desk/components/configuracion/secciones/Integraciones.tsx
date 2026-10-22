@@ -6,6 +6,7 @@ import { Button, Checkbox, Input, Select, StatusBadge, Switch } from '@/componen
 import { IcPlus } from '@/components/suite/icons';
 import { usePatch } from '../store';
 import Dega from './Dega';
+import { Opciones } from './ParametrosGenerales';
 import {
   Aviso, Campo, Celda, ConfigCard, Fila, FilaVacia, Grid, IcCheckLine, IcTrash, IcUpload, IconButton, InputAfijo, LinkButton, PillTabs, Popover, SubCard, Tabla, TextArea, uid,
 } from '../kit';
@@ -20,16 +21,18 @@ const al20 = (hex: string) => {
   return '#' + [0, 2, 4].map(i => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.2 + 255 * 0.8).toString(16).padStart(2, '0')).join('').toUpperCase();
 };
 
-// Integraciones: Seven Web Check In (3 pestañas) y Seven DEGA en una sola sección.
-const TABS_INT = ['Web Check In', 'Formulario Check-In', 'Errores de sincronización', 'DEGA'] as const;
+// Integraciones: servicios que se activan, Seven Web Check In (3 pestañas) y Seven DEGA en una sola sección.
+const TABS_INT = ['Servicios', 'Web Check In', 'Formulario Check-In', 'Errores de sincronización', 'DEGA'] as const;
 export default function Integraciones() {
-  const [tab, setTab] = useState<(typeof TABS_INT)[number]>('Web Check In');
+  const [tab, setTab] = useState<(typeof TABS_INT)[number]>('Servicios');
   const [w] = usePatch('webCheckin');
   const sinLeer = w.errores.filter(e => !e.leido).length;
   return (
     <>
       <TabsEnBarra items={TABS_INT.map(t => ({ id: t, count: t === 'Errores de sincronización' && sinLeer ? sinLeer : undefined }))} activo={tab} onChange={setTab} />
-      {tab === 'DEGA' ? <Dega /> : (
+      {tab === 'Servicios' && <Servicios />}
+      {tab === 'DEGA' && <Dega />}
+      {tab !== 'DEGA' && tab !== 'Servicios' && (
         <ConfigCard title={tab === 'Web Check In' ? 'Seven Web Check In · Parámetros generales' : `Seven Web Check In · ${tab}`}>
           {tab === 'Web Check In' && <Parametros />}
           {tab === 'Formulario Check-In' && <Formulario />}
@@ -37,6 +40,15 @@ export default function Integraciones() {
         </ConfigCard>
       )}
     </>
+  );
+}
+
+function Servicios() {
+  const [g, patch] = usePatch('general');
+  return (
+    <ConfigCard title="Servicios" subtitle="Integraciones que usa el hotel. Cada servicio activo se configura en su pestaña.">
+      <Opciones valores={g.integraciones} onChange={v => patch({ integraciones: v })} />
+    </ConfigCard>
   );
 }
 
@@ -89,13 +101,11 @@ function Parametros() {
 function Formulario() {
   const [sub, setSub] = useState<(typeof SUB)[number]>('Información');
   return (
-    <div style={{ border: `1px solid ${C.n500}`, borderRadius: radius.md, overflow: 'hidden' }}>
-      <div style={{ background: C.n200, padding: 8 }}><PillTabs tabs={SUB} active={sub} onChange={setSub} /></div>
-      <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {sub === 'Información' && <Informacion />}
-        {sub === 'Apariencia' && <Apariencia />}
-        {sub === 'Condiciones' && <Condiciones />}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <PillTabs tabs={SUB} active={sub} onChange={setSub} />
+      {sub === 'Información' && <Informacion />}
+      {sub === 'Apariencia' && <Apariencia />}
+      {sub === 'Condiciones' && <Condiciones />}
     </div>
   );
 }

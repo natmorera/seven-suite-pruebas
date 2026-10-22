@@ -22,7 +22,7 @@ export function Camareras() {
   const [error, setError] = useState('');
   const { pedir, dialogo } = useConfirmar();
   const filtradas = useMemo(() => l.filter(c => norm(c.nombre).includes(norm(q)) && (!estado || (estado === 'a') === c.activo)), [l, q, estado]);
-  const { pagina, total, setPagina, visibles } = usePaginado(filtradas);
+  const { pagina, total, setPagina, visibles, filas: nFilas, tam } = usePaginado(filtradas);
   const sel = useSeleccion();
   const csv = (xs = filtradas) => exportarCSV('camareras', ['Nombre', 'Estado'], xs.map(c => [c.nombre, c.activo ? 'Activo' : 'Inactivo']));
   const activar = (on: boolean) => { set(l.map(x => (sel.tiene(x.id) ? { ...x, activo: on } : x))); sel.limpiar(); };
@@ -67,7 +67,7 @@ export function Camareras() {
         )}
       </Tabla>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <Paginacion pagina={pagina} total={total} onChange={setPagina} />
+        <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
       </div>
       {dialogo}
     </div>
@@ -86,7 +86,7 @@ export function Rangos() {
     return { value: n, label: `Habitación ${n}`, detalle: de ? `(${de.codigo})` : undefined };
   });
   const filtradas = l.filter(r => (!q || norm(r.codigo + r.descripcion).includes(norm(q)) || r.habitaciones.includes(q.trim())) && (!estado || (estado === 'a') === r.activo));
-  const { pagina, total, setPagina, visibles } = usePaginado(filtradas);
+  const { pagina, total, setPagina, visibles, filas: nFilas, tam } = usePaginado(filtradas);
   const sel = useSeleccion();
   const csv = (xs = filtradas) => exportarCSV('rangos-habitacion', ['Código', 'Descripción', 'Habitaciones', 'Estado'], xs.map(r => [r.codigo, r.descripcion, r.habitaciones.join(' '), r.activo ? 'Activa' : 'Inactiva']));
   const activar = (on: boolean) => { set(l.map(x => (sel.tiene(x.id) ? { ...x, activo: on } : x))); sel.limpiar(); };
@@ -146,7 +146,7 @@ export function Rangos() {
       </Tabla>
       {error && <p role="alert" style={{ margin: 0, fontSize: 12, color: C.error }}>{error}</p>}
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <Paginacion pagina={pagina} total={total} onChange={setPagina} />
+        <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
       </div>
       <p style={{ fontSize: 11, color: C.n700, margin: 0 }}>Los números entre paréntesis en el selector indican el rango al que ya pertenece cada habitación. <LinkButton onClick={() => setQ('')}>Limpiar búsqueda</LinkButton></p>
       {dialogo}

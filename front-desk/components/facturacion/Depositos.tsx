@@ -11,7 +11,7 @@ import { IcPlus } from '@/components/suite/icons';
 import { Buscador, Campo, Celda, Fila, FilaVacia, IcEdit, IcTrash, Paginacion, Tabla, TextArea, norm, usePaginado } from '@/components/configuracion/kit';
 import { Alerta, RangoBoton, exportarCSV, usePrint } from '@/components/hotel/ui';
 import { useHotel, nuevoId } from '@/components/hotel/store';
-import { HOY, TARIFAS_NOMBRES, fmtF, sumarDias } from '@/components/hotel/datos';
+import { HOY, TARIFAS_NOMBRES, fmtF, noches, sumarDias } from '@/components/hotel/datos';
 import { MONEDAS, TIPOS_DEPOSITO, ahoraHotel, fmtFH, fmtMon, fmtN, nombreMoneda, r2, tasaCruce, type Deposito, type Mon } from '@/components/hotel/finanzas';
 import { montoEnLetras } from '@/components/hotel/montoEnLetras';
 import { turnoAbiertoDe } from '@/components/hotel/accionesFinanzas';
@@ -19,6 +19,9 @@ import { useEmpresa } from '@/components/layout/Shell';
 import { datosHotel } from './ReciboCanje';
 import { BotonIcono, Exportar, FiltroUno, HojaSistema, IcDoc, PaginaFact, TablaReporte, Tarjeta, Visor, tdR } from './comun';
 import { useFolios } from './folios/modelo';
+
+/** Vistas: todos, de reservas por llegar (adelantados), de huéspedes en casa, de folios externos y sin asignar. */
+const VISTAS = ['Todos', 'Adelantados', 'En casa', 'Folios externos', 'Sin asignar'] as const;
 
 export default function Depositos() {
   return <Suspense fallback={null}><Pantalla /></Suspense>;
@@ -33,6 +36,7 @@ function Pantalla() {
   const [moneda, setMoneda] = useState('');
   const [tarifa, setTarifa] = useState('');
   const [estado, setEstado] = useState('Activo');
+  const [vista, setVista] = useState<(typeof VISTAS)[number]>(() => (sp.get('vista') === 'adelantados' ? 'Adelantados' : 'Todos'));
   const [form, setForm] = useState<null | { dep?: Deposito }>(null);
   const [verId, setVerId] = useState<string | null>(null);
   const [anular, setAnular] = useState<Deposito | null>(null);
@@ -43,12 +47,18 @@ function Pantalla() {
   const [anularVarios, setAnularVarios] = useState(false);
   const s = useSeleccion();
   const { imprimir, portal } = usePrint();
+  const claseDe = (d: Deposito): (typeof VISTAS)[number] => {
+    const r = h.reservas.find(x => x.id === d.reservaId);
+    if (!r) return d.folioId ? 'Folios externos' : 'Sin asignar';
+    if (r.estado === 'In-House') return 'En casa';
+    return (r.estado === 'Confirmada' || r.estado === 'Solicitada' || r.estado === 'Lista de espera') && r.entrada >= HOY ? 'Adelantados' : 'Todos';
+  };
   const filas = useMemo(() => h.depositos.filter(d => {
     const r = h.reservas.find(x => x.id === d.reservaId);
-    return (!q || norm(`${d.numero} ${d.nombre} ${r?.numero ?? ''} ${d.referencia}`).includes(norm(q))) && (!periodo.d || d.recibido.slice(0, 10) >= periodo.d) && (!periodo.h || d.recibido.slice(0, 10) <= periodo.h)
+    return (vista === 'Todos' || claseDe(d) === vista) && (!q || norm(`${d.numero} ${d.nombre} ${r?.numero ?? ''} ${d.referencia}`).includes(norm(q))) && (!periodo.d || d.recibido.slice(0, 10) >= periodo.d) && (!periodo.h || d.recibido.slice(0, 10) <= periodo.h)
       && (!tipo || d.tipo === tipo) && (!moneda || d.moneda === moneda) && (!tarifa || d.tarifa === tarifa) && (!estado || d.estado === estado);
-  }).sort((a, b) => b.recibido.localeCompare(a.recibido)), [h.depositos, h.reservas, q, periodo, tipo, moneda, tarifa, estado]);
-  const pag = usePaginado(filas, 12);
+  }).sort((a, b) => b.recibido.localeCompare(a.recibido)), [h.depositos, h.reservas, q, periodo, tipo, moneda, tarifa, estado, vista]); // eslint-disable-line react-hooks/exhaustive-deps -- claseDe depende de h.reservas
+  const pag = usePaginado(filas, 50);
   const resNum = (d: Deposito) => h.reservas.find(x => x.id === d.reservaId)?.numero ?? (d.folioId ? h.foliosCta.find(f => f.id === d.folioId)?.numero : undefined);
   const elegidos = filas.filter(d => s.tiene(d.id));
   const activosSel = elegidos.filter(d => d.estado === 'Activo');
@@ -63,7 +73,7 @@ function Pantalla() {
       </TablaReporte>
     </HojaSistema>);
   return (
-    <PaginaFact titulo="Depósito en garantía" acciones={<><Exportar onCSV={() => csv()} onPDF={pdf} disabled={!filas.length} /><Button icon={<IcPlus size={12} />} onClick={() => setForm({})}>Nuevo depósito</Button></>}
+    <PaginaFact titulo="Depósitos en garantía" tabs={{ items: VISTAS, activo: vista, onChange: v => { setVista(v); s.limpiar(); } }} acciones={<><Exportar onCSV={() => csv()} onPDF={pdf} disabled={!filas.length} /><Button icon={<IcPlus size={12} />} onClick={() => setForm({})}>Nuevo depósito</Button></>}
       filtros={<>
         <div style={{ width: 220 }}><Buscador value={q} onChange={setQ} placeholder="Buscar por número, nombre..." /></div>
         <RangoBoton label="Período de recibido" desde={periodo.d} hasta={periodo.h} onChange={(d, x) => setPeriodo({ d, h: x })} />
@@ -79,22 +89,25 @@ function Pantalla() {
         <Button variant="secondary" disabled={!activosSel.length} style={{ color: C.error }} onClick={() => setAnularVarios(true)}>Anular ({activosSel.length})</Button>
       </> }}>
       <Tarjeta>
-        <Tabla headers={[<CheckTodos key="t" s={s} ids={pag.visibles.map(d => d.id)} />, 'Número', 'N° reserva', 'Nombre', 'Tarifa', 'Asignado', 'Moneda', 'Importe', 'Recibido', '']} alinearDerecha={[7]} minWidth={1000}>
-          {pag.visibles.length === 0 && <FilaVacia cols={10} texto="No hay depósitos para los filtros seleccionados." />}
+        <Tabla headers={[<CheckTodos key="t" s={s} ids={pag.visibles.map(d => d.id)} />, 'Número', 'N° reserva', 'Llegada', 'Nombre', 'Tarifa', 'Asignado', 'Importe', 'Recibido', '']} alinearDerecha={[7]} minWidth={1040}>
+          {pag.visibles.length === 0 && <FilaVacia cols={10} texto={vista === 'Adelantados' ? 'No hay depósitos de reservas por llegar con estos filtros.' : 'No hay depósitos para los filtros seleccionados.'} />}
           {pag.visibles.map(d => {
             const n = resNum(d);
+            const r = h.reservas.find(x => x.id === d.reservaId);
+            const faltan = r && r.entrada >= HOY ? noches(HOY, r.entrada) : null;
             return (
               <Fila key={d.id} style={{ opacity: d.estado === 'Anulado' ? 0.65 : 1 }}>
                 <Celda style={{ width: 28 }}><CheckFila s={s} id={d.id} label={`Seleccionar ${d.numero}`} /></Celda>
                 <Celda><button type="button" onClick={() => setVerId(d.id)} style={{ border: 'none', background: 'none', padding: 0, color: C.brand, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, fontSize: 12 }}>{d.numero}</button></Celda>
                 <Celda>{n ? <Link href={d.reservaId ? `/facturacion/folios?q=${n}` : `/facturacion/folios-externos?folio=${n}`} style={{ color: C.brand }}>{n}</Link> : '—'}</Celda>
-                <Celda>{d.nombre}</Celda><Celda>{d.tarifa || '—'}</Celda><Celda>{d.asignado || '—'}</Celda><Celda>{d.moneda}</Celda>
-                <Celda derecha style={{ textDecoration: d.estado === 'Anulado' ? 'line-through' : undefined }}>{fmtN(d.importe)}</Celda>
+                <Celda style={{ whiteSpace: 'nowrap' }}>{r ? <>{fmtF(r.entrada)}{faltan !== null && <span style={{ color: C.n700 }}> · {faltan === 0 ? 'hoy' : `en ${faltan} d`}</span>}</> : '—'}</Celda>
+                <Celda>{d.nombre}</Celda><Celda>{d.tarifa || '—'}</Celda><Celda>{d.asignado || '—'}</Celda>
+                <Celda derecha style={{ textDecoration: d.estado === 'Anulado' ? 'line-through' : undefined, whiteSpace: 'nowrap' }}>{fmtMon(d.importe, d.moneda)}</Celda>
                 <Celda style={{ whiteSpace: 'nowrap' }}>{fmtFH(d.recibido)}</Celda>
                 <Celda derecha style={{ whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                     {d.estado === 'Anulado' ? <><StatusBadge label="Anulado" color="red" /><Button variant="secondary" onClick={() => setAnulId(d.id)}>Anulación</Button></> : <>
-                      <Button variant="secondary" icon={<IcDoc size={14} />} style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setVerId(d.id)}>Detalle</Button>
+                      <Button variant="secondary" icon={<IcDoc size={14} />} onClick={() => setVerId(d.id)}>Detalle</Button>
                       <BotonIcono label={`Editar depósito ${d.numero}`} tono="peligro" onClick={() => setForm({ dep: d })}><span style={{ color: C.n700, display: 'flex' }}><IcEdit /></span></BotonIcono>
                       <BotonIcono label={`Anular depósito ${d.numero}`} tono="peligro" onClick={() => setAnular(d)}><IcTrash /></BotonIcono>
                     </>}
@@ -104,7 +117,7 @@ function Pantalla() {
             );
           })}
         </Tabla>
-        {filas.length > 12 && <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} />}
+        <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} filas={pag.filas} porPagina={pag.tam} />
       </Tarjeta>
       {form && <FormDeposito dep={form.dep} onClose={() => setForm(null)} onListo={(t, id) => { setForm(null); setToast(t); if (id) setVerId(id); }} />}
       {ver && <Visor titulo="Dep. en Garantía" sub={`#${ver.numero}`} onClose={() => setVerId(null)}><Comprobante d={ver} /></Visor>}
@@ -190,7 +203,7 @@ export function FormDeposito({ dep, reservaId, onClose, onListo }: { dep?: Depos
         <Campo label="Reserva / folio externo">
           <div style={{ display: 'flex', gap: 10 }}>
             <div style={{ flex: 1 }}><Select value={destino} onChange={elegir} options={[{ value: '', label: 'Seleccionar' }, ...destinos.map(x => ({ value: x.id, label: x.txt }))]} /></div>
-            <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => setBuscar(true)}>Buscar</Button>
+            <Button variant="secondary" onClick={() => setBuscar(true)}>Buscar</Button>
           </div>
         </Campo>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 14 }}>

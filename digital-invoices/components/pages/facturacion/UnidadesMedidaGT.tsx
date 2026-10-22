@@ -71,8 +71,8 @@ export default function UnidadesMedidaGT({ addSignal }: { addSignal?: number } =
                 <Td><Switch checked={u.activo} onChange={v => persistir(items.map(x => (x.valor === u.valor ? { ...x, activo: v } : x)))} /></Td>
                 <Td right>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                    {puede('fe.config.productos.editar') && <button title="Editar" onClick={() => abrir(u)} style={{ ...btn, color: C.n700 }}><IcEdit className="w-3.5 h-3.5" /></button>}
-                    {puede('fe.config.productos.eliminar') && <button title="Eliminar" onClick={() => persistir(items.filter(x => x.valor !== u.valor))} style={{ ...btn, color: C.error }}><IcTrash className="w-4 h-4" /></button>}
+                    {puede('fe.config.unidades.editar') && <button title="Editar" onClick={() => abrir(u)} style={{ ...btn, color: C.n700 }}><IcEdit className="w-3.5 h-3.5" /></button>}
+                    {puede('fe.config.unidades.eliminar') && <button title="Eliminar" onClick={() => persistir(items.filter(x => x.valor !== u.valor))} style={{ ...btn, color: C.error }}><IcTrash className="w-4 h-4" /></button>}
                   </div>
                 </Td>
               </DataRow>

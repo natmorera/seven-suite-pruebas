@@ -26,7 +26,7 @@ export default function TipoCambio() {
   const divisas = monedas.filter(m => !m.referencia);
   const desde = periodo === '7' ? diasAntes(HOY, 6) : periodo === 'mes' ? HOY.slice(0, 8) + '01' : '';
   const filtradas = [...l].filter(t => (!moneda || t.moneda === moneda) && (!desde || t.fecha >= desde)).sort((a, b) => b.fecha.localeCompare(a.fecha) || a.moneda.localeCompare(b.moneda));
-  const { pagina, setPagina, total, visibles } = usePaginado(filtradas, 12);
+  const { pagina, setPagina, total, visibles, filas: nFilas, tam } = usePaginado(filtradas, 12);
 
   const guardar = (r: Registro) => {
     // Un solo registro por fecha y divisa: uno nuevo reemplaza al existente de ese día.
@@ -70,7 +70,7 @@ export default function TipoCambio() {
           </Fila>
         ))}
       </Tabla>
-      {total > 1 && <Paginacion pagina={pagina} total={total} onChange={setPagina} />}
+      <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
       {modal && <ModalRegistro inicial={modal === 'nuevo' ? { id: uid(), fecha: HOY, moneda: divisas[0]?.codigo ?? '', tasa: 0, fuente: 'Manual' } : modal}
         correccion={modal !== 'nuevo'} divisas={divisas.map(d => ({ value: d.codigo, label: `${d.codigo} - ${d.descripcion}` }))} onClose={() => setModal(null)} onGuardar={guardar} />}
     </ConfigCard>

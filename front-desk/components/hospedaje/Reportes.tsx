@@ -13,6 +13,7 @@ import { HOY, NACIONALIDADES, REGIMENES, TIPOS, fmtF, type Reserva } from '@/com
 import { cuentaOcupacion } from '@/components/hotel/reservas';
 import { money, usePrint } from '@/components/hotel/ui';
 import { PantallaReporte } from '@/components/reportes/Reporte';
+import { IndiceReportes } from '@/components/reportes/Indice';
 import { cols, tabla, type FilaRep } from '@/components/reportes/modelo';
 import { useFiltros, type DefFiltro } from '@/components/reportes/filtros';
 
@@ -24,14 +25,16 @@ const en = (v: string, [d, h]: [string, string]) => (!d || v >= d) && (!h || v <
 const periodoDe = ([d, h]: [string, string]) => (d || h ? `${d ? fmtF(d) : '…'} al ${h ? fmtF(h) : '…'}` : undefined);
 
 // ── Pantalla única de reportes de Hospedaje ─────────────────────────────────
-// Igual que en el resto de la plataforma: el menú «Reportes» abre directamente
-// el reporte y se cambia de reporte con el selector del título (?r=).
+// Como en toda la plataforma: el menú «Reportes» abre el índice de reportes del módulo; cada reporte se abre
+// con ?r= y desde ahí se cambia con el selector del título o se vuelve al índice.
 const REPS = [
-  { id: 'sin-perfiles', label: 'Registros sin perfiles' },
-  { id: 'ocupacion', label: 'Listado de ocupación' },
-  { id: 'saldos', label: 'Saldos en el pick' },
-  { id: 'etiquetas', label: 'Etiquetas de facturas de clientes' },
+  { id: 'sin-perfiles', label: 'Registros sin perfiles', descripcion: 'Estancias registradas sin perfil de huésped asociado, para completarlas.' },
+  { id: 'ocupacion', label: 'Listado de ocupación', descripcion: 'Habitaciones ocupadas en una fecha hotelera, por habitación, huésped o empresa.' },
+  { id: 'nacionalidades', label: 'Ocupación por nacionalidades', descripcion: 'Habitaciones y huéspedes en casa agrupados por nacionalidad.' },
+  { id: 'saldos', label: 'Saldos en el pick', descripcion: 'Cuentas con saldo pendiente de huéspedes en casa y folios externos.' },
+  { id: 'etiquetas', label: 'Etiquetas de facturas de clientes', descripcion: 'Etiquetas de saldo para entregar a los huéspedes con factura pendiente.' },
 ] as const;
+const RUTA = '/hospedaje/reportes';
 type Rep = (typeof REPS)[number]['id'];
 export function ReportesHospedaje() {
   return <Suspense fallback={null}><ReportesHospedajePantalla /></Suspense>;
@@ -39,15 +42,21 @@ export function ReportesHospedaje() {
 function ReportesHospedajePantalla() {
   const sp = useSearchParams();
   const router = useRouter();
-  const rep = (REPS.some(x => x.id === sp.get('r')) ? sp.get('r') : 'sin-perfiles') as Rep;
-  const onCambiar = (id: string) => router.replace(`/hospedaje/reportes?r=${id}`);
-  const sel = { lista: REPS, actual: rep, onCambiar };
+  const r = sp.get('r');
+  if (!REPS.some(x => x.id === r)) return <IndiceReportes titulo="Reportes de hospedaje" grupos={[
+    { titulo: 'Ocupación', items: REPS.filter(x => ['ocupacion', 'nacionalidades', 'sin-perfiles'].includes(x.id)).map(x => ({ label: x.label, descripcion: x.descripcion, href: `${RUTA}?r=${x.id}` })) },
+    { titulo: 'Saldos y facturación', items: REPS.filter(x => ['saldos', 'etiquetas'].includes(x.id)).map(x => ({ label: x.label, descripcion: x.descripcion, href: `${RUTA}?r=${x.id}` })) },
+  ]} />;
+  const rep = r as Rep;
+  const onCambiar = (id: string) => router.replace(`${RUTA}?r=${id}`);
+  const sel = { lista: REPS, actual: rep, onCambiar, volver: RUTA };
   if (rep === 'ocupacion') return <ListadoOcupacion sel={sel} />;
   if (rep === 'saldos') return <Saldos sel={sel} />;
   if (rep === 'etiquetas') return <Etiquetas sel={sel} />;
+  if (rep === 'nacionalidades') return <Nacionalidades sel={sel} />;
   return <RegistrosSinPerfiles sel={sel} />;
 }
-type Sel = { lista: typeof REPS; actual: Rep; onCambiar: (id: string) => void };
+type Sel = { lista: typeof REPS; actual: Rep; onCambiar: (id: string) => void; volver: string };
 
 // ── Registros sin perfiles ──────────────────────────────────────────────────
 const DEFS_RSP: DefFiltro[] = [
@@ -243,4 +252,34 @@ function Etiquetas({ sel }: { sel: Sel }) {
       vacio="Ningún folio supera el importe mínimo." />
     {portal}
   </>;
+}
+
+// ── Ocupación por nacionalidades ────────────────────────────────────────────
+const DEFS_NAC: DefFiltro[] = [
+  { k: 'q', tipo: 'busqueda', placeholder: 'Buscar nacionalidad' },
+  { k: 'fecha', tipo: 'fecha', label: 'Fecha hotelera', def: HOY },
+  { k: 'tipos', tipo: 'multi', label: 'Tipo de habitación', opciones: TIPOS.map(t => ({ value: t.id, label: t.nombre })) },
+];
+function Nacionalidades({ sel }: { sel: Sel }) {
+  const h = useHotel();
+  const f = useFiltros(DEFS_NAC, 'nacionalidades');
+  const datos = useMemo(() => {
+    const dia = f.s('fecha') || HOY;
+    const tipos = f.m('tipos');
+    const rs = enCasa(h.reservas, dia).filter(r => !tipos.length || tipos.includes(r.tipo));
+    const tot = rs.reduce((s, r) => s + r.adultos + r.ninos, 0) || 1;
+    const q = norm(f.s('q'));
+    const filas = [...new Set(rs.map(r => r.nacionalidad))]
+      .map(n => { const xs = rs.filter(r => r.nacionalidad === n); const p = xs.reduce((s, r) => s + r.adultos + r.ninos, 0); return { n, nombre: NACIONALIDADES[n] ?? n, hab: xs.length, ad: xs.reduce((s, r) => s + r.adultos, 0), ni: xs.reduce((s, r) => s + r.ninos, 0), p }; })
+      .filter(x => !q || norm(`${x.n} ${x.nombre}`).includes(q))
+      .sort((a, b) => b.p - a.p || a.nombre.localeCompare(b.nombre));
+    const sum = (k: 'hab' | 'ad' | 'ni' | 'p') => filas.reduce((s, x) => s + x[k], 0);
+    return { dia, n: filas.length, hab: sum('hab'), p: sum('p'),
+      d: tabla(cols(['Nacionalidad', 'Código', 'Habitaciones', 'Adultos', 'Niños', 'Huéspedes', '%'], [2, 3, 4, 5, 6]),
+        filas.map(x => ({ c: [x.nombre, x.n, x.hab, x.ad, x.ni, x.p, `${fmtNum((x.p / tot) * 100, 1)} %`] })),
+        ['Total', `${filas.length} nacionalidades`, sum('hab'), sum('ad'), sum('ni'), sum('p'), filas.length ? '100 %' : '']) };
+  }, [h.reservas, f]);
+  return <PantallaReporte titulo="Ocupación por nacionalidades" reportes={sel} archivo="ocupacion-nacionalidades" filtros={f} periodo={fmtF(datos.dia)} datos={datos.d}
+    contadores={[{ valor: datos.n, label: 'Nacionalidades' }, { valor: datos.hab, label: 'Habitaciones ocupadas' }, { valor: datos.p, label: 'Huéspedes' }]}
+    vacio="No hay huéspedes en casa en esa fecha." />;
 }

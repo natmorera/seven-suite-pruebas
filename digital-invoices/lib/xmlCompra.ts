@@ -77,7 +77,8 @@ function directo(el: Element | null | undefined, nombre: string): Element | null
 function txt(el: Element | null | undefined): string { return (el?.textContent ?? '').trim(); }
 function num(el: Element | null | undefined): number { const n = Number(txt(el)); return isFinite(n) ? n : 0; }
 
-export function soloDigitos(s: string) { return (s ?? '').replace(/\D/g, ''); }
+// Identificación sin guiones ni espacios. El NIT de Guatemala puede terminar en K (dígito verificador).
+export function soloDigitos(s: string) { return (s ?? '').toUpperCase().replace(/[^\dK]/g, ''); }
 
 // En el navegador usa DOMParser; en el servidor se le pasa el de @xmldom.
 export function parsearCompraXml(texto: string, parser?: { parseFromString(t: string, tipo: string): unknown }): ResultadoXml {

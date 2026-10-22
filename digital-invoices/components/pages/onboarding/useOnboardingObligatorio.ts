@@ -6,6 +6,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export const RUTA_ONBOARDING = '/onboarding-contable';
+// Pantallas que se pueden abrir sin terminar el onboarding: la API Key, para
+// conectar el módulo con Management antes de configurarlo.
+export const RUTAS_SIN_ONBOARDING = new Set(['/api-key']);
 
 export function useOnboardingObligatorio(activo: boolean, pathname: string): 'ok' | 'pendiente' {
   const router = useRouter();
@@ -21,9 +24,10 @@ export function useOnboardingObligatorio(activo: boolean, pathname: string): 'ok
     return () => { vivo = false; };
   }, [activo, pathname]);
   const completo = respuesta?.ruta === pathname ? respuesta.completo : null;
-  const debeIr = activo && completo === false && pathname !== RUTA_ONBOARDING;
+  const libre = pathname === RUTA_ONBOARDING || RUTAS_SIN_ONBOARDING.has(pathname);
+  const debeIr = activo && completo === false && !libre;
   useEffect(() => { if (debeIr) router.replace(RUTA_ONBOARDING); }, [debeIr, router]);
-  if (!activo || pathname === RUTA_ONBOARDING) return 'ok';
+  if (!activo || libre) return 'ok';
   return completo === null || debeIr ? 'pendiente' : 'ok';
 }
 

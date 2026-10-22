@@ -1,9 +1,9 @@
 'use client';
-// Usuarios y roles de Front Desk. Vive en el layout de /configuracion (como el
-// resto de la configuración), pero guarda al instante con sus propios botones,
+// Usuarios y roles de Front Desk. Vive en el shell de la aplicación (como el
+// resto de la configuración) y lo usa también Mi cuenta. Guarda al instante con sus propios botones,
 // igual que «Usuarios y permisos» del resto de la suite.
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { ROLES_INIT, USUARIOS_INIT, type Rol, type UsuarioFD } from './datosPermisos';
+import { ROLES_INIT, USUARIOS_INIT, type Rol, type UsuarioFD } from './arbol';
 
 interface Ctx {
   usuarios: UsuarioFD[]; setUsuarios: (f: (u: UsuarioFD[]) => UsuarioFD[]) => void;

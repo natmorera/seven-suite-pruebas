@@ -18,10 +18,10 @@ export default function Tareas() {
   const params = useSearchParams();
   const [q, setQ] = useState('');
   const [tipos, setTipos] = useState<string[]>([]);
-  const [tab, setTab] = useState<TabT>(() => (ESTADOS_TAREA as readonly string[]).includes(params.get('estado') ?? '') ? params.get('estado') as TabT : 'Pendiente');
+  const [tab, setTab] = useState<TabT>(() => (ESTADOS_TAREA as readonly string[]).includes(params.get('estado') ?? '') ? params.get('estado') as TabT : 'Todas');
   const [creadores, setCreadores] = useState<string[]>([]);
   const [resp, setResp] = useState<string[]>([]);
-  const [modal, setModal] = useState<{ tipo: 'nueva' } | { tipo: 'editar'; id: string } | { tipo: 'bloqueo'; id: string; ver: boolean } | { tipo: 'anular'; ids: string[] } | null>(null);
+  const [modal, setModal] = useState<{ tipo: 'nueva' } | { tipo: 'editar'; id: string; bloqueo?: boolean } | { tipo: 'bloqueo'; id: string; ver: boolean } | { tipo: 'anular'; ids: string[] } | null>(null);
   const [detalle, setDetalle] = useState<string | null>(null);
   const [borrar, setBorrar] = useState<Tarea | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -35,7 +35,8 @@ export default function Tareas() {
   const cuenta = (e: TabT) => (e === 'Todas' ? filtradas.length : filtradas.filter(t => t.estado === e).length);
   const lista = useMemo(() => filtradas.filter(t => tab === 'Todas' || t.estado === tab)
     .sort((a, b) => (tab === 'Completado' || tab === 'Anulado' ? b.vencimiento.localeCompare(a.vencimiento) : a.vencimiento.localeCompare(b.vencimiento))), [filtradas, tab]);
-  const { pagina, total, setPagina, visibles } = usePaginado(lista, 12);
+  const { pagina, total, setPagina, visibles, filas: nFilas, tam } = usePaginado(lista, 12);
+  const [confirmar, setConfirmar] = useState<{ id: string; p: Partial<Tarea>; log: string; titulo: string; texto: string } | null>(null);
   const actualizar = (id: string, p: Partial<Tarea>, log?: string) => h.setTareas(ts => ts.map(t => (t.id === id ? (log ? conLog({ ...t, ...p }, log) : { ...t, ...p }) : t)));
   const hayFiltros = q || tipos.length || creadores.length || resp.length;
   const th = { padding: '9px 8px', textAlign: 'left' as const, fontSize: 12, fontWeight: 400, color: C.n700, whiteSpace: 'nowrap' as const };
@@ -82,14 +83,14 @@ export default function Tareas() {
                     <tr key={t.id} className="suite-fila" style={{ background: s_.tiene(t.id) || detalle === t.id ? C.brandBg : undefined, color: cerrada ? C.n700 : undefined }}>
                       <td style={td}><CheckFila s={s_} id={t.id} label={`Seleccionar ${t.tarea}`} /></td>
                       <td style={{ ...td, width: 160 }}>{cerrada ? <span style={{ color: C.n700 }}>{t.tipo}</span>
-                        : <select value={t.tipo} onChange={e => actualizar(t.id, { tipo: e.target.value as TipoTarea }, `Tipo: ${e.target.value}`)} aria-label="Tipo de tarea" style={selInline}>{TIPOS_TAREA.map(x => <option key={x}>{x}</option>)}</select>}</td>
+                        : <select value={t.tipo} onChange={e => setConfirmar({ id: t.id, p: { tipo: e.target.value as TipoTarea }, log: `Tipo: ${t.tipo} → ${e.target.value}`, titulo: '¿Cambiar el tipo de la tarea?', texto: `«${t.tarea}» pasa de ${t.tipo} a ${e.target.value}.` })} aria-label="Tipo de tarea" style={selInline}>{TIPOS_TAREA.map(x => <option key={x}>{x}</option>)}</select>}</td>
                       <td style={td}><button type="button" onClick={() => setDetalle(t.id)} title="Ver detalle"
                         style={{ display: 'block', maxWidth: 230, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', border: 'none', background: 'none', padding: 0, fontSize: 12, fontFamily: FONT, color: cerrada ? C.n700 : C.brand, cursor: 'pointer', textAlign: 'left', textDecoration: t.estado === 'Anulado' ? 'line-through' : 'none' }}>{t.tarea}</button></td>
                       <td style={td}>{fmtDate(t.inicio)}</td>
                       <td style={{ ...td, color: t.estado === 'Atrasado' ? C.error : undefined }}>{fmtDate(t.vencimiento)}</td>
                       {tab === 'Todas' && <td style={{ ...td, color: COLOR_ESTADO[t.estado] }}>● {t.estado}</td>}
                       <td style={{ ...td, width: 170, maxWidth: 170 }}>{cerrada ? t.responsable
-                        : <select value={t.responsable} onChange={e => actualizar(t.id, { responsable: e.target.value }, `Responsable: ${e.target.value}`)} aria-label="Responsable" style={{ ...selInline, width: 160, textOverflow: 'ellipsis' }}>{USUARIOS.map(x => <option key={x}>{x}</option>)}</select>}</td>
+                        : <select value={t.responsable} onChange={e => setConfirmar({ id: t.id, p: { responsable: e.target.value }, log: `Responsable: ${t.responsable} → ${e.target.value}`, titulo: '¿Cambiar el responsable?', texto: `«${t.tarea}» pasa de ${t.responsable} a ${e.target.value}.` })} aria-label="Responsable" style={{ ...selInline, width: 160, textOverflow: 'ellipsis' }}>{USUARIOS.map(x => <option key={x}>{x}</option>)}</select>}</td>
                       <td style={td}>{t.creador}</td>
                       <td style={td}>{t.bloqueo
                         ? <button type="button" onClick={() => setModal({ tipo: 'bloqueo', id: t.id, ver: true })} title="Ver bloqueo" style={{ border: 'none', background: cerrada ? C.n200 : '#FDECEA', color: cerrada ? C.n700 : '#C62828', borderRadius: 999, padding: '3px 10px', fontSize: 11.5, fontFamily: FONT, cursor: 'pointer', whiteSpace: 'nowrap' }}>Hab. {t.bloqueo.habitaciones.join(', ')}</button>
@@ -107,17 +108,19 @@ export default function Tareas() {
               </tbody>
             </table>
           </div>
-          {total > 1 && <Paginacion pagina={pagina} total={total} onChange={setPagina} />}
+          <Paginacion pagina={pagina} total={total} onChange={setPagina} filas={nFilas} porPagina={tam} />
         </section>
 
       {/* el detalle se oculta mientras hay un modal encima y vuelve al cerrarlo */}
       {detalle && !modal && !borrar && h.tareas.some(t => t.id === detalle) && <DetalleTarea id={detalle} onClose={() => setDetalle(null)}
-        onEditar={() => setModal({ tipo: 'editar', id: detalle })} onBloqueo={ver => setModal({ tipo: 'bloqueo', id: detalle, ver })}
+        onEditar={() => setModal({ tipo: 'editar', id: detalle })} onBloqueo={() => setModal({ tipo: 'editar', id: detalle, bloqueo: true })}
         onAnular={() => setModal({ tipo: 'anular', ids: [detalle] })} onEliminar={() => setBorrar(h.tareas.find(t => t.id === detalle)!)} onToast={setToast} />}
       {modal?.tipo === 'nueva' && <ModalTarea onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
-      {modal?.tipo === 'editar' && <ModalTarea id={modal.id} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
+      {modal?.tipo === 'editar' && <ModalTarea id={modal.id} conBloqueo={modal.bloqueo} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
       {modal?.tipo === 'bloqueo' && <ModalBloqueo tareaId={modal.id} soloLectura={modal.ver} onClose={() => setModal(null)} onListo={t => { setModal(null); setToast(t); }} />}
       {modal?.tipo === 'anular' && <AnularTareas ids={modal.ids} onClose={() => setModal(null)} onListo={t => { setModal(null); s_.limpiar(); setToast(t); }} />}
+      <Alerta open={!!confirmar} titulo={confirmar?.titulo ?? ''} confirmar="Sí, cambiar" onClose={() => setConfirmar(null)}
+        onConfirm={() => { if (confirmar) { actualizar(confirmar.id, confirmar.p, confirmar.log); setToast('Tarea actualizada'); } setConfirmar(null); }}>{confirmar?.texto}</Alerta>
       <Alerta open={!!borrar} titulo={`¿Eliminar la tarea «${borrar?.tarea}»?`} tono="danger" confirmar="Sí, eliminar" onClose={() => setBorrar(null)}
         onConfirm={() => { h.setTareas(ts => ts.filter(t => t.id !== borrar!.id)); setToast('Tarea eliminada'); if (detalle === borrar!.id) setDetalle(null); setBorrar(null); }}>
         {borrar?.bloqueo && tareaAbierta(borrar) ? <>Esta tarea tiene un bloqueo activo: se liberarán las habitaciones <b>{borrar.bloqueo.habitaciones.join(', ')}</b>.</> : 'Esta acción no se puede deshacer.'}

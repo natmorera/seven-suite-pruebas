@@ -9,6 +9,7 @@ import { MERCADOS, cuentaOcupacion, mercadoDe } from '@/components/hotel/reserva
 import { TC } from '@/components/hotel/finanzas';
 import { bloqueadasEn } from '@/components/reservaciones/inventario';
 import { PantallaReporte, type Contador } from '@/components/reportes/Reporte';
+import { IndiceReportes } from '@/components/reportes/Indice';
 import { cols, type DatosReporte, type FilaRep } from '@/components/reportes/modelo';
 import { useFiltros, type DefFiltro } from '@/components/reportes/filtros';
 import { fmt2, type Celda } from './comun';
@@ -32,7 +33,33 @@ const inicioMes = HOY.slice(0, 8) + '01';
 const finMes = sumarDias(`${HOY.slice(0, 5)}${String(Number(HOY.slice(5, 7)) % 12 + 1).padStart(2, '0')}-01`, -1);
 
 export default function ReportesPronostico() {
-  return <Suspense fallback={null}><Pantalla /></Suspense>;
+  return <Suspense fallback={null}><Entrada /></Suspense>;
+}
+
+const DESC: Record<Rep, string> = {
+  resumen: 'Ocupación, habitaciones y huéspedes por día del período.',
+  acumulada: 'Ocupación acumulada del mes y comparación con el año anterior.',
+  regimen: 'Pronóstico de huéspedes por régimen de alojamiento.',
+  segmentos: 'Habitaciones e ingresos por segmento de mercado.',
+  realizadas: 'Reservas creadas en el período, por empresa y mercado.',
+  plazos: 'Depósitos en garantía pendientes y sus plazos de vencimiento.',
+  diario: 'Informe diario de la gerencia: ocupación, ADR, RevPAR e ingresos.',
+  ingresos: 'Ingresos proyectados por día y por mes.',
+};
+const RUTA = '/pronostico-estadisticas/reportes';
+/** Sin ?r= se muestra el índice de reportes del módulo. */
+function Entrada() {
+  const r = useSearchParams().get('r');
+  if (REPORTES_PRONOSTICO.some(x => x.id === r)) return <Pantalla />;
+  const item = (id: Rep) => ({ label: REPORTES_PRONOSTICO.find(x => x.id === id)!.label, descripcion: DESC[id], href: `${RUTA}?r=${id}` });
+  return <IndiceReportes titulo="Reportes de pronóstico y estadísticas" grupos={[
+    { titulo: 'Análisis por tipo de habitación', items: [
+      { label: 'Pronóstico por tipo de habitación', descripcion: 'Disponibilidad y ocupación proyectada de cada tipo, día a día.', href: '/pronostico-estadisticas/pronostico-por-tipo-de-hab' },
+      { label: 'Detalle del tipo de habitación', descripcion: 'Reservas, bloqueos y disponibilidad de un tipo en un día.', href: '/pronostico-estadisticas/detalle-del-tipo-de-habitacion' },
+    ] },
+    { titulo: 'Ocupación', items: (['diario', 'resumen', 'acumulada', 'regimen'] as Rep[]).map(item) },
+    { titulo: 'Ventas e ingresos', items: (['segmentos', 'realizadas', 'ingresos', 'plazos'] as Rep[]).map(item) },
+  ]} />;
 }
 
 interface Def { headers: string[]; filas: Celda[][]; derecha?: number[]; grupos?: { label: string; span: number }[]; total?: Celda[]; nota?: ReactNode; cabecera?: ReactNode }
@@ -179,7 +206,7 @@ function Pantalla() {
   const periodo = rep === 'resumen' ? fmtF(f.fecha) : rep === 'realizadas' || rep === 'diario' ? f.anio : `${fmtF(f.desde)} al ${fmtF(f.hasta)}`;
   return (
     <PantallaReporte titulo={titulo} archivo={`pronostico-${rep}`} filtros={fl} periodo={periodo} datos={datos} contadores={contadores}
-      reportes={{ lista: REPORTES_PRONOSTICO, actual: rep, onCambiar: id => router.replace(`/pronostico-estadisticas/reportes?r=${id}`) }}
+      reportes={{ lista: REPORTES_PRONOSTICO, actual: rep, onCambiar: id => router.replace(`${RUTA}?r=${id}`), volver: RUTA }}
       antesDeTabla={def.cabecera && rep !== 'resumen' ? <span style={{ fontSize: 12, color: '#757575' }}>{def.cabecera}</span> : undefined}
       vacio="No hay datos para el período seleccionado." />
   );

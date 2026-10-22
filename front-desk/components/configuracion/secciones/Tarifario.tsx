@@ -1,30 +1,46 @@
 'use client';
-// Configuración › Tarifas / Contratos › Tarifario: grilla por tarifa, tipo y día, editor de tarifa y acceso a la actualización colectiva.
+// Configuración › Tarifas / Contratos › Tarifario: grilla de 15 días por tipo de habitación y tarifa, con filtro
+// (mercado, tipos, tarifas), vista por fila (⚡), detalle de la tarifa, editor y actualización masiva.
 import { BarraSeccion } from '@/components/layout/Pantalla';
-import { BotonExportar } from '@/components/hotel/ui';
+import { BotonExportar, MenuBoton } from '@/components/hotel/ui';
 import { FiltroUno } from '@/components/facturacion/comun';
-import { Fragment, useMemo, useState } from 'react';
-import { C, FONT, fmtNum } from '@/components/suite/tokens';
+import { Fragment, useMemo, useState, type CSSProperties } from 'react';
+import { C, FONT, PAGE_PAD, fmtNum, radius } from '@/components/suite/tokens';
 import { Button, Checkbox, Input, Modal, Select, Switch, Toast } from '@/components/suite/ui';
+import { IcChevronDown } from '@/components/suite/icons';
 import { useDato } from '../store';
-import { Campo, Grid, IcBolt, IcInfo, IconButton, PillTabs, Popover, SubCard, uid, useConfirmar } from '../kit';
+import { Campo, Grid, IcBolt, IcEdit, IcFiltro, IcInfo, IcLink, IconButton, ModalBase, PillTabs, Popover, SubCard, uid } from '../kit';
+import { useConfirmar } from '../kit';
 import { DIAS, MONEDAS_OPC, TERMINOS, VISTAS_TARIFARIO, type Tarifa } from '../datos';
 import { BOOL, adicionalesDe, clave, dow, fecha, iso, sumar, valor, vistaPax, type Vista } from '../tarifario';
 import { ActualizacionColectiva } from './ActualizacionTarifas';
+import { ListaChecks } from './ActualizacionPiezas';
+import { DetalleTarifa } from './DetalleTarifa';
 import { AccionesMasivas, CheckFila, CheckTodos, useSeleccion } from '@/components/layout/Pantalla';
 
 // ── Tarifario ───────────────────────────────────────────────────────────────
-const DIAS_VISTA = 10;
+const DIAS_VISTA = 15;
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+/** Número corto para la grilla: sin decimales si es entero. */
+export const corto = (v: number) => (Number.isInteger(v) ? v.toLocaleString('en-US') : fmtNum(v));
+
+interface Filtro { mercado: string; tipos: string[]; tarifas: string[] }
+const SIN_FILTRO: Filtro = { mercado: '', tipos: [], tarifas: [] };
 
 export function Tarifario() {
   const [tarifas, setTarifas] = useDato('tarifas');
   const [tipos] = useDato('tiposHab');
+  const [contratos] = useDato('contratos');
+  const [mercados] = useDato('mercados');
   const [mapa, setMapa] = useDato('tarifario');
-  const [inicio, setInicio] = useState(() => iso(new Date()));
+  const hoy = iso(new Date());
+  const [inicio, setInicio] = useState(hoy);
   const [moneda, setMoneda] = useState(MONEDAS_OPC[0]);
   const [inactivos, setInactivos] = useState(false);
+  const [vistaGlobal, setVistaGlobal] = useState<Vista>('Tarifas');
   const [vistas, setVistas] = useState<Record<string, Vista>>({});
+  const [filtro, setFiltro] = useState<Filtro>(SIN_FILTRO);
+  const [verFiltro, setVerFiltro] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [borrador, setBorrador] = useState('');
   const [masiva, setMasiva] = useState(false);
@@ -32,9 +48,17 @@ export function Tarifario() {
   const s_ = useSeleccion();
   const [editorTarifa, setEditorTarifa] = useState<{ id: string | null } | null>(null);
   const [terminos, setTerminos] = useState(false);
+  const [detalle, setDetalle] = useState<string | null>(null);
+  const [seleccionMasiva, setSeleccionMasiva] = useState<string[] | null>(null);
 
   const dias = useMemo(() => Array.from({ length: DIAS_VISTA }, (_, i) => sumar(inicio, i)), [inicio]);
-  const visibles = tarifas.filter(t => t.moneda === moneda && (inactivos || t.activo));
+  /** Tarifas usadas por contratos del mercado elegido. */
+  const delMercado = (m: string) => new Set(contratos.filter(c => c.mercado === m).map(c => c.tarifa));
+  const enMercado = filtro.mercado ? delMercado(filtro.mercado) : null;
+  const visibles = tarifas.filter(t => t.moneda === moneda && (inactivos || t.activo)
+    && (!enMercado || enMercado.has(t.nombre)) && (!filtro.tarifas.length || filtro.tarifas.includes(t.id)));
+  const tiposVisibles = tipos.filter(t => !filtro.tipos.length || filtro.tipos.includes(t.id));
+  const nFiltros = (filtro.mercado ? 1 : 0) + (filtro.tipos.length ? 1 : 0) + (filtro.tarifas.length ? 1 : 0);
 
   const guardarCelda = (k: string, v: number | boolean | null) => {
     setMapa(m => { const n = { ...m }; if (v === null) delete n[k]; else n[k] = v; return n; });
@@ -44,133 +68,250 @@ export function Tarifario() {
     if (n === null || !isNaN(n)) guardarCelda(k, n === null ? null : n);
     setEditando(null);
   };
+  const mover = (n: number) => setInicio(sumar(inicio, n));
+  const nav = (txt: string, n: number, title: string) => <Button variant="secondary" onClick={() => mover(n)} title={title} style={{ minWidth: 32, padding: '0 8px' }}>{txt}</Button>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <BarraSeccion
         filtros={<>
-          <FiltroUno label="Moneda" value={moneda} onChange={v => setMoneda(v || MONEDAS_OPC[0])} todos={null} opciones={MONEDAS_OPC.map(m => ({ value: m, label: m }))} />
+          <Button variant="secondary" icon={<IcFiltro />} onClick={() => setVerFiltro(true)}
+            style={nFiltros ? { color: C.brand, borderColor: C.brand, background: C.brandBg } : undefined}>
+            Filtrar{nFiltros ? ` · ${nFiltros}` : ''}
+          </Button>
+          <FiltroUno label="Moneda" value={moneda} onChange={v => setMoneda(v || MONEDAS_OPC[0])} todos={null} opciones={MONEDAS_OPC.map(m => ({ value: m, label: m.split(' - ')[0] }))} />
+          <FiltroUno label="Vista" value={vistaGlobal} onChange={v => { setVistaGlobal((v || 'Tarifas') as Vista); setVistas({}); }} todos={null} ancho={200}
+            opciones={VISTAS_TARIFARIO.map(v => ({ value: v, label: v }))} />
           <Checkbox checked={inactivos} onChange={setInactivos} label="Mostrar inactivos" />
-          <span aria-hidden style={{ width: 1, height: 22, background: C.n500, margin: '0 4px' }} />
-        <Button variant="secondary" onClick={() => setInicio(sumar(inicio, -DIAS_VISTA))} title="Días anteriores">‹</Button>
-        <div style={{ width: 160 }}><Input type="date" value={inicio} onChange={v => v && setInicio(v)} aria-label="Fecha de inicio" /></div>
-        <Button variant="secondary" onClick={() => setInicio(sumar(inicio, DIAS_VISTA))} title="Días siguientes">›</Button>
-        <Button variant="ghost" onClick={() => setInicio(iso(new Date()))}>Hoy</Button>
-        <span style={{ position: 'relative' }}>
-          <Button variant="ghost" icon={<IcInfo />} onClick={() => setTerminos(t => !t)}>Explicación de términos</Button>
-          <Popover open={terminos} onClose={() => setTerminos(false)} width={330} align="right">
-            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>Referencia de vistas</p>
-              {VISTAS_TARIFARIO.map(v => <p key={v} style={{ fontSize: 12, margin: 0, color: C.n700 }}><b style={{ color: C.n900, fontWeight: 500 }}>{v}:</b> {TERMINOS[v]}</p>)}
-            </div>
-          </Popover>
-        </span>
+          <span aria-hidden style={{ width: 1, height: 22, background: C.n500, margin: '0 2px' }} />
+          <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+            {nav('‹‹', -DIAS_VISTA, `${DIAS_VISTA} días antes`)}
+            {nav('‹', -1, 'Un día antes')}
+            <div style={{ width: 140 }}><Input type="date" value={inicio} onChange={v => v && setInicio(v)} aria-label="Primer día de la grilla" /></div>
+            {nav('›', 1, 'Un día después')}
+            {nav('››', DIAS_VISTA, `${DIAS_VISTA} días después`)}
+          </span>
+          {inicio !== hoy && <Button variant="ghost" onClick={() => setInicio(hoy)}>Hoy</Button>}
         </>}
         acciones={<>
+          <span style={{ position: 'relative' }}>
+            <Button variant="secondary" icon={<IcInfo />} onClick={() => setTerminos(t => !t)}>Ayuda</Button>
+            <Popover open={terminos} onClose={() => setTerminos(false)} width={360} align="right">
+              <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, margin: 0 }}>Vistas del tarifario</p>
+                {VISTAS_TARIFARIO.map(v => <p key={v} style={{ fontSize: 12, margin: 0, color: C.n700, lineHeight: 1.45 }}><b style={{ color: C.n900, fontWeight: 500 }}>{v}:</b> {TERMINOS[v]}</p>)}
+                <p style={{ fontSize: 12, margin: '4px 0 0', color: C.n700, lineHeight: 1.45 }}>
+                  <b style={{ color: C.n900, fontWeight: 500 }}>⚡</b> cambia la vista de una fila · <b style={{ color: C.n900, fontWeight: 500 }}>🔗</b> tarifa derivada de otra · valores en azul: cambiados solo ese día.
+                </p>
+              </div>
+            </Popover>
+          </span>
           <BotonExportar onPDF={() => window.print()} titulo="Tarifario" />
-          <Button variant="secondary" onClick={() => setEditorTarifa({ id: null })}>Crear / Editar tarifa</Button>
-          <Button onClick={() => setMasiva(true)}>Actualización colectiva</Button>
+          <MenuBoton label="Actualización" variant="primary" ancho={310} opciones={[
+            { label: 'Masiva · varias tarifas y tipos por período', onClick: () => setMasiva(true) },
+            { label: 'Por tarifa · crear o editar una tarifa', onClick: () => setEditorTarifa({ id: null }) },
+          ]} />
         </>}
-        derecha={s_.n ? <AccionesMasivas s={s_} etiqueta={s_.n === 1 ? 'tarifa seleccionada' : 'tarifas seleccionadas'}>
+        derecha={s_.n ? <AccionesMasivas s={s_} etiqueta={s_.n === 1 ? 'fila seleccionada' : 'filas seleccionadas'}>
           <Button onClick={() => setMasiva(true)}>Actualizar seleccionadas</Button>
-        </AccionesMasivas> : <span style={{ fontSize: 12, color: C.n700 }}>Marca filas para actualizarlas juntas</span>} />
+        </AccionesMasivas> : undefined} />
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONT, fontSize: 12, minWidth: 980 }}>
-          <thead>
-            <tr>
-              <th style={{ width: 30 }} /><th style={{ width: 230 }} /><th style={{ width: 34 }} /><th style={{ width: 130 }} />
-              {dias.map(d => {
-                const fin = dow(d) >= 5;
+      <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', fontFamily: FONT, fontSize: 12 }}>
+        <colgroup><col style={{ width: 34 }} /><col style={{ width: 250 }} /><col style={{ width: 118 }} />{dias.map(d => <col key={d} />)}</colgroup>
+        <thead>
+          <tr>
+            <th style={{ ...cab, textAlign: 'left' }} colSpan={2}>
+              <span style={{ fontSize: 11.5, color: C.n700, fontWeight: 400 }}>{visibles.length} {visibles.length === 1 ? 'tarifa' : 'tarifas'} · {tiposVisibles.length} tipos</span>
+            </th>
+            <th style={{ ...cab, textAlign: 'left', fontSize: 11.5, color: C.n700, fontWeight: 400 }}>Vista</th>
+            {dias.map(d => {
+              const fin = dow(d) >= 5, esHoy = d === hoy;
+              return (
+                <th key={d} style={{ ...cab, padding: '4px 0 6px', background: esHoy ? C.brandBg : fin ? C.n200 : C.n000 }}>
+                  <div style={{ fontSize: 10.5, color: esHoy ? C.brand : C.n700 }}>{DIAS[dow(d)]}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: esHoy ? C.brand : C.n900, lineHeight: 1.2 }}>{fecha(d).getDate()}</div>
+                  <div style={{ fontSize: 10.5, color: C.n700 }}>{MESES[fecha(d).getMonth()]}</div>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {(visibles.length === 0 || tiposVisibles.length === 0) && (
+            <tr><td colSpan={3 + DIAS_VISTA} style={{ padding: 28, textAlign: 'center', color: C.n700 }}>
+              {nFiltros ? <>Ninguna tarifa cumple el filtro. <button type="button" onClick={() => setFiltro(SIN_FILTRO)} style={enlace}>Quitar filtro</button></>
+                : <>No hay tarifas en {moneda}. Crea una con «Actualización › Por tarifa».</>}
+            </td></tr>
+          )}
+          {visibles.length > 0 && tiposVisibles.map(tipo => (
+            <Fragment key={tipo.id}>
+              <tr>
+                <td style={{ ...grupo, paddingLeft: 9 }}><CheckTodos s={s_} ids={visibles.map(t => `${tipo.id}|${t.id}`)} label={`Seleccionar todas las tarifas de ${tipo.nombre}`} /></td>
+                <td colSpan={2 + DIAS_VISTA} style={grupo}>
+                  <b style={{ fontWeight: 600 }}>{tipo.nombre}</b><span style={{ color: C.n700 }}> · {tipo.codigo}</span>
+                  <span style={{ color: C.n700, marginLeft: 10, fontSize: 11.5 }}>{tipo.base ?? 2} pax incluidos · máx. {tipo.max ?? 4}</span>
+                </td>
+              </tr>
+              {visibles.map(t => {
+                const fila = `${tipo.id}|${t.id}`;
+                const vista = vistas[fila] ?? vistaGlobal;
+                const esBool = BOOL.includes(vista);
+                const madre = t.derivaDe ? tarifas.find(x => x.id === t.derivaDe) : undefined;
+                const sel = s_.tiene(fila);
                 return (
-                  <th key={d} style={{ padding: '4px 2px 6px', textAlign: 'center', fontWeight: 400, background: fin ? '#FFF8EC' : undefined, borderBottom: `1px solid ${C.n500}` }}>
-                    <div style={{ fontSize: 11, color: C.n700 }}>{DIAS[dow(d)]}</div>
-                    <div style={{ fontSize: 15, fontWeight: 500, color: C.n900 }}>{fecha(d).getDate()}</div>
-                    <div style={{ fontSize: 11, color: C.n700 }}>{MESES[fecha(d).getMonth()]}</div>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.length === 0 && <tr><td colSpan={4 + DIAS_VISTA} style={{ padding: 28, textAlign: 'center', color: C.n700 }}>No hay tarifas en {moneda}. Crea una con «Crear / Editar tarifa».</td></tr>}
-            {visibles.length > 0 && tipos.map(tipo => (
-              <Fragment key={tipo.id}>
-                <tr>
-                  <td style={{ background: C.n200, padding: '7px 8px' }}><CheckTodos s={s_} ids={visibles.map(t => `${tipo.id}|${t.id}`)} label={`Seleccionar todas las tarifas de ${tipo.nombre}`} /></td>
-                  <td colSpan={3 + DIAS_VISTA} style={{ background: C.n200, padding: '7px 8px', fontWeight: 600, fontSize: 12 }}>{tipo.nombre.toUpperCase()} - {tipo.codigo}<span style={{ fontWeight: 400, color: C.n700, marginLeft: 8 }}>{tipo.base ?? 2} pax incluidos · máx. {tipo.max ?? 4}</span></td>
-                </tr>
-                {visibles.map(t => {
-                  const fila = `${tipo.id}|${t.id}`;
-                  const vista = vistas[fila] ?? 'Tarifas';
-                  const esBool = BOOL.includes(vista);
-                  return (
-                    <tr key={fila} style={{ borderBottom: `1px solid ${C.n500}`, color: t.activo ? C.n900 : C.n700, background: s_.tiene(fila) ? C.brandBg : undefined }}>
-                      <td style={{ padding: '6px 8px' }}><CheckFila s={s_} id={fila} label={`Seleccionar ${t.nombre} · ${tipo.nombre}`} /></td>
-                      <td style={{ padding: '6px 8px' }}>
-                        {t.nombre}
-                        {t.derivaDe && <span style={{ fontSize: 11, color: C.n700, marginLeft: 6 }}>(derivada)</span>}
-                        {!t.activo && <span style={{ fontSize: 11, color: C.n700, marginLeft: 6 }}>(inactiva)</span>}
-                      </td>
-                      <td><IconButton label={`Editar tarifa ${t.nombre}`} tono="marca" onClick={() => setEditorTarifa({ id: t.id })}><IcBolt /></IconButton></td>
-                      <td style={{ padding: '2px 4px' }}>
-                        <select value={vista} onChange={e => setVistas(v => ({ ...v, [fila]: e.target.value as Vista }))} aria-label={`Vista de ${t.nombre}`}
-                          style={{ border: 'none', background: 'transparent', color: C.brand, fontWeight: 600, fontSize: 12, fontFamily: FONT, cursor: 'pointer', outline: 'none', maxWidth: 125 }}>
-                          {VISTAS_TARIFARIO.map(v => <option key={v} value={v}>{v === 'Adulto Extra' || v === 'Niño Extra' ? `${v} · Pax 1` : v}</option>)}
-                          {Array.from({ length: Math.max(0, adicionalesDe(tipo) - 1) }, (_, i) => i + 2).flatMap(n => [vistaPax('adulto', n), vistaPax('nino', n)]).map(v => <option key={v} value={v}>{v}</option>)}
-                        </select>
-                      </td>
-                      {dias.map(d => {
-                        const k = clave(tipo.id, t.id, d, vista);
-                        const v = valor(t, tipo.id, d, vista, tarifas, mapa);
-                        const excepcion = mapa[k] !== undefined;
-                        const fin = dow(d) >= 5;
-                        const base = { padding: 0, textAlign: 'center' as const, background: fin ? C.n200 : undefined, borderLeft: `1px solid ${C.n000}` };
-                        if (esBool) {
-                          return (
-                            <td key={d} style={base}>
-                              <button type="button" onClick={() => guardarCelda(k, !v)} aria-pressed={!!v} aria-label={`${vista} ${d}`}
-                                style={{ width: '100%', height: 30, border: 'none', cursor: 'pointer', fontSize: 11, fontFamily: FONT, fontWeight: 500,
-                                  background: v ? 'rgba(244,67,54,.12)' : 'transparent', color: v ? '#C62828' : C.n500 }}>
-                                {v ? (vista === 'Cerrar ventas' ? 'Cerrado' : vista) : '·'}
-                              </button>
-                            </td>
-                          );
-                        }
+                  <tr key={fila} style={{ color: t.activo ? C.n900 : C.n700, background: sel ? C.brandBg : undefined }}>
+                    <td style={{ ...celda, paddingLeft: 9 }}><CheckFila s={s_} id={fila} label={`Seleccionar ${t.nombre} · ${tipo.nombre}`} /></td>
+                    <td style={{ ...celda, padding: '0 4px 0 6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+                        <button type="button" onClick={() => setDetalle(t.id)} title="Ver detalle de la tarifa"
+                          style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', color: t.activo ? C.brand : C.n700, cursor: 'pointer', textAlign: 'left',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{t.nombre}</button>
+                        {madre && <span title={`Deriva de ${madre.nombre}`} aria-label={`Deriva de ${madre.nombre}`} style={{ color: C.n700, display: 'inline-flex', flexShrink: 0 }}><IcLink size={13} /></span>}
+                        {!t.activo && <span style={{ fontSize: 10.5, color: C.n700, flexShrink: 0 }}>inactiva</span>}
+                        <span style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                          <IconButton label={`Editar tarifa ${t.nombre}`} onClick={() => setEditorTarifa({ id: t.id })}><IcEdit size={13} /></IconButton>
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ ...celda, padding: '0 4px' }}>
+                      <MenuVista vista={vista} tipo={tipo} label={`Vista de ${t.nombre} · ${tipo.nombre}`} onChange={v => setVistas(x => ({ ...x, [fila]: v }))} />
+                    </td>
+                    {dias.map(d => {
+                      const k = clave(tipo.id, t.id, d, vista);
+                      const v = valor(t, tipo.id, d, vista, tarifas, mapa);
+                      const excepcion = mapa[k] !== undefined;
+                      const fin = dow(d) >= 5;
+                      const base: CSSProperties = { ...celda, padding: 0, textAlign: 'center', background: sel ? undefined : d === hoy ? 'rgba(33,60,137,.04)' : fin ? C.n200 : undefined, borderLeft: `1px solid ${C.n200}` };
+                      if (esBool) {
                         return (
                           <td key={d} style={base}>
-                            {editando === k ? (
-                              <input autoFocus value={borrador} onChange={e => setBorrador(e.target.value)} onBlur={() => confirmarNumero(k)}
-                                onKeyDown={e => { if (e.key === 'Enter') confirmarNumero(k); if (e.key === 'Escape') setEditando(null); }} aria-label={`${vista} ${d}`}
-                                style={{ width: '100%', height: 30, border: `1px solid ${C.brand}`, textAlign: 'right', fontSize: 12, fontFamily: FONT, padding: '0 6px', outline: 'none', boxSizing: 'border-box' }} />
-                            ) : (
-                              <button type="button" onClick={() => { setEditando(k); setBorrador(typeof v === 'number' ? String(v) : ''); }}
-                                title={excepcion ? 'Valor modificado manualmente en este día' : 'Clic para editar'}
-                                style={{ width: '100%', height: 30, border: 'none', background: 'transparent', cursor: 'text', textAlign: 'right', padding: '0 6px', fontSize: 12, fontFamily: FONT,
-                                  color: excepcion ? C.brand : 'inherit', fontWeight: excepcion ? 600 : 400, fontVariantNumeric: 'tabular-nums' }}>
-                                {typeof v === 'number' ? (vista.startsWith('Estancia') ? v : fmtNum(v)) : '---'}
-                              </button>
-                            )}
+                            <button type="button" onClick={() => guardarCelda(k, !v)} aria-pressed={!!v} aria-label={`${vista} ${d}`} title={v ? 'Clic para abrir' : 'Clic para cerrar'}
+                              style={{ width: '100%', height: 30, border: 'none', cursor: 'pointer', fontSize: 10.5, fontFamily: FONT, fontWeight: 600,
+                                background: v ? 'rgba(244,67,54,.12)' : 'transparent', color: v ? C.error : C.n500 }}>
+                              {v ? (vista === 'Cerrar ventas' ? 'Cerr.' : vista) : '·'}
+                            </button>
                           </td>
                         );
-                      })}
-                    </tr>
-                  );
-                })}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+                      }
+                      return (
+                        <td key={d} style={base}>
+                          {editando === k ? (
+                            <input autoFocus value={borrador} onChange={e => setBorrador(e.target.value)} onBlur={() => confirmarNumero(k)}
+                              onKeyDown={e => { if (e.key === 'Enter') confirmarNumero(k); if (e.key === 'Escape') setEditando(null); }} aria-label={`${vista} ${d}`}
+                              style={{ width: '100%', height: 30, border: `1px solid ${C.brand}`, textAlign: 'right', fontSize: 12, fontFamily: FONT, padding: '0 4px', outline: 'none', boxSizing: 'border-box' }} />
+                          ) : (
+                            <button type="button" onClick={() => { setEditando(k); setBorrador(typeof v === 'number' ? String(v) : ''); }}
+                              title={excepcion ? 'Cambiado solo este día · clic para editar' : 'Clic para editar'}
+                              style={{ width: '100%', height: 30, border: 'none', background: 'transparent', cursor: 'text', textAlign: 'right', padding: '0 5px', fontSize: 12, fontFamily: FONT,
+                                color: excepcion ? C.brand : typeof v === 'number' && v !== 0 ? 'inherit' : C.n500, fontWeight: excepcion ? 600 : 400, fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {typeof v === 'number' ? (vista === 'Cupos' && v === 0 ? '·' : corto(v)) : '—'}
+                            </button>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </Fragment>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 11.5, color: C.n700 }}>
+        <span>Clic en una celda para cambiar solo ese día; déjala vacía para volver al valor de la tarifa.</span>
+        <span><b style={{ color: C.brand }}>Azul</b>: cambiado solo ese día</span>
+        <span><b style={{ color: C.error }}>Rojo</b>: cerrado</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IcLink size={12} /> derivada</span>
       </div>
-      <p style={{ fontSize: 11, color: C.n700, margin: 0 }}>Clic en una celda para cambiar el valor de ese día. Los valores en azul son excepciones; deja la celda vacía para volver al valor de la tarifa.</p>
 
-      {masiva && <ActualizacionColectiva inicio={inicio} tarifas={visibles} todas={tarifas} tipos={tipos} mapa={mapa} seleccionInicial={s_.sel} onClose={() => setMasiva(false)}
-        onAplicar={r => { setMapa(m => ({ ...m, ...r.mapa })); setTarifas(r.tarifas); setMasiva(false); s_.limpiar(); setToast(`${r.mensaje}. Revisa y usa «Guardar cambios».`); }} />}
+      {verFiltro && <ModalFiltro filtro={filtro} tipos={tipos} tarifas={tarifas.filter(t => t.moneda === moneda && (inactivos || t.activo))} mercados={mercados.filter(m => m.activo).map(m => m.descripcion)}
+        delMercado={delMercado} onClose={() => setVerFiltro(false)} onAplicar={f => { setFiltro(f); setVerFiltro(false); }} />}
+      {masiva && <ActualizacionColectiva inicio={inicio} tarifas={visibles} todas={tarifas} tipos={tipos} mapa={mapa} seleccionInicial={seleccionMasiva ?? s_.sel} onClose={() => { setMasiva(false); setSeleccionMasiva(null); }}
+        onAplicar={r => { setMapa(m => ({ ...m, ...r.mapa })); setTarifas(r.tarifas); setMasiva(false); setSeleccionMasiva(null); s_.limpiar(); setToast(`${r.mensaje}. Revisa y usa «Guardar cambios».`); }} />}
       {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
+      {detalle && (() => {
+        const t = tarifas.find(x => x.id === detalle);
+        if (!t) return null;
+        return <DetalleTarifa t={t} tarifas={tarifas} tipos={tipos} mapa={mapa} dia={inicio} contratos={contratos.filter(c => c.tarifa === t.nombre).map(c => c.nombre)} onClose={() => setDetalle(null)}
+          onEditar={() => { setDetalle(null); setEditorTarifa({ id: t.id }); }}
+          onActualizar={() => { setDetalle(null); setSeleccionMasiva(tipos.map(tp => `${tp.id}|${t.id}`)); setMasiva(true); }} />;
+      })()}
       {editorTarifa && <EditorTarifa idInicial={editorTarifa.id} tarifas={tarifas} tipos={tipos} onClose={() => setEditorTarifa(null)}
         onGuardar={t => setTarifas(ts => (ts.some(x => x.id === t.id) ? ts.map(x => (x.id === t.id ? t : x)) : [...ts, t]))}
         onEliminar={id => { setTarifas(ts => ts.filter(x => x.id !== id).map(x => (x.derivaDe === id ? { ...x, derivaDe: null } : x))); setMapa(m => Object.fromEntries(Object.entries(m).filter(([k]) => k.split('|')[1] !== id))); }} />}
     </div>
+  );
+}
+
+// top negativo: el cuerpo de la pantalla tiene padding y el encabezado debe pegarse al borde del área con scroll.
+const cab: CSSProperties = { position: 'sticky', top: -PAGE_PAD, zIndex: 1, background: C.n000, borderBottom: `1px solid ${C.n500}`, padding: '6px 8px', textAlign: 'center', fontWeight: 400 };
+const grupo: CSSProperties = { background: C.n200, padding: '7px 8px', fontSize: 12, borderBottom: `1px solid ${C.n500}` };
+const celda: CSSProperties = { borderBottom: `1px solid ${C.n500}`, height: 30, verticalAlign: 'middle' };
+const enlace: CSSProperties = { border: 'none', background: 'none', padding: 0, font: 'inherit', color: C.brand, cursor: 'pointer', textDecoration: 'underline' };
+
+/** ⚡ Vista de la fila: qué se ve y se edita en los días (precio, cupos, cierres, estancias, pax adicionales). */
+function MenuVista({ vista, tipo, label, onChange }: { vista: Vista; tipo: { base?: number; max?: number }; label: string; onChange: (v: Vista) => void }) {
+  const [open, setOpen] = useState(false);
+  const extra = Array.from({ length: Math.max(0, adicionalesDe(tipo) - 1) }, (_, i) => i + 2).flatMap(n => [vistaPax('adulto', n), vistaPax('nino', n)]);
+  const opciones: Vista[] = [...VISTAS_TARIFARIO, ...extra];
+  const nombre = (v: Vista) => (v === 'Adulto Extra' || v === 'Niño Extra' ? `${v} · Pax 1` : v);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', maxWidth: '100%' }}>
+      <button type="button" onClick={() => setOpen(o => !o)} aria-label={label} aria-expanded={open} title="Cambiar la vista de esta fila"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: '100%', height: 24, padding: '0 6px', border: `1px solid ${open ? C.brandBd : 'transparent'}`, borderRadius: radius.control,
+          background: open ? C.brandBg : 'transparent', color: C.brand, fontSize: 11.5, fontWeight: 600, fontFamily: FONT, cursor: 'pointer' }}>
+        <IcBolt size={12} /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre(vista)}</span><IcChevronDown size={10} />
+      </button>
+      <Popover open={open} onClose={() => setOpen(false)} width={260}>
+        <div role="menu" style={{ padding: 6, display: 'flex', flexDirection: 'column', maxHeight: 340, overflowY: 'auto' }}>
+          {opciones.map(v => (
+            <button key={v} role="menuitemradio" aria-checked={v === vista} type="button" onClick={() => { onChange(v); setOpen(false); }} className="suite-fila"
+              title={TERMINOS[v as keyof typeof TERMINOS]}
+              style={{ textAlign: 'left', padding: '7px 10px', border: 'none', background: v === vista ? C.brandBg : 'none', color: v === vista ? C.brand : C.n900,
+                fontWeight: v === vista ? 600 : 400, fontSize: 12, fontFamily: FONT, borderRadius: radius.control, cursor: 'pointer' }}>
+              {nombre(v)}
+            </button>
+          ))}
+        </div>
+      </Popover>
+    </span>
+  );
+}
+
+/** Filtrar: mercado (tarifas de sus contratos), tipos de habitación y tarifas. */
+function ModalFiltro({ filtro, tipos, tarifas, mercados, delMercado, onClose, onAplicar }: {
+  filtro: Filtro; tipos: { id: string; nombre: string; codigo: string }[]; tarifas: Tarifa[]; mercados: string[];
+  delMercado: (m: string) => Set<string>; onClose: () => void; onAplicar: (f: Filtro) => void;
+}) {
+  const [f, setF] = useState<Filtro>(filtro);
+  const enMercado = f.mercado ? delMercado(f.mercado) : null;
+  const tarifasMercado = tarifas.filter(t => !enMercado || enMercado.has(t.nombre));
+  const tiposSel = f.tipos.length ? f.tipos : tipos.map(t => t.id);
+  const tarifasSel = f.tarifas.length ? f.tarifas.filter(id => tarifasMercado.some(t => t.id === id)) : tarifasMercado.map(t => t.id);
+  const aplicar = () => onAplicar({
+    mercado: f.mercado,
+    tipos: tiposSel.length === tipos.length ? [] : tiposSel,
+    tarifas: tarifasSel.length === tarifasMercado.length ? [] : tarifasSel,
+  });
+  return (
+    <ModalBase titulo="Filtrar tarifario" onClose={onClose} ancho={720}
+      pie={<>
+        <Button variant="ghost" style={{ marginRight: 'auto' }} onClick={() => setF(SIN_FILTRO)}>Quitar filtros</Button>
+        <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+        <Button onClick={aplicar} disabled={!tiposSel.length || !tarifasSel.length}>Aplicar</Button>
+      </>}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ maxWidth: 320 }}>
+          <Campo label="Mercado" hint="Muestra solo las tarifas de los contratos de ese mercado.">
+            <Select value={f.mercado} onChange={v => setF(x => ({ ...x, mercado: v, tarifas: [] }))} options={[{ value: '', label: 'Todos los mercados' }, ...mercados.map(m => ({ value: m, label: m }))]} />
+          </Campo>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <ListaChecks titulo="Tipo de habitación" items={tipos.map(t => ({ id: t.id, label: `${t.codigo} · ${t.nombre}` }))} sel={tiposSel} onChange={ids => setF(x => ({ ...x, tipos: ids }))} alto={260} />
+          <ListaChecks titulo="Tarifa" items={tarifasMercado.map(t => ({ id: t.id, label: t.nombre, nota: t.activo ? undefined : 'Inactiva' }))} sel={tarifasSel} onChange={ids => setF(x => ({ ...x, tarifas: ids }))} alto={260} />
+        </div>
+      </div>
+    </ModalBase>
   );
 }
 
@@ -187,7 +328,7 @@ function Stepper({ value, onChange, paso = 1, label }: { value: number; onChange
 }
 
 function EditorTarifa({ idInicial, tarifas, tipos, onClose, onGuardar, onEliminar }: {
-  idInicial: string | null; tarifas: Tarifa[]; tipos: { id: string; nombre: string; codigo: string }[];
+  idInicial: string | null; tarifas: Tarifa[]; tipos: { id: string; nombre: string; codigo: string; base?: number; max?: number }[];
   onClose: () => void; onGuardar: (t: Tarifa) => void; onEliminar: (id: string) => void;
 }) {
   const vacia = (): Tarifa => ({ id: uid(), nombre: '', activo: true, moneda: MONEDAS_OPC[0], base: Object.fromEntries(tipos.map(t => [t.id, null])), derivaDe: null,
@@ -200,6 +341,9 @@ function EditorTarifa({ idInicial, tarifas, tipos, onClose, onGuardar, onElimina
   const existe = tarifas.some(x => x.id === t.id);
   const p = (x: Partial<Tarifa>) => setT(v => ({ ...v, ...x }));
   const madres = tarifas.filter(x => x.id !== t.id && x.derivaDe !== t.id);
+  /** Escalones posibles: los adicionales que admite el tipo de habitación con más capacidad. */
+  const maxEsc = Math.max(1, ...tipos.map(adicionalesDe));
+  const nEsc = (t.extras.escalones ?? []).length;
 
   const cambiarTarifa = (id: string) => { const n = cargar(id || null); setT(n); setModo(n.derivaDe ? 'Derivar de otra tarifa' : 'Nueva Tarifa'); setError(''); };
   const guardar = () => {
@@ -265,7 +409,7 @@ function EditorTarifa({ idInicial, tarifas, tipos, onClose, onGuardar, onElimina
           ) : (
             <>
               <PillTabs tabs={['Precio base por adicional', 'Desglose por escalón'] as const} active={t.extras.modo === 'escalones' ? 'Desglose por escalón' : 'Precio base por adicional'}
-                onChange={m => p({ extras: { ...t.extras, modo: m === 'Desglose por escalón' ? 'escalones' : 'base', escalones: t.extras.escalones?.length ? t.extras.escalones : [{ adulto: t.extras.adulto, nino: t.extras.nino }, { adulto: t.extras.adulto, nino: t.extras.nino }] } })} />
+                onChange={m => p({ extras: { ...t.extras, modo: m === 'Desglose por escalón' ? 'escalones' : 'base', escalones: t.extras.escalones?.length ? t.extras.escalones : Array.from({ length: Math.min(2, maxEsc) }, () => ({ adulto: t.extras.adulto, nino: t.extras.nino })) } })} />
               {t.extras.modo !== 'escalones' ? (
                 <Grid cols={2}>
                   <Campo label="Adulto extra (por noche)"><Input type="number" value={t.extras.adulto} onChange={v => p({ extras: { ...t.extras, adulto: Number(v) || 0 } })} /></Campo>
@@ -282,8 +426,11 @@ function EditorTarifa({ idInicial, tarifas, tipos, onClose, onGuardar, onElimina
                       <IconButton label={`Quitar escalón ${i + 1}`} tono="peligro" disabled={(t.extras.escalones ?? []).length === 1} onClick={() => p({ extras: { ...t.extras, escalones: t.extras.escalones!.filter((_, j) => j !== i) } })}>×</IconButton>
                     </Fragment>
                   ))}
-                  <span style={{ gridColumn: '1 / -1' }}><Button variant="ghost" onClick={() => { const u = t.extras.escalones?.at(-1) ?? { adulto: t.extras.adulto, nino: t.extras.nino }; p({ extras: { ...t.extras, escalones: [...(t.extras.escalones ?? []), { ...u }] } }); }}>+ Agregar escalón</Button></span>
-                  <span style={{ gridColumn: '1 / -1', fontSize: 11, color: C.n700 }}>Adicional 1 = la primera persona sobre las incluidas en el precio. Si una habitación admite más adicionales que escalones, se usa el último.</span>
+                  {nEsc < maxEsc && <span style={{ gridColumn: '1 / -1' }}><Button variant="ghost" onClick={() => { const u = t.extras.escalones?.at(-1) ?? { adulto: t.extras.adulto, nino: t.extras.nino }; p({ extras: { ...t.extras, escalones: [...(t.extras.escalones ?? []), { ...u }] } }); }}>+ Agregar escalón ({nEsc} de {maxEsc})</Button></span>}
+                  <span style={{ gridColumn: '1 / -1', fontSize: 11, color: C.n700, lineHeight: 1.5 }}>
+                    El pax adicional 1 es la primera persona por encima de las incluidas en el precio de la habitación. La habitación con más capacidad admite {maxEsc} {maxEsc === 1 ? 'adicional' : 'adicionales'}.
+                    {nEsc < maxEsc && ` Las personas adicionales sin escalón propio pagan el precio del pax adicional ${nEsc}.`}
+                  </span>
                 </div>
               )}
             </>

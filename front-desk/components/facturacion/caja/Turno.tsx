@@ -7,11 +7,12 @@ import { TextArea } from '@/components/configuracion/kit';
 import { usePrint } from '@/components/hotel/ui';
 import { useHotel, nuevoId } from '@/components/hotel/store';
 import { HOY, fmtF } from '@/components/hotel/datos';
-import { COMPROBANTES, MOTIVOS_DIFERENCIA, RESPONSABLE, TC, ahoraHotel, conteoVacio, fmtDuracion, fmtUSD, minutosEntre, r2, totalComprobantesUSD, totalConteoUSD, type Comprobantes, type Conteo } from '@/components/hotel/finanzas';
-import { Banda, Bloque, PaginaFact, Tarjeta, Visor, useAhora } from '../comun';
+import { COMPROBANTES, MOTIVOS_DIFERENCIA, RESPONSABLE, TC, ahoraHotel, conteoVacio, fmtCRC, fmtDuracion, fmtUSD, minutosEntre, r2, totalComprobantesUSD, totalConteoUSD, type Comprobantes, type Conteo } from '@/components/hotel/finanzas';
+import { AvisoPie, Banda, Bloque, PaginaFact, Tarjeta, Visor, useAhora } from '../comun';
 import { CONFIG_CAJA, esResponsable, heredado, resumenTurno, totalesDeclarados, type Declaracion } from './calc';
 import { TicketTurno } from './Reportes';
 import { Check, Dato, FirmaModal, Linea, Renglon, TablaConteo, VerComo, Volver, type P } from './piezas';
+import { MontoCelda } from '@/components/suite/Monto';
 
 export function AbrirTurno({ ir, toast, modo, cajero }: P & { modo: 'caja' | 'turno'; cajero: string }) {
   const h = useHotel();
@@ -33,14 +34,15 @@ export function AbrirTurno({ ir, toast, modo, cajero }: P & { modo: 'caja' | 'tu
   };
   return (
     <PaginaFact titulo={modo === 'caja' ? 'Abrir caja' : cajero === h.sesion ? 'Abrir mi turno' : `Abrir turno · ${cajero}`} izquierda={<Volver onClick={() => ir({ v: 'inicio' })} />}
-      pie={<><Button variant="secondary" onClick={() => ir({ v: 'inicio' })}>Cancelar</Button><Button onClick={abrir}>Abrir turno →</Button></>}>
+      pie={<>{error ? <AvisoPie>{error}</AvisoPie> : <AvisoPie tono="info">Declarado {fmtUSD(declarado)} · esperado {fmtUSD(saldo)}</AvisoPie>}
+        <Button variant="secondary" onClick={() => ir({ v: 'inicio' })}>Cancelar</Button><Button onClick={abrir}>{modo === 'caja' ? 'Abrir caja y turno' : 'Abrir turno'}</Button></>}>
       {modo === 'caja' && <Banda tono="info">Declara el efectivo físico con el que abre la caja del día. El sistema calculará automáticamente la diferencia con el cierre anterior.</Banda>}
       {modo === 'turno' && cajero !== h.sesion && <Banda tono="warn">Apertura manual realizada por {h.sesion} en nombre de {cajero}.</Banda>}
       <Tarjeta titulo="Información del turno">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: '18px 24px' }}>
           <Dato l="Cajero" v={cajero} /><Dato l="Caja asignada" v="Recepción" /><Dato l="Fecha y hora de apertura" v={ahora ? `${fmtF(HOY)} · ${ahora.slice(11, 16)}` : fmtF(HOY)} />
           <Dato l="Turno anterior" v={anterior ? `${anterior.cajero} · ${fmtF(anterior.inicio.slice(0, 10)).slice(0, 5)} ${anterior.inicio.slice(11, 16)}–${anterior.fin!.slice(11, 16)}` : '—'} />
-          <Dato l="Tipo de cambio BCCR" v={`₡${TC} / $1 USD`} />
+          <Dato l="Tipo de cambio" v={fmtCRC(TC)} />
           <Dato l={CONFIG_CAJA.modalidad === 'fijo' ? 'Fondo fijo' : 'Saldo heredado'} v={<span style={{ color: C.brand, fontSize: 18 }}>{fmtUSD(saldo)}</span>} />
         </div>
       </Tarjeta>
@@ -48,8 +50,8 @@ export function AbrirTurno({ ir, toast, modo, cajero }: P & { modo: 'caja' | 'tu
         <p style={{ margin: '-6px 0 0', fontSize: 12.5, color: C.n700 }}>Cuenta el efectivo físico y declara lo que encuentras en caja. Si el monto difiere del esperado, el sistema registrará la diferencia al turno anterior.
           {conteoAnterior && <> · <button type="button" onClick={() => setConteo({ USD: { ...conteoAnterior.USD }, CRC: { ...conteoAnterior.CRC } })} style={{ border: 'none', background: 'none', color: C.brand, cursor: 'pointer', fontFamily: FONT, fontSize: 12.5, padding: 0, textDecoration: 'underline' }}>Usar el conteo del cierre anterior</button></>}</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-          <TablaConteo moneda="USD" conteo={conteo} onChange={setConteo} titulo="Efectivo USD" />
-          <TablaConteo moneda="CRC" conteo={conteo} onChange={setConteo} titulo="Efectivo CRC" />
+          <TablaConteo moneda="USD" conteo={conteo} onChange={c => { setConteo(c); setError(''); }} titulo="Efectivo USD" />
+          <TablaConteo moneda="CRC" conteo={conteo} onChange={c => { setConteo(c); setError(''); }} titulo="Efectivo CRC" />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, borderTop: `1px solid ${C.n500}`, paddingTop: 16 }}>
           <Linea l="Saldo esperado (turno anterior)" v={fmtUSD(saldo)} />
@@ -59,14 +61,13 @@ export function AbrirTurno({ ir, toast, modo, cajero }: P & { modo: 'caja' | 'tu
       </Tarjeta>
       <Tarjeta>
         <span style={{ fontSize: 13 }}>Observaciones <span style={{ color: C.n700 }}>(opcional)</span></span>
-        <TextArea value={obs} onChange={setObs} rows={3} placeholder="Ej: Posible billete no contabilizado en turno anterior..." />
-        {error && <p role="alert" style={{ margin: 0, color: C.error, fontSize: 12 }}>{error}</p>}
+        <TextArea value={obs} onChange={v => { setObs(v); setError(''); }} rows={3} placeholder="Ej: Posible billete no contabilizado en turno anterior..." />
       </Tarjeta>
     </PaginaFact>
   );
 }
 // ── Arqueo (cerrar turno) ───────────────────────────────────────────────────
-export function Arqueo({ ir, turnoId, inicial, obsInicial }: P & { turnoId: string; inicial?: Declaracion; obsInicial?: string }) {
+export function Arqueo({ ir, turnoId, inicial, obsInicial, desde }: P & { turnoId: string; inicial?: Declaracion; obsInicial?: string; desde?: 'cierreDia' }) {
   const h = useHotel();
   const t = h.turnos.find(x => x.id === turnoId)!;
   const r = resumenTurno(h, t);
@@ -74,14 +75,19 @@ export function Arqueo({ ir, turnoId, inicial, obsInicial }: P & { turnoId: stri
   const [comp, setComp] = useState<Comprobantes>(inicial?.comprobantes ?? r.sistema);
   const [obs, setObs] = useState(obsInicial ?? '');
   const totalComp = totalComprobantesUSD(comp);
+  // Diferencia en vivo: el cajero ve si cuadra antes de pasar al resumen
+  const decl = totalesDeclarados({ conteo, comprobantes: comp });
+  const difVivo = r2(decl.total - r.esperado);
+  const volver = () => ir(desde ? { v: 'cierreDia' } : { v: 'inicio' });
   const inputMonto = (k: keyof Comprobantes) => (
     <input value={comp[k] || comp[k] === 0 ? String(comp[k]) : ''} inputMode="decimal" aria-label={`Monto ${k}`} className="suite-campo"
       onChange={e => setComp({ ...comp, [k]: Number(e.target.value.replace(/[^\d.]/g, '')) || 0 })}
       style={{ width: 130, height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, textAlign: 'right', padding: '0 10px', fontSize: 13, fontFamily: FONT, outline: 'none' }} />
   );
   return (
-    <PaginaFact titulo={`Arqueo de turno · ${t.cajero}`} izquierda={<Volver onClick={() => ir({ v: 'inicio' })} />}
-      pie={<><Button variant="secondary" onClick={() => ir({ v: 'inicio' })}>Cancelar</Button><Button onClick={() => ir({ v: 'resumen', turnoId, decl: { conteo, comprobantes: comp }, obs })}>Calcular y revisar →</Button></>}>
+    <PaginaFact titulo={`Arqueo de turno · ${t.cajero}`} izquierda={<Volver onClick={volver} />}
+      pie={<><AvisoPie tono={Math.abs(difVivo) < 0.01 ? 'info' : 'warn'}>Declarado {fmtUSD(decl.total)} · esperado {fmtUSD(r.esperado)} · {Math.abs(difVivo) < 0.01 ? 'cuadra ✓' : `diferencia ${fmtUSD(difVivo)}`}</AvisoPie>
+        <Button variant="secondary" onClick={volver}>Cancelar</Button><Button onClick={() => ir({ v: 'resumen', turnoId, decl: { conteo, comprobantes: comp }, obs, desde })}>Revisar cierre</Button></>}>
       <Banda tono="info">Declara el efectivo físico y los comprobantes de tu turno. El sistema calculará automáticamente la diferencia.</Banda>
       <Tarjeta titulo="Resumen de operación">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 14 }}>
@@ -104,10 +110,10 @@ export function Arqueo({ ir, turnoId, inicial, obsInicial }: P & { turnoId: stri
                 <td style={{ padding: '8px 10px' }}>{k.metodo}</td><td style={{ padding: '8px 10px' }}>{k.detalle}</td>
                 <td style={{ padding: '8px 10px', textAlign: 'right' }}>{k.moneda === 'CRC' ? inputMonto(k.k) : '—'}</td>
                 <td style={{ padding: '8px 10px', textAlign: 'right' }}>{k.moneda === 'USD' ? inputMonto(k.k) : '—'}</td>
-                <td style={{ padding: '8px 10px', textAlign: 'right' }}>{fmtUSD(k.moneda === 'CRC' ? comp[k.k] / TC : comp[k.k])}</td>
+                <td style={{ padding: '8px 10px', textAlign: 'right' }}><MontoCelda texto={fmtUSD(k.moneda === 'CRC' ? comp[k.k] / TC : comp[k.k])} /></td>
               </tr>
             ))}
-            <tr style={{ background: '#EEF2FA' }}><td colSpan={4} style={{ padding: '10px', fontWeight: 600 }}>Total comprobantes</td><td style={{ padding: '10px', textAlign: 'right', fontWeight: 700 }}>{fmtUSD(totalComp)}</td></tr>
+            <tr style={{ background: '#EEF2FA' }}><td colSpan={4} style={{ padding: '10px', fontWeight: 600 }}>Total comprobantes</td><td style={{ padding: '10px', textAlign: 'right', fontWeight: 700 }}><MontoCelda texto={fmtUSD(totalComp)} /></td></tr>
           </tbody>
         </table>
         <p style={{ margin: 0, fontSize: 11.5, color: C.n700 }}>Los montos vienen precargados con lo registrado en el sistema; corrígelos con el cierre de lote de cada datáfono.</p>
@@ -121,7 +127,7 @@ export function Arqueo({ ir, turnoId, inicial, obsInicial }: P & { turnoId: stri
 }
 
 // ── Resumen de cierre de turno + firma ──────────────────────────────────────
-export function ResumenCierre({ ir, toast, turnoId, decl, obs }: P & { turnoId: string; decl: Declaracion; obs: string }) {
+export function ResumenCierre({ ir, toast, turnoId, decl, obs, desde }: P & { turnoId: string; decl: Declaracion; obs: string; desde?: 'cierreDia' }) {
   const h = useHotel();
   const t = h.turnos.find(x => x.id === turnoId)!;
   const r = resumenTurno(h, t);
@@ -140,15 +146,23 @@ export function ResumenCierre({ ir, toast, turnoId, decl, obs }: P & { turnoId: 
   const cerrar = () => {
     h.cerrarTurno(turnoId, { fin: ahoraHotel(), conteo: decl.conteo, comprobantes: decl.comprobantes, esperado: r.esperado, declarado: tot.total, diferencia: dif, motivo: conDif ? motivo : undefined, detalles: conDif ? detalles.trim() : undefined, observaciones: obs, firmadoPor: t.cajero });
     toast('Turno cerrado. El reporte se envió a contabilidad.');
-    ir({ v: 'turnoCerrado', turnoId });
+    ir(desde ? { v: 'cierreDia' } : { v: 'turnoCerrado', turnoId });
   };
   const hora = ahora?.slice(11, 16) ?? '';
   return (
-    <PaginaFact titulo={`Resumen de cierre · ${t.cajero}`} izquierda={<Volver onClick={() => ir({ v: 'arqueo', turnoId, decl, obs })} />}
-      pie={<><Button variant="secondary" onClick={() => ir({ v: 'arqueo', turnoId, decl, obs })}>Cancelar</Button>
-        <Button onClick={seguir} style={conDif ? { background: C.error, borderColor: C.error } : undefined}>{conDif ? 'Firmar y cerrar con diferencia' : 'Firmar y cerrar turno →'}</Button></>}>
+    <PaginaFact titulo={`Resumen de cierre · ${t.cajero}`} izquierda={<Volver onClick={() => ir({ v: 'arqueo', turnoId, decl, obs, desde })} />}
+      pie={<>{error && <AvisoPie>{error}</AvisoPie>}<Button variant="secondary" onClick={() => ir({ v: 'arqueo', turnoId, decl, obs, desde })}>Volver al arqueo</Button>
+        <Button onClick={seguir} style={conDif ? { background: C.error, borderColor: C.error } : undefined}>{conDif ? 'Firmar y cerrar con diferencia' : 'Firmar y cerrar turno'}</Button></>}>
       {conDif ? <Banda tono="error"><b>Diferencia detectada: {fmtUSD(dif)} ({dif < 0 ? 'faltante' : 'sobrante'})</b></Banda>
         : <Banda tono="ok"><b>Tu caja cuadra perfectamente.</b> No se detectaron diferencias. Puedes proceder al cierre.</Banda>}
+      {/* La justificación va primero: es lo único que falta completar para poder firmar */}
+      {conDif && <Tarjeta titulo="Justificación de la diferencia">
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', gap: 16, alignItems: 'start' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}><span>Motivo <span style={{ color: C.error }}>*</span></span>
+            <Select value={motivo} onChange={v => { setMotivo(v); setError(''); }} options={[{ value: '', label: 'Seleccionar motivo' }, ...MOTIVOS_DIFERENCIA.map(m => ({ value: m, label: m }))]} /></label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}><span>Detalles <span style={{ color: C.error }}>*</span></span><TextArea value={detalles} onChange={v => { setDetalles(v); setError(''); }} rows={2} placeholder="Describe lo ocurrido" /></label>
+        </div>
+      </Tarjeta>}
       <Tarjeta titulo="Desglose">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           <div>
@@ -165,13 +179,7 @@ export function ResumenCierre({ ir, toast, turnoId, decl, obs }: P & { turnoId: 
         </div>
         <Linea l="Diferencia final (sobrante / faltante)" v={`${fmtUSD(dif)}${conDif ? '' : ' ✓'}`} verde={!conDif} rojo={conDif} bold />
       </Tarjeta>
-      {conDif && <Tarjeta titulo="Justificación de diferencia">
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>Motivo
-          <Select value={motivo} onChange={setMotivo} options={[{ value: '', label: 'Seleccionar motivo' }, ...MOTIVOS_DIFERENCIA.map(m => ({ value: m, label: m }))]} /></label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>Detalles<TextArea value={detalles} onChange={setDetalles} rows={3} placeholder="Describe lo ocurrido" /></label>
-      </Tarjeta>}
       {conDif && <Banda tono="warn">El cierre con diferencia será notificado al Cajero Responsable ({RESPONSABLE}) y al administrador. El monto {dif < 0 ? 'faltante' : 'sobrante'} quedará registrado en tu historial.</Banda>}
-      {error && <Banda tono="error">{error}</Banda>}
       {firmar && <FirmaModal titulo="Firma de cierre de turno" sub={`Firma digital · ${t.cajero} · ${fmtF(HOY)} ${hora}`} firmante={t.cajero} onClose={() => setFirmar(false)} onFirmar={cerrar}
         confirmar="Firmar y cerrar turno" peligro={conDif}
         resumen={<div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>

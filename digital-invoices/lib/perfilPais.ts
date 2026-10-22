@@ -176,6 +176,18 @@ export const COMPRAS_FISICAS = [
   { codigo: 'SCCA', nombre: 'Compra de factura cambiaria física' },
 ];
 
+// Nombre de una compra en Guatemala: el del DTE del proveedor (FACT, FCAM,
+// FPEQ…), el de la compra física o, si no se sabe, el equivalente del tipo
+// guardado.
+export function nombreCompraGT(tipoDte: string | null | undefined, tipo?: string | null): string {
+  const fisica = COMPRAS_FISICAS.find(t => t.codigo === tipoDte);
+  if (fisica) return fisica.nombre;
+  if (tipoDte && TIPOS_DTE.some(t => t.codigo === tipoDte)) return nombreDte(tipoDte);
+  const porTipo: Record<string, string> = { 'Factura electrónica': 'Factura', 'Nota de crédito': 'Nota de crédito', 'Nota de débito': 'Nota de débito', 'Factura electrónica de compra': 'Factura especial' };
+  const t = String(tipo ?? '');
+  return porTipo[t] ?? (t.includes(' · ') ? t.split(' · ')[1] : t || 'Factura');
+}
+
 // Clasificación de la operación. FEL solo lleva la marca de exportación; las
 // demás sirven para los libros.
 export const TIPOS_TRANSACCION = ['Local', 'Importación', 'Exportación', 'Adquisición', 'Transferencia'];

@@ -8,7 +8,7 @@ import { BarraSeccion } from '@/components/layout/Pantalla';
 import { Alerta, BotonExportar, exportarCSV } from '@/components/hotel/ui';
 import { Buscador, Campo, ConfigCard, IcEdit, IcTrash, IconButton, norm, uid } from '../kit';
 import { ArbolPermisos } from '../permisos/Arbol';
-import { TODAS_LAS_HOJAS, TOTAL, contar, type Rol } from '../permisos/datosPermisos';
+import { TODAS_LAS_HOJAS, TOTAL, contar, type Rol } from '../permisos/arbol';
 import { usePermisos } from '../permisos/store';
 
 export const iguales = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every(x => b.has(x));

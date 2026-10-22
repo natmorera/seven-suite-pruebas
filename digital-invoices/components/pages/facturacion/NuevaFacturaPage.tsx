@@ -792,7 +792,7 @@ export default function NuevaFacturaPage() {
                     <div style={{ gridColumn: '1 / -1', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                       {/* Un solo emisor (la empresa): se elige la sucursal y la caja */}
                       {sucursalesEmisor.length > 0 && (
-                        <Campo label="Sucursal">
+                        <Campo label={gt ? 'Establecimiento' : 'Sucursal'}>
                           <select value={sucursalActual} onChange={e => { const c = cajasEmisor.find(x => x.sucursal === e.target.value); if (c) setCajaId(c.id); }} style={plano}>
                             {[...sucursalesEmisor].sort().map(s => <option key={s} value={s}>{s}{nombresSucursal[s] ? ` · ${nombresSucursal[s]}` : ''}</option>)}
                           </select>

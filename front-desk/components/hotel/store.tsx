@@ -83,6 +83,11 @@ function useHotelState() {
         const bloqueos = [...x.bloqueos, { id: nuevoId('bq'), habitacion: num, desde: HOY, hasta, motivo, usuario: x.sesion ?? USUARIO_ACTUAL, creado: ahoraIso() }];
         return { ...x, bloqueos, habitaciones: sincronizarBloqueos(x.habitaciones, x.tareas, bloqueos, x.reservas) };
       }),
+      /** Cambia motivo y fecha final del bloqueo manual vigente de la habitación. */
+      editarBloqueo: (num: string, motivo: string, hasta = '') => mut(x => {
+        const bloqueos = x.bloqueos.map(b => (b.habitacion === num && !b.tareaId && cubreHoy(b) ? { ...b, motivo, hasta } : b));
+        return { ...x, bloqueos, habitaciones: sincronizarBloqueos(x.habitaciones, x.tareas, bloqueos, x.reservas) };
+      }),
       desbloquear: (num: string) => mut(x => {
         // los bloqueos manuales que empezaron antes de hoy terminan ayer (quedan en el historial); los de hoy se eliminan
         const bloqueos = x.bloqueos.flatMap(b => (b.habitacion !== num || !cubreHoy(b) ? [b] : b.desde < HOY ? [{ ...b, hasta: sumarDias(HOY, -1) }] : []));

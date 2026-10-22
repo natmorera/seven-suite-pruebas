@@ -1,5 +1,7 @@
 'use client';
 import SeccionApiKey from '@/components/ui/integracion/SeccionApiKey';
+// Conexión con Management: la API Key vive en el servidor (lib/apiKey.ts)
+import { obtenerApiKey, regenerarApiKey } from './ApiKeyPagina';
 import { useState, useEffect, useSyncExternalStore } from 'react';
 import { PageHeader, TabBar, Button, FormField, Input, Section, Toast, PAGE_PAD, FONT } from '../../ui/primitives';
 import { IcCheck, IcPlus } from '../../ui/icons';
@@ -51,9 +53,6 @@ function TabDatosEmpresa({ config, patch }: { config: DatosEmpresa; patch: (p: P
 
 type TabId = 'datos' | 'tributaria' | 'consecutivos' | 'asignacion' | 'impresoras' | 'tipos' | 'apikey';
 
-// Conexión con Management: la API Key vive en el servidor (lib/apiKey.ts)
-const obtenerApiKey = () => fetch('/api/integracion/api-key').then(r => r.json());
-const regenerarApiKey = () => fetch('/api/integracion/api-key', { method: 'POST' }).then(r => r.json());
 
 export default function EmpresaPage() {
   const { contabilidad: contabilidadEmp } = useModulos();

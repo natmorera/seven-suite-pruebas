@@ -13,7 +13,7 @@ import { FiltroUno } from '@/components/facturacion/comun';
 import { HOY, fmtF } from '@/components/hotel/datos';
 import { Buscador, Campo, Celda, ConfigCard, Fila, FilaVacia, Grid, IcEdit, IcTrash, IconButton, Paginacion, Tabla, norm, uid, usePaginado } from '../kit';
 import { ArbolPermisos } from '../permisos/Arbol';
-import { TOTAL, detallePermisos, type Rol, type UsuarioFD } from '../permisos/datosPermisos';
+import { TOTAL, detallePermisos, type Rol, type UsuarioFD } from '../permisos/arbol';
 import { usePermisos } from '../permisos/store';
 import { EditarRol, GuardarComoRol, Nota, Roles, iguales, nPerm } from './Roles';
 
@@ -113,7 +113,7 @@ function Usuarios({ onPermisos, onToast }: { onPermisos: (id: string) => void; o
           </Fila>
         ))}
       </Tabla>
-      {pag.total > 1 && <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} />}
+      <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} filas={pag.filas} porPagina={pag.tam} />
 
       {nuevo && <NuevoUsuario onClose={() => setNuevo(false)} onListo={u => { setNuevo(false); setQ(''); setRol(''); pag.setPagina(Math.ceil((filas.length + 1) / 15)); onToast(`Usuario ${u.usuario} creado`); }} />}
       {clave && <RestablecerClave u={clave} onClose={() => setClave(null)} onListo={() => { patch([clave.id], { claveCambiada: HOY }); onToast(`Contraseña de ${clave.usuario} restablecida`); setClave(null); }} />}

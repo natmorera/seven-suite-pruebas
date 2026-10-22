@@ -1,4 +1,5 @@
 'use client';
+import { nombreCompraGT } from '@/lib/perfilPais';
 import { Suspense, useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   C, FONT, PageHeader, TabBar, Button, StatusBadge, BulkActionBar, EmptyState, Toast,
@@ -141,18 +142,18 @@ function RecepcionContenido() {
       const d = x?.ok ? x.doc : null;
       return {
       key: 'correo-' + c.id, etapa: c.tiene_adjunto_xml ? 'por_importar' : 'sin_xml',
-      proveedor: d?.proveedor || c.remitente, identificacion: d?.proveedorIdentificacion ?? '', tipo: d ? d.tipo : 'Correo recibido', consecutivo: d?.consecutivo || c.asunto, clave: d?.clave ?? null,
+      proveedor: d?.proveedor || c.remitente, identificacion: d?.proveedorIdentificacion ?? '', tipo: d ? (gt ? nombreCompraGT(d.version?.startsWith('FEL ') ? d.version.slice(4) : null, d.tipo) : d.tipo) : 'Correo recibido', consecutivo: d?.consecutivo || c.asunto, clave: d?.clave ?? null,
       fecha: d?.fechaEmision?.slice(0, 10) || c.fecha, origen: 'Correo', credito: null, total: d?.totalComprobante ?? null, moneda: d?.moneda ?? null, correo: c,
       };
     });
     const deCompras: Fila[] = compras.map(r => ({
       key: r.id, etapa: sinAcuse(r) ? 'sin_acuse' : r.estado === 'Rechazado' ? 'rechazada' : 'aceptada',
-      proveedor: r.proveedor, identificacion: r.proveedor_identificacion ?? '', tipo: r.tipo ?? 'Factura electrónica',
+      proveedor: r.proveedor, identificacion: r.proveedor_identificacion ?? '', tipo: gt ? nombreCompraGT(r.tipo_dte, r.tipo) : r.tipo ?? 'Factura electrónica',
       consecutivo: r.numero_factura, fecha: r.fecha_emision, origen: ORIGEN_LABEL[r.origen] ?? r.origen,
       credito: r.tipo_credito_fiscal, total: r.total_factura, moneda: r.moneda, compra: r,
     }));
     return [...deCorreos, ...deCompras].sort((a, b) => ORDEN_ETAPA[a.etapa] - ORDEN_ETAPA[b.etapa] || b.fecha.localeCompare(a.fecha));
-  }, [correos, compras]);
+  }, [correos, compras, gt]);
 
   const conteo = useMemo(() => ({
     por_importar: filas.filter(f => f.etapa === 'por_importar').length,
@@ -249,7 +250,7 @@ function RecepcionContenido() {
       <div style={{ minWidth: 170, maxWidth: 240 }}>
         <EmisorCompra nombre={f.proveedor} identificacion={f.identificacion} correo={f.compra?.proveedor_correo} compras={compras} proveedores={proveedores}
           onVerComprobante={f.compra ? () => setDetalle(f.compra!) : f.etapa === 'por_importar' ? () => abrirImportarCorreos([f.correo!]) : undefined} />
-        {f.identificacion && <div style={{ fontSize: 11, color: C.n700 }}>{esGuatemalaActual() ? 'NIT' : 'Céd.'} {f.identificacion}</div>}
+        {f.identificacion && <div style={{ fontSize: 11, color: C.n700 }}>{esGuatemalaActual() ? (/^\d{13}$/.test(f.identificacion) ? 'CUI' : 'NIT') : 'Céd.'} {f.identificacion}</div>}
         {contabilidad && f.compra?.cuenta_proveedor && <div style={{ fontSize: 10.5, color: C.n700, fontVariantNumeric: 'tabular-nums' }}>Cta. {f.compra.cuenta_proveedor}</div>}
       </div>
     ) },
@@ -329,7 +330,7 @@ function RecepcionContenido() {
             ...(puede('fe.compras.fec') ? [gt
               ? { label: 'Factura especial', ayuda: 'La emites tú cuando el vendedor no está inscrito en el IVA; retiene ISR e IVA.', onClick: () => { window.location.href = URL_NUEVA_FEC; } }
               : { label: 'Factura electrónica de compra', ayuda: 'La emites tú cuando el proveedor no está inscrito y no te factura.', onClick: () => { window.location.href = URL_NUEVA_FEC; } }] : []),
-            ...(gt && puede('fe.compras.importar') ? [
+            ...(gt && puede('fe.compras.fisica') ? [
               { label: 'Compra física', ayuda: 'Factura en papel u otro documento que no pasa por un certificador.', onClick: () => setFisicaOpen(true) },
             ] : []),
           ]} />
@@ -362,7 +363,7 @@ function RecepcionContenido() {
         <div style={{ flex: 1, minHeight: 0, overflow: 'auto', paddingBottom: 16 }}>
           {tabId === 'fec' ? <FacturasCompraLista filas={fecs ? listaFec.filasPagina : null} total={fecs?.length ?? 0} contabilidad={contabilidad} vacio={listaFec.vacio('')} /> : cargando ? <p style={{ fontSize: 12, color: C.n700 }}>Cargando…</p> : (
             <DocumentosTable
-              columns={contabilidad ? columnas : columnas.filter(c => c.key !== 'asiento')}
+              columns={columnas.filter(c => (contabilidad || c.key !== 'asiento') && !(gt && c.key === 'actividad'))}
               rows={pagina}
               rowKey={f => f.key}
               selected={selected}

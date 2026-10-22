@@ -6,6 +6,12 @@ import { Filtros, aplicarFiltros, enVista, filtrosIniciales, fmtFechaHora, simbo
 import { interpretarError } from '@/lib/erroresHacienda';
 import { AvisoReporte, BarraFiltros, Cargando, Encabezado, Enlace, Fila, FilaTotal, FilaVacia, Monto, ReporteLayout, Tabla, Td, TdTotal, Th, descripcionFiltros, txtMonto } from './comun/ui';
 import { esGuatemalaActual, segunPais } from '@/lib/paisActual';
+import { nombreCompraGT, nombreDte } from '@/lib/perfilPais';
+
+// Guatemala: nombres de FEL (DTE, serie y número, autorización)
+const gtR = () => esGuatemalaActual();
+const nombreTipo = (c: { lado: string; tipo: string; tipoDte: string }) => (!gtR() ? c.tipo : c.lado === 'compra' ? nombreCompraGT(c.tipoDte, c.tipo) : nombreDte(c.tipoDte));
+const sinNumero = () => (gtR() ? 'Sin autorización' : 'Sin consecutivo');
 
 const TABS = ['Ventas', 'Compras'] as const;
 const INICIAL = filtrosIniciales();
@@ -56,12 +62,12 @@ export default function ComprobantesRechazados() {
 
   return (
     <ReporteLayout
-      titulo="Comprobantes rechazados" filtros={filtros} onExportar={() => setExportOpen(true)} permisoExportar="fe.reportes.rechazados.exportar"
+      titulo={gtR() ? 'Documentos rechazados' : 'Comprobantes rechazados'} filtros={filtros} onExportar={() => setExportOpen(true)} permisoExportar="fe.reportes.rechazados.exportar"
       tabs={[`Ventas (${conteoPorLado.venta})`, `Compras (${conteoPorLado.compra})`]} tab={tab}
       onTab={i => { setTab(i); setPage(1); }}
       barra={
         <BarraFiltros actividades={esGuatemalaActual() ? undefined : actividades} filtros={filtros} inicial={INICIAL} onChange={f => { setFiltros(f); setPage(1); }} mostrarEstado={false}
-          placeholder={esVentas ? 'Busca cliente o consecutivo…' : 'Busca proveedor o consecutivo…'}
+          placeholder={gtR() ? (esVentas ? 'Busca cliente, serie o número…' : 'Busca proveedor, serie o número…') : esVentas ? 'Busca cliente o consecutivo…' : 'Busca proveedor o consecutivo…'}
           conteo={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
             <span><b style={{ color: C.error }}>{filas.length}</b> comprobante{filas.length === 1 ? '' : 's'} rechazado{filas.length === 1 ? '' : 's'}</span>
             <span style={{ display: 'inline-flex', border: `1px solid ${C.n500}`, borderRadius: 6, overflow: 'hidden' }}>
@@ -74,7 +80,10 @@ export default function ComprobantesRechazados() {
       }
       aviso={
         <AvisoReporte>
-          {esVentas
+          {gtR()
+            ? (esVentas ? 'Un DTE rechazado no fue certificado y no tiene validez fiscal: corrige el dato indicado en el motivo y emítelo de nuevo. Estos montos no suman en los reportes fiscales.'
+              : 'Compras que tu empresa rechazó: no entran al libro de compras ni generan crédito fiscal.')
+            : esVentas
             ? 'Un comprobante rechazado no tiene validez fiscal: corrige el dato indicado en el motivo y emite un comprobante nuevo. Estos montos no suman en los reportes fiscales.'
             : segunPais('Compras rechazadas por Hacienda o por tu empresa con el acuse. No generan crédito fiscal.')}
         </AvisoReporte>
@@ -103,7 +112,7 @@ export default function ComprobantesRechazados() {
       ) : (
       <Tabla minWidth={1050}>
         <Encabezado>
-          <Th>{colContraparte}</Th><Th>Tipo de comprobante</Th><Th>Consecutivo</Th><Th>Fecha de emisión</Th>
+          <Th>{colContraparte}</Th><Th>{gtR() ? 'Tipo de DTE' : 'Tipo de comprobante'}</Th><Th>{gtR() ? 'Serie y número' : 'Consecutivo'}</Th><Th>Fecha de emisión</Th>
           <Th>{colOrigen}</Th><Th>Motivo del rechazo</Th><Th right>Total</Th>
         </Encabezado>
         <tbody>
@@ -112,11 +121,11 @@ export default function ComprobantesRechazados() {
             : pagina.map((c, i) => (
               <Fila key={c.id} i={i}>
                 <Td>{c.contraparte}</Td>
-                <Td nowrap>{c.tipo}</Td>
+                <Td nowrap>{nombreTipo(c)}</Td>
                 <Td nowrap>
                   {esVentas && c.consecutivo
                     ? <Enlace onClick={() => router.push(`/facturacion/emitidos/${c.id.replace('#', '')}`)}>{c.consecutivo}</Enlace>
-                    : c.consecutivo || <span style={{ color: C.error }}>Sin consecutivo</span>}
+                    : c.consecutivo || <span style={{ color: C.error }}>{sinNumero()}</span>}
                 </Td>
                 <Td nowrap>{fmtFechaHora(c.fecha)}</Td>
                 <Td nowrap>{c.origen}</Td>
@@ -147,17 +156,17 @@ export default function ComprobantesRechazados() {
             onClose={() => setExportOpen(false)}
           />
         ) : <ExportListModal
-          title={`Comprobantes rechazados: ${TABS[tab]}`}
+          title={`${gtR() ? 'Documentos rechazados' : 'Comprobantes rechazados'}: ${TABS[tab]}`}
           subtitulo={descripcionFiltros({ ...filtros, estados: new Set(['Rechazado']) })}
           columns={[
-            { key: 'contraparte', label: colContraparte }, { key: 'tipo', label: 'Tipo de comprobante' },
-            { key: 'consecutivo', label: 'Consecutivo' }, { key: 'fecha', label: 'Fecha de emisión' },
+            { key: 'contraparte', label: colContraparte }, { key: 'tipo', label: gtR() ? 'Tipo de DTE' : 'Tipo de comprobante' },
+            { key: 'consecutivo', label: gtR() ? 'Serie y número' : 'Consecutivo' }, { key: 'fecha', label: 'Fecha de emisión' },
             { key: 'origen', label: colOrigen }, { key: 'motivo', label: 'Motivo del rechazo' },
             { key: 'total', label: 'Total', align: 'right' },
           ]}
           rows={[
             ...filas.map(c => ({
-              contraparte: c.contraparte, tipo: c.tipo, consecutivo: c.consecutivo || 'Sin consecutivo', fecha: fmtFechaHora(c.fecha),
+              contraparte: c.contraparte, tipo: nombreTipo(c), consecutivo: c.consecutivo || sinNumero(), fecha: fmtFechaHora(c.fecha),
               origen: c.origen, motivo: c.motivoRechazo ?? sinMotivo(), total: txtMonto(enVista(c, c.total, filtros), sym),
             })),
             { contraparte: 'Totalizado', tipo: '', consecutivo: '', fecha: '', origen: '', motivo: '', total: txtMonto(total, sym) },

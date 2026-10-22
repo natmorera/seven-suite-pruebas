@@ -59,7 +59,8 @@ export interface TerceroFila {
 }
 interface PerfilMin { cuentaCode?: string; auxId?: string; numeroIdentificacion?: string }
 
-export const soloDigitos = (s: string | null | undefined) => String(s ?? '').replace(/\D/g, '');
+// Identificación sin guiones ni espacios (el NIT de Guatemala puede terminar en K)
+export const soloDigitos = (s: string | null | undefined) => String(s ?? '').toUpperCase().replace(/[^\dK]/g, '');
 export function normalizar(s: string) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     .replace(/\b(s\.?\s?a\.?|sociedad anonima|ltda\.?|limitada|srl|s\.?r\.?l\.?|de|del|la|el|los|las|y|cia)\b/g, ' ')

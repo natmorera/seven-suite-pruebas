@@ -3,17 +3,14 @@
 import type { AsignacionImpresora, Consecutivo, TipoCambio, TipoDocumento } from './datos';
 
 const consecutivos: Consecutivo[] = [
-  { id: 'cs1', tipo: 'Reservas', formato: '{N:4}', reinicio: 'Nunca', emitidos: 4200 },
-  { id: 'cs2', tipo: 'Registros (check-in)', formato: '{N:4}', reinicio: 'Nunca', emitidos: 1197 },
+  { id: 'cs1', tipo: 'Reservas (RE)', formato: 'RE-{N:4}', reinicio: 'Nunca', emitidos: 4200 },
+  { id: 'cs2', tipo: 'Reservas de agencia · rooming list (RL)', formato: 'RL-{N:4}', reinicio: 'Nunca', emitidos: 318 },
   { id: 'cs3', tipo: 'Cargos', formato: '{N:1}', reinicio: 'Nunca', emitidos: 6 },
-  { id: 'cs4', tipo: 'Facturas electrónicas', formato: '0010000101{N:10}', reinicio: 'Nunca', emitidos: 4511 },
-  { id: 'cs5', tipo: 'Notas de crédito', formato: '0010000103{N:10}', reinicio: 'Nunca', emitidos: 12 },
   { id: 'cs6', tipo: 'Facturas de folios externos', formato: 'FE-{N:6}', reinicio: 'Nunca', emitidos: 0 },
   { id: 'cs7', tipo: 'Recibos de pago', formato: 'RC-{N:6}', reinicio: 'Nunca', emitidos: 2310 },
   { id: 'cs8', tipo: 'Depósitos en garantía', formato: 'DG-{N:5}', reinicio: 'Nunca', emitidos: 381 },
   { id: 'cs9', tipo: 'Canje de divisas', formato: 'CD-{AAAA}-{N:4}', reinicio: 'Anual', emitidos: 148 },
   { id: 'cs10', tipo: 'Cierres de caja', formato: 'CC-{AAAA}{MM}{N:3}', reinicio: 'Mensual', emitidos: 5 },
-  { id: 'cs11', tipo: 'Consultas de rooming', formato: '{N:4}', reinicio: 'Nunca', emitidos: 1395 },
 ];
 
 const tiposDocumento: TipoDocumento[] = [

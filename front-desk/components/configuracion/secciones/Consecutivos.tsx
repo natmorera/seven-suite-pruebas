@@ -36,10 +36,7 @@ export default function Consecutivos() {
   const [editando, setEditando] = useState<Consecutivo | null>(null);
   return (
     <ConfigCard title="Consecutivos de documentos" subtitle="Cómo se numera cada tipo de documento.">
-      <Aviso>
-        El contador lo lleva el sistema: sube solo al emitir cada documento y no se retrocede. Año, mes y reinicio salen de la fecha
-        hotelera del documento. Un cambio de formato rige solo para los documentos nuevos; los ya emitidos conservan su número.
-      </Aviso>
+      <Aviso>Los consecutivos de las facturas electrónicas y las notas de crédito se configuran en Digital Invoices.</Aviso>
       <Tabla headers={['Tipo', 'Formato', 'Reinicio', 'Emitidos', 'Próximo número (hoy)', 'Acciones']} anchos={{ 3: 90, 5: 80 }} alinearDerecha={[3]}>
         {l.map(c => (
           <Fila key={c.id}>

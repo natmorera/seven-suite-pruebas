@@ -18,9 +18,29 @@ const conceptoBase = (id: string, descripcion: string, agrupadoEn: string): Conc
 });
 export const conceptos = (pref: string, agrup: string, nombres: string[]) => nombres.map((n, i) => conceptoBase(`${pref}${i}`, n, agrup));
 
+/** Cupos garantizados de ejemplo: [tipo, tarifa, desde, hasta, cupos] → un valor por día en el tarifario. */
+const CUPOS_INICIALES: Record<string, number> = Object.fromEntries(([
+  ['t1', 'ta1', '2026-10-01', '2026-12-20', 4], ['t2', 'ta1', '2026-10-01', '2026-12-20', 2],
+  ['t1', 'ta4', '2026-11-01', '2027-01-31', 3], ['t6', 'ta4', '2026-12-15', '2027-01-10', 1],
+  ['t3', 'ta3', '2026-10-10', '2026-11-30', 2],
+] as const).flatMap(([tipo, tarifa, desde, hasta, n]) => {
+  const out: [string, number][] = [];
+  for (let d = new Date(desde + 'T12:00:00'); d <= new Date(hasta + 'T12:00:00'); d.setDate(d.getDate() + 1)) {
+    const dia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    out.push([`${tipo}|${tarifa}|${dia}|Cupos`, n]);
+  }
+  return out;
+}));
+
+const contrato = (id: string, codigo: string, nombre: string, empresa: string, mercado: string, desde: string, hasta: string, tarifa: string, extra: Partial<Contrato> = {}): Contrato => ({
+  id, codigo, nombre, nacionalidad: '', empresa, mercado, descuento: '', tarifa, tasaFija: 0, depGarantia: false, cSab: 1, cpl: false, modoPago: '', webCheckin: true,
+  cuenta: '', maxDias: 0, saldoMax: 0, desde, hasta, activo: true, observaciones: '',
+  servicios: [], impuestos: [{ id: 'ci1', impuesto: 'im3', incluido: true }, { id: 'ci2', impuesto: 'im6', incluido: true }], politicas: {}, restricciones: [], ...extra,
+});
+
 const tarifaBase = (id: string, nombre: string, precio: number | null, activo = true): Tarifa => ({
   id, nombre, activo, moneda: 'USD - Dólar Americano',
-  base: { t1: precio, t2: precio, t3: precio, t4: precio === null ? null : precio + 40, t5: precio === null ? null : precio + 60 },
+  base: { t1: precio, t2: precio, t3: precio, t4: precio === null ? null : precio + 40, t5: precio === null ? null : precio + 60, t6: precio === null ? null : precio + 180 },
   derivaDe: null, metodo: 'Porcentaje', ajusteImporte: 0, ajustePct: 0,
   extras: { derivar: false, tipo: 'Importe', importe: 0, pct: 0, adulto: 35, nino: 20 },
   restricciones: { estMin: 1, estMax: 30 },
@@ -75,24 +95,29 @@ export const INICIAL = {
   ] as Regimen[],
 
   empresas: [
-    { id: 'em1', descripcion: 'Agencias', directo: false, color: '#4CAF50' },
-    { id: 'em2', descripcion: 'Amadeus', directo: true, color: '#EEB300' },
-    { id: 'em3', descripcion: 'Booking', directo: false, color: '#1984D9' },
-    { id: 'em4', descripcion: 'Corporativo', directo: false, color: '#FFFFFF' },
-    { id: 'em5', descripcion: 'Costa Rica Vacations', directo: false, color: '#FFFFFF' },
+    { id: 'em1', descripcion: 'Agencias', directo: false, color: '#4CAF50', activo: true },
+    { id: 'em2', descripcion: 'Amadeus', directo: true, color: '#EEB300', activo: true },
+    { id: 'em3', descripcion: 'Booking', directo: false, color: '#1984D9', activo: true },
+    { id: 'em4', descripcion: 'Corporativo', directo: false, color: '#FFFFFF', activo: true },
+    { id: 'em5', descripcion: 'Costa Rica Vacations', directo: false, color: '#FFFFFF', activo: true },
   ] as Empresa[],
-  mercados: ['Agencias', 'Agencias Complementary (CPL)', 'Corporativo', 'Incentivos', "OTA's"].map((d, i) => ({ id: 'm' + i, descripcion: d })) as Mercado[],
+  mercados: ['Agencias', 'Agencias Complementary (CPL)', 'Corporativo', 'Incentivos', "OTA's"].map((d, i) => ({ id: 'm' + i, descripcion: d, activo: true })) as Mercado[],
   agentes: [
-    { id: 'a1', nombre: 'Diego Montero Quirós', telefono: '', celular: '8888 8888', correo: 'corporate.sales@corporacioncsb.com' },
-    { id: 'a2', nombre: 'Isis Suárez Delgado', telefono: '', celular: '8888 8888', correo: 'ventas02@corporacioncsb.com' },
-    { id: 'a3', nombre: 'Jackelin Hernández Aguilar', telefono: '', celular: '8888 8888', correo: 'jefe.reservas@corporacioncsb.com' },
-    { id: 'a4', nombre: 'María Castillo', telefono: '', celular: '8888 8888', correo: 'ventas09@corporacioncsb.com' },
+    { id: 'a1', nombre: 'Diego Montero Quirós', telefono: '', celular: '8888 8888', correo: 'corporate.sales@corporacioncsb.com', activo: true },
+    { id: 'a2', nombre: 'Isis Suárez Delgado', telefono: '', celular: '8888 8888', correo: 'ventas02@corporacioncsb.com', activo: true },
+    { id: 'a3', nombre: 'Jackelin Hernández Aguilar', telefono: '', celular: '8888 8888', correo: 'jefe.reservas@corporacioncsb.com', activo: true },
+    { id: 'a4', nombre: 'María Castillo', telefono: '', celular: '8888 8888', correo: 'ventas09@corporacioncsb.com', activo: false },
   ] as Agente[],
-  referidores: [{ id: 'rf1', descripcion: 'Diego Montero Quirós' }, { id: 'rf2', descripcion: 'TripAdvisor' }, { id: 'rf3', descripcion: 'Recomendación de huésped' }] as Referidor[],
+  referidores: [{ id: 'rf1', descripcion: 'Diego Montero Quirós', activo: true }, { id: 'rf2', descripcion: 'TripAdvisor', activo: true }, { id: 'rf3', descripcion: 'Recomendación de huésped', activo: false }] as Referidor[],
   contratos: [
-    { id: 'k1', nombre: 'Agencias Tarifa Fits | 2025-2026', empresa: 'Agencias', mercado: 'Agencias', desde: '2025-11-01', hasta: '2026-10-31', cupos: 10, release: 7, tarifa: 'Agencias Tarifa Fits | 2025-2026', activo: true },
-    { id: 'k2', nombre: 'Ara Tours Fits 26', empresa: 'Agencias', mercado: 'Agencias', desde: '2026-01-01', hasta: '2026-12-31', cupos: 4, release: 14, tarifa: 'Ara Tours Fits 26', activo: true },
-    { id: 'k3', nombre: 'Costa Rica Vacations', empresa: 'Costa Rica Vacations', mercado: 'Agencias', desde: '2026-01-01', hasta: '2026-12-31', cupos: 6, release: 10, tarifa: 'Costa Rica Vacations', activo: true },
+    contrato('k1', 'AGENCIAS FITS', 'Agencias Tarifa Fits | 2025-2026', 'Agencias', 'Agencias', '2025-11-01', '2026-10-31', 'Agencias Tarifa Fits | 2025-2026', {
+      servicios: [{ id: 'sv1', servicio: 'ADV', porPax: true, pax: 1, automatico: false, precio: 85 }, { id: 'sv2', servicio: 'ADA', porPax: true, pax: 1, automatico: true, precio: 35 }],
+      politicas: { 'Español': 'Cancelación sin cargo hasta 7 días antes de la llegada. Pago a crédito 30 días.', 'Inglés': 'Free cancellation up to 7 days before arrival. 30-day credit.' },
+      restricciones: [{ id: 'rs1', tipo: 't1', regimen: '1BB', restriccion: 'Estancia mínima', estancias: 2, desde: '2026-12-20', hasta: '2027-01-05', aplicar: true }],
+      saldoMax: 15000, maxDias: 30, modoPago: 'Crédito',
+    }),
+    contrato('k2', 'ARA TOURS', 'Ara Tours Fits 26', 'Agencias', 'Agencias', '2026-01-01', '2026-12-31', 'Ara Tours Fits 26', { nacionalidad: 'Costa Rica', webCheckin: false }),
+    contrato('k3', 'CR VACATIONS', 'Costa Rica Vacations', 'Costa Rica Vacations', 'Agencias', '2026-01-01', '2026-12-31', 'Costa Rica Vacations', { depGarantia: true }),
   ] as Contrato[],
   tiposHab: [
     { id: 't1', nombre: 'Family', codigo: '400', base: 2, max: 5 },
@@ -100,6 +125,7 @@ export const INICIAL = {
     { id: 't3', nombre: 'Double', codigo: '300', base: 2, max: 3 },
     { id: 't4', nombre: 'Suite Ocean View Queen', codigo: '500Q', base: 2, max: 4 },
     { id: 't5', nombre: 'Suite Ocean View King', codigo: '500K', base: 2, max: 3 },
+    { id: 't6', nombre: 'Villa Familiar', codigo: '600V', base: 2, max: 10 },
   ] as TipoHab[],
   tarifas: [
     tarifaBase('ta1', 'Agencias Tarifa Fits | 2025-2026', 270),
@@ -113,7 +139,7 @@ export const INICIAL = {
     tarifaBase('ta9', "OTA'S", 305, false),
   ] as Tarifa[],
   /** Excepciones del tarifario: `${tipo}|${tarifa}|${aaaa-mm-dd}|${vista}` → valor */
-  tarifario: {} as Record<string, number | boolean>,
+  tarifario: CUPOS_INICIALES as Record<string, number | boolean>,
 
   gruposProd: [
     { id: 'gp1', nombre: 'Hospedaje', conceptos: conceptos('hs', 'Hospedaje', ['HOSPEDAJE HAB FAMILY', 'HOSPEDAJE HAB SUPERIOR', 'HOSPEDAJE GULF VIEW']) },
@@ -169,9 +195,9 @@ export const INICIAL = {
 
   tiposTarea: ['Ama de llaves', 'Mantenimiento', 'Transporte', 'Servicio al cliente'].map((d, i) => ({ id: 'tt' + i, descripcion: d })) as TipoTarea[],
   monedas: [
-    { id: 'mo1', codigo: 'CRC', descripcion: 'Colón Costarricense', simbolo: '₡', comision: 0, decimales: 2, convertible: true, facturable: true, referencia: true, activo: true, empresa: '100 - Hotel', depAdelantados: 'ADE - DEP ADELANTADO EFECTIVO', pagoParcial: 'ADT - DEP ADELANTADO TARJETA' },
-    { id: 'mo2', codigo: 'USD', descripcion: 'Dólar Americano', simbolo: '$', comision: 0, decimales: 2, convertible: false, facturable: false, referencia: false, activo: true, empresa: '100 - Hotel', depAdelantados: 'ADE - DEP ADELANTADO EFECTIVO', pagoParcial: 'ADT - DEP ADELANTADO TARJETA' },
-    { id: 'mo3', codigo: 'EUR', descripcion: 'Euro', simbolo: '€', comision: 0, decimales: 2, convertible: true, facturable: false, referencia: false, activo: true, empresa: '100 - Hotel', depAdelantados: '', pagoParcial: '' },
+    { id: 'mo1', codigo: 'CRC', descripcion: 'Colón costarricense', simbolo: '₡', referencia: true, activo: true },
+    { id: 'mo2', codigo: 'USD', descripcion: 'Dólar estadounidense', simbolo: '$', referencia: false, activo: true },
+    { id: 'mo3', codigo: 'EUR', descripcion: 'Euro', simbolo: '€', referencia: false, activo: true },
   ] as Moneda[],
   nacionalidades: [
     ['ALB', 'Albania', 'Albanés'], ['ALE', 'Alemania', 'Alemán'], ['ANT', 'Antigua y Barbuda', 'Inglés'], ['ARA', 'Arabia Saudita', 'Árabe'],

@@ -23,27 +23,66 @@ export function promedio(d: DatosHotel, dias: string[]) {
 }
 export const variacion = (a: number, b: number) => (b ? ((a - b) / b) * 100 : 0);
 
-// ── Rango de las tarjetas (1D · 7D · 1M · 1Y · Custom) ───────────────────────
-export type Rango = '1D' | '7D' | '1M' | '1Y' | 'Custom';
-export interface RangoSel { r: Rango; desde: string; hasta: string }
+// ── Período de las tarjetas (atajos relativos al día actual o rango personalizado) ──
+export type Sentido = 'futuro' | 'pasado';
+export interface Atajo { id: string; label: string; calc: (dia: string) => [string, string] }
+const finMes = (d: string) => { const f = new Date(d + 'T12:00:00'); return `${d.slice(0, 7)}-${String(new Date(f.getFullYear(), f.getMonth() + 1, 0).getDate()).padStart(2, '0')}`; };
+const inicioSemana = (d: string) => { const f = new Date(d + 'T12:00:00'); return sumarDias(d, -((f.getDay() + 6) % 7)); };
+export const ATAJOS: Record<Sentido, Atajo[]> = {
+  futuro: [
+    { id: 'hoy', label: 'Día actual', calc: d => [d, d] },
+    { id: 'p7', label: 'Próximos 7 días', calc: d => [d, sumarDias(d, 6)] },
+    { id: 'p28', label: 'Próximos 28 días', calc: d => [d, sumarDias(d, 27)] },
+    { id: 'p90', label: 'Próximos 90 días', calc: d => [d, sumarDias(d, 89)] },
+    { id: 'semana', label: 'Esta semana', calc: d => [inicioSemana(d), sumarDias(inicioSemana(d), 6)] },
+    { id: 'mes', label: 'Este mes', calc: d => [d.slice(0, 8) + '01', finMes(d)] },
+    { id: 'anio', label: 'Este año', calc: d => [d.slice(0, 5) + '01-01', d.slice(0, 5) + '12-31'] },
+  ],
+  pasado: [
+    { id: 'hoy', label: 'Día actual', calc: d => [d, d] },
+    { id: 'u7', label: 'Últimos 7 días', calc: d => [sumarDias(d, -6), d] },
+    { id: 'u28', label: 'Últimos 28 días', calc: d => [sumarDias(d, -27), d] },
+    { id: 'u90', label: 'Últimos 90 días', calc: d => [sumarDias(d, -89), d] },
+    { id: 'semana', label: 'Esta semana', calc: d => [inicioSemana(d), d] },
+    { id: 'mes', label: 'Este mes', calc: d => [d.slice(0, 8) + '01', d] },
+    { id: 'anio', label: 'Este año', calc: d => [d.slice(0, 5) + '01-01', d] },
+  ],
+};
+const finSemana = (d: string) => sumarDias(inicioSemana(d), 6);
+const sigMes1 = (d: string) => { const f = new Date(d + 'T12:00:00'); const n = new Date(f.getFullYear(), f.getMonth() + 1, 1); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-01`; };
+const finTrimestre = (d: string) => { const m = Number(d.slice(5, 7)); const fm = Math.ceil(m / 3) * 3; return finMes(`${d.slice(0, 5)}${String(fm).padStart(2, '0')}-01`); };
+/** Atajos del filtro corto «Período de fecha» (Disponibilidad): desde hoy hacia adelante. */
+export const ATAJOS_CORTOS: Atajo[] = [
+  { id: 'c-hoy', label: 'Hoy', calc: d => [d, d] },
+  { id: 'c-semana', label: 'Esta semana', calc: d => [d, finSemana(d)] },
+  { id: 'c-mes', label: 'Este mes', calc: d => [d, finMes(d)] },
+  { id: 'c-prox', label: 'Próximo mes', calc: d => [sigMes1(d), finMes(sigMes1(d))] },
+  { id: 'c-trim', label: 'Este trimestre', calc: d => [d, finTrimestre(d)] },
+  { id: 'c-anio', label: 'Este año', calc: d => [d, d.slice(0, 5) + '12-31'] },
+];
+/** `r` = id del atajo, o «personalizado» con `desde` / `hasta` fijos. */
+export interface RangoSel { r: string; desde: string; hasta: string }
+export const resolverRango = (dia: string, s: Sentido, r: RangoSel): [string, string] =>
+  r.r === 'personalizado' ? [r.desde, r.hasta] : (ATAJOS[s].find(a => a.id === r.r) ?? ATAJOS_CORTOS.find(a => a.id === r.r) ?? ATAJOS[s][1]).calc(dia);
 export const fmtCorto = (n: number) => (Math.abs(n) >= 1000 ? `${fmtNum(n / 1000, n >= 10000 ? 0 : 1)}K` : fmtNum(n, 0));
 
 // ── Página ──────────────────────────────────────────────────────────────────
-export const REPORTES_RAPIDOS = ['Informe Diario', 'Estado de Habitaciones', 'Ocupación por Nacionalidades', 'Mano corriente de Hoy', 'Caja del Día', 'Facturación del Día'] as const;
-export type ReporteRapido = (typeof REPORTES_RAPIDOS)[number];
+/** Menú «Reportes» del Dashboard: cada uno abre su pantalla. */
+export const REPORTES_RAPIDOS: { label: string; href: string }[] = [
+  { label: 'Informe diario', href: '/pronostico-estadisticas/reportes?r=diario' },
+  { label: 'Estado de las habitaciones', href: '/ama-de-llaves/estado-de-habitaciones' },
+  { label: 'Ocupación por nacionalidades', href: '/hospedaje/reportes?r=nacionalidades' },
+  { label: 'Transacciones diarias', href: '/facturacion/transacciones-diarias' },
+  { label: 'Caja del día', href: '/facturacion/caja' },
+  { label: 'Histórico de folios', href: '/facturacion/historico-de-folios' },
+];
 
-/** Noches de la tabla de Disponibilidad a partir del día actual. */
-export function diasDisponibilidad(dia: string, r: RangoSel) {
-  if (r.r === 'Custom') return rango(r.desde, r.hasta);
-  const n = { '1D': 1, '7D': 7, '1M': 30, '1Y': 365 }[r.r];
-  return rango(dia, sumarDias(dia, n - 1));
-}
-/** Días (o meses, en 1Y) del gráfico de ingresos que terminan en el día actual. */
-export function diasIngresos(dia: string, r: RangoSel) {
-  if (r.r === 'Custom') return rango(r.desde, r.hasta);
-  const n = { '1D': 0, '7D': 7, '1M': 29, '1Y': 364 }[r.r];
-  return rango(sumarDias(dia, -n), dia);
-}
+/** Período inicial de Disponibilidad (y el que deja «Limpiar»). */
+export const DISP_DEFECTO: RangoSel = { r: 'c-semana', desde: '', hasta: '' };
+/** Noches de la tabla de Disponibilidad. */
+export const diasDisponibilidad = (dia: string, r: RangoSel) => rango(...resolverRango(dia, 'futuro', r));
+/** Días del gráfico de ingresos (se agrupan por mes si pasan de 62). */
+export const diasIngresos = (dia: string, r: RangoSel) => rango(...resolverRango(dia, 'pasado', r));
 
 // ── Exportación de lo visible en cada pestaña ───────────────────────────────
 type SeccionExp = { titulo: string; headers: string[]; filas: (string | number)[][] };

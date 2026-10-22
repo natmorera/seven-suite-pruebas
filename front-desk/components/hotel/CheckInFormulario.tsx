@@ -5,10 +5,13 @@ import { C, FONT, radius } from '@/components/suite/tokens';
 import { Button, Checkbox, Input, Modal, Radio, Select, StatusBadge, Switch } from '@/components/suite/ui';
 import { Campo, Grid, IcTrash, IconButton, Popover, TextArea, LinkButton } from '@/components/configuracion/kit';
 import { useHotel, totalReserva, nuevoId } from './store';
-import { CONCEPTOS_CARGO, CONDICIONES, NACIONALIDADES, PAISES, REGIMENES, TIPOS, fmtF, noches, sumarDias, type Reserva } from './datos';
+import { CONCEPTOS_CARGO, CONDICIONES, NACIONALIDADES, PAISES, REGIMENES, noches, type Reserva } from './datos';
 import { Alerta, money } from './ui';
-import { TarjetaRegistro } from './TarjetaRegistro';
+import { EstadoRegistro, TarjetaRegistro } from './TarjetaRegistro';
+import { EstanciaTramos, erroresTramos, tramoInicial } from './checkinEstancia';
+import type { Tramo } from './reservas';
 import { Bloque, td, th } from './checkinPiezas';
+import { MontoCelda } from '@/components/suite/Monto';
 
 export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; onClose: () => void }) {
   const h = useHotel();
@@ -27,11 +30,16 @@ export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; o
   const esGrupo = multiple && original.modalidad === 'grupo';
   const preguntarFact = multiple && !esGrupo && original.facturaUnica === undefined;
   const [unica, setUnica] = useState(false);
+  // Estancia por tramos: un tramo = estancia normal; varios = cambio de habitación programado
+  const [tramos, setTramos] = useState<Tramo[]>(() => [tramoInicial(original)]);
+  const dividida = tramos.length > 1;
+  const t0 = tramos[0];
+  const registroListo = h.reservas.find(x => x.id === reservaId)?.tarjetaLista ?? false;
   const p = (x: Partial<Reserva>) => setR(v => ({ ...v, ...x }));
-  const n = noches(r.entrada, r.salida);
-  const libres = h.habitaciones.filter(x => x.numero === original.habitacion || ((x.estado === 'libre' || x.estado === 'checkin' || x.estado === 'checkinRL') && !x.sucia));
-  const total = totalReserva(r);
-  const alojamiento = r.precio * n;
+  const salida = tramos.at(-1)!.hasta;
+  const n = noches(r.entrada, salida);
+  const alojamiento = tramos.reduce((s, t) => s + t.precio * noches(t.desde, t.hasta), 0);
+  const total = totalReserva({ ...r, salida }) - r.precio * n + alojamiento;
   const cargos = total + r.descuento - alojamiento;
   const limite = perfil?.extra.maximo ? Number(perfil.extra.maximo) : 42500;
 
@@ -40,7 +48,7 @@ export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; o
     if (!r.nombre.trim()) e.push('Nombre del huésped principal');
     if (!r.identificacion.trim()) e.push('Identificación');
     if (!/^\S+@\S+\.\S+$/.test(r.email)) e.push('E-mail válido');
-    if (!r.habitacion) e.push('Habitación asignada');
+    e.push(...erroresTramos(tramos));
     r.adicionales.forEach((a, i) => { if (!a.nombre.trim() || !a.identificacion.trim()) e.push(`Nombre e identificación del adicional ${i + 1}`); });
     setErrores(e);
     if (!e.length) setConfirmar(true);
@@ -48,34 +56,28 @@ export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; o
 
   return (
     <>
-      <Modal open onClose={onClose} width={860}
+      <Modal open onClose={onClose} width={980}
         title={`Check in · ${r.cliente === 'Tarifa Corporativa' ? 'C. Empresa' : r.cliente === 'Agencia de Viajes' ? 'C. Agencia' : 'C. Directo'} · Reserva ${r.numero}`}
         footer={<>
-          <Button variant="secondary" onClick={() => setTarjeta(true)} style={{ marginRight: 'auto' }}>Tarjeta de registro</Button>
+          {errores.length > 0 ? <span role="alert" style={{ marginRight: 'auto', fontSize: 12.5, color: C.error }}>Completa: {errores.join(', ')}.</span> : <span style={{ marginRight: 'auto' }} />}
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-          <Button onClick={validar}>Confirmar Check in</Button>
+          <Button onClick={validar}>{dividida ? `Confirmar check-in · ${tramos.length} tramos` : 'Confirmar check-in'}</Button>
         </>}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontFamily: FONT }}>
-          <Grid cols={2}>
-            <div style={{ border: `1px solid ${C.n500}`, borderRadius: radius.md, padding: 12 }}>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500 }}>Período de estancia</p>
-              <Grid cols={3} gap={8}>
-                <Campo label="Entrada"><Input value={fmtF(r.entrada)} readOnly /></Campo>
-                <Campo label="Salida"><Input type="date" value={r.salida} min={sumarDias(r.entrada, 1)} onChange={v => v > r.entrada && p({ salida: v })} /></Campo>
-                <Campo label="Noches"><Input value={n} readOnly /></Campo>
-              </Grid>
-            </div>
-            <div style={{ border: `1px solid ${C.n500}`, borderRadius: radius.md, padding: 12 }}>
-              <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 500 }}>Habitación asignada</p>
-              <Grid cols={4} gap={8}>
-                <Campo label="Tipo"><Input value={TIPOS.find(t => t.id === r.tipo)?.nombre ?? r.tipo} readOnly /></Campo>
-                <Campo label="Hab. ⇄"><Select value={r.habitacion} onChange={v => p({ habitacion: v, tipo: h.habitaciones.find(x => x.numero === v)!.tipo })}
-                  options={[{ value: '', label: 'Asignar' }, ...libres.map(x => ({ value: x.numero, label: `${x.numero} · ${x.tipo}` }))]} /></Campo>
-                <Campo label="Adult. / Niños"><Input value={`${r.adultos} / ${r.ninos}`} readOnly /></Campo>
-                <Campo label="Régimen"><Input value={r.regimen} readOnly title={REGIMENES[r.regimen]} /></Campo>
-              </Grid>
-            </div>
-          </Grid>
+          {/* Registro del huésped: pendiente (enlaces del Web Check-In) o completada (tarjeta) */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 14px', border: `1px solid ${registroListo ? C.n500 : 'rgba(238,179,0,.45)'}`, background: registroListo ? C.n000 : 'rgba(238,179,0,.06)', borderRadius: radius.md }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+              <b style={{ fontWeight: 600 }}>Registro del huésped</b><EstadoRegistro r={h.reservas.find(x => x.id === reservaId) ?? original} />
+              <span style={{ color: C.n700 }}>{registroListo ? 'La tarjeta de registro está lista.' : 'Compártele el Web Check-In o complétalo aquí con él.'}</span>
+            </span>
+            <Button variant="secondary" style={{ height: 28 }} onClick={() => setTarjeta(true)}>{registroListo ? 'Ver tarjeta' : 'Completar registro'}</Button>
+          </div>
+          <EstanciaTramos r={original} tramos={tramos} onChange={setTramos} />
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 12, color: C.n700, padding: '0 2px' }}>
+            <span>Adultos / niños: <b style={{ color: C.n900, fontWeight: 500 }}>{r.adultos} / {r.ninos}</b></span>
+            <span title={REGIMENES[r.regimen]}>Régimen: <b style={{ color: C.n900, fontWeight: 500 }}>{r.regimen}</b></span>
+            <span>Tarifa: <b style={{ color: C.n900, fontWeight: 500 }}>{r.tarifa}</b></span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: C.n200, borderRadius: radius.md }}>
             <Switch checked={r.credito} onChange={b => p({ credito: b })} label="Aplicar crédito al cliente" />
             {r.credito && <span style={{ fontSize: 12, color: C.n700 }}>Límite de crédito: <b style={{ color: C.n900 }}>{money(limite)}</b></span>}
@@ -151,7 +153,7 @@ export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; o
                       <td style={{ ...td, width: 70 }}><Input type="number" value={c.cantidad} onChange={v => setC({ cantidad: Math.max(1, Number(v) || 1) })} /></td>
                       <td style={td}><Select value={c.concepto} onChange={v => setC({ concepto: v })} options={[{ value: '', label: 'Selecciona un concepto' }, ...CONCEPTOS_CARGO.map(x => ({ value: x, label: x }))]} /></td>
                       <td style={{ ...td, width: 100 }}><Input type="number" value={c.precio} onChange={v => setC({ precio: Math.max(0, Number(v) || 0) })} /></td>
-                      <td style={{ ...td, textAlign: 'right' }}>{money(c.precio * c.cantidad * dias)}</td>
+                      <td style={{ ...td, textAlign: 'right' }}><MontoCelda texto={money(c.precio * c.cantidad * dias)} /></td>
                       <td style={td}><IconButton label="Quitar cargo" tono="peligro" onClick={() => p({ cargos: r.cargos.filter(y => y.id !== c.id) })}><IcTrash /></IconButton></td>
                     </tr>);
                 })}</tbody>
@@ -177,17 +179,29 @@ export function FormularioCheckIn({ reservaId, onClose }: { reservaId: string; o
             <span>Importe pendiente</span><span style={{ color: total - r.pagado > 0 ? '#B45309' : C.n900 }}>{money(Math.max(0, total - r.pagado))}</span>
             <span>Dep. en garantía</span><span>{money(r.depGarantia)}</span>
           </div>
-          {errores.length > 0 && <p role="alert" style={{ margin: 0, fontSize: 12, color: C.error }}>Completa: {errores.join(', ')}.</p>}
         </div>
       </Modal>
-      {tarjeta && <TarjetaRegistro reservaId={reservaId} onClose={() => setTarjeta(false)} />}
+      {tarjeta && <TarjetaRegistro reservaId={reservaId} onClose={() => setTarjeta(false)} alCompletar={() => setTarjeta(false)} />}
       <Alerta open={confirmar} titulo="¿Deseas realizar el check-in?" onClose={() => setConfirmar(false)}
         onConfirm={() => {
-          h.checkIn(reservaId, { ...r, tarjetaLista: true, ...(preguntarFact ? { facturaUnica: unica } : {}) });
+          // Si el registro se completó mientras el formulario estaba abierto, sus datos mandan
+          const act = h.reservas.find(x => x.id === reservaId);
+          const delRegistro = act?.registro && act.registro.fecha !== original.registro?.fecha
+            ? { nombre: act.nombre, email: act.email, nacionalidad: act.nacionalidad, identificacion: act.identificacion, observaciones: act.observaciones, registro: act.registro } : {};
+          const rr = { ...r, ...delRegistro };
+          if (dividida) {
+            // Primero se guardan los datos del formulario, luego se crean los tramos y por último el check-in del primero
+            h.setReserva(reservaId, { ...rr, habitacion: original.habitacion, salida: original.salida, tipo: original.tipo, precio: original.precio, cuentas: original.cuentas });
+            h.dividirEstancia(reservaId, tramos);
+            h.checkIn(reservaId, { habitacion: t0.habitacion });
+          } else {
+            h.checkIn(reservaId, { ...rr, salida: t0.hasta, habitacion: t0.habitacion, tipo: t0.tipo, precio: t0.precio, tarjetaLista: true, ...(preguntarFact ? { facturaUnica: unica } : {}) });
+          }
           if (preguntarFact) h.editarReserva(hermanas.filter(x => x.id !== reservaId).map(x => ({ id: x.id, p: { facturaUnica: unica } })), 'Facturación definida en el check-in', 'Por definir', unica ? 'Una sola factura para todas las habitaciones' : 'Factura separada por habitación');
           setConfirmar(false); onClose();
         }}>
-        La reserva pasará a In-House y la habitación {r.habitacion} quedará ocupada; se habilitará el registro de cargos.
+        La reserva pasará a In-House y la habitación {t0.habitacion} quedará ocupada; se habilitará el registro de cargos.
+        {dividida && <span style={{ display: 'block', marginTop: 10 }}>Cambios de habitación programados: {tramos.slice(1).map(t => `hab. ${t.habitacion} desde el ${t.desde.slice(8, 10)}/${t.desde.slice(5, 7)}`).join(', ')}. Cada tramo queda como una línea confirmada de la misma reserva, en una sola factura.</span>}
         {preguntarFact && (
           <div role="radiogroup" aria-label="Facturación de la reserva" style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left' }}>
             <span style={{ fontSize: 12.5, fontWeight: 600, color: C.n900 }}>Esta reserva tiene {hermanas.length} habitaciones. ¿Cómo se factura?</span>

@@ -1,5 +1,5 @@
 // ── Modelo de datos de Usuarios y Permisos ──────────────────────────────────
-import { segunPais } from '@/lib/paisActual';
+import { segunPais, esGuatemalaActual } from '@/lib/paisActual';
 
 // subOptions: cuando una acción se otorga "por tipo" (p.ej. registrar asientos
 // solo de cierto origen, o crear cuentas solo de cierto nivel), en vez de
@@ -7,7 +7,8 @@ import { segunPais } from '@/lib/paisActual';
 // una lista de sub-opciones seleccionables. Se guarda en el Set como
 // "clave:subopcion" (p.ej. "bandeja.registrar:Manual"). El checkbox del
 // permiso queda marcado si tiene AL MENOS una sub-opción elegida.
-export interface PermLeaf { key: string; label: string; desc?: string; subOptions?: string[] }
+// optionLabels: cómo se muestra cada sub-opción cuando el nombre guardado no es el que se ve (p. ej. en Guatemala)
+export interface PermLeaf { key: string; label: string; desc?: string; subOptions?: string[]; optionLabels?: Record<string, string> }
 export interface PermGroup { key: string; label: string; info?: string; leaves: PermLeaf[]; flat?: boolean }
 export interface PermModule { key: string; label: string; leaves?: PermLeaf[]; groups?: PermGroup[] }
 export interface PermCategory { key: string; label: string; modules: PermModule[] }
@@ -585,6 +586,170 @@ export const PERMISSIONS_TREE: PermCategory[] = [
   },
 ];
 
+// ── Facturación electrónica en Guatemala (FEL de la SAT) ────────────────────
+// Las mismas pantallas con sus nombres de Guatemala. Las claves son las de
+// Costa Rica cuando la acción es la misma (así los permisos guardados siguen
+// sirviendo); solo lo propio de Guatemala tiene claves nuevas.
+const FACTURACION_GT: PermCategory = {
+  key: 'facturacion', label: 'FACTURACIÓN ELECTRÓNICA (FEL)',
+  modules: [
+    {
+      key: 'feventas', label: 'Ventas (DTE emitidos)',
+      groups: [
+        { key: 'feventas.docs', label: 'Documentos', flat: true, leaves: [
+          { key: 'fe.ventas.view', label: 'Ver ventas' },
+          { key: 'fe.ventas.emitir', label: 'Emitir DTE', desc: 'Elegí qué tipos de DTE puede emitir.',
+            subOptions: ['Factura electrónica', 'Factura cambiaria', 'Nota de crédito', 'Nota de débito', 'Recibo de anticipos'],
+            optionLabels: { 'Factura electrónica': 'Factura (FACT)', 'Factura cambiaria': 'Factura cambiaria (FCAM)', 'Nota de crédito': 'Nota de crédito (NCRE)', 'Nota de débito': 'Nota de débito (NDEB)', 'Recibo de anticipos': 'Recibo de anticipos (RANT)' } },
+          { key: 'fe.ventas.borrador', label: 'Guardar y eliminar borradores' },
+          { key: 'fe.ventas.refacturar', label: 'Corregir y volver a emitir los rechazados por el certificador' },
+          { key: 'fe.ventas.reenviar', label: 'Reenviar al certificador y consultar el estado' },
+          { key: 'fe.ventas.correo', label: 'Enviar por correo' },
+          { key: 'fe.ventas.descargar', label: 'Descargar PDF y XML certificado' },
+          { key: 'fe.ventas.importarexterno', label: 'Importar DTE emitidos con otro sistema' },
+        ]},
+        { key: 'feventas.recibos', label: 'Factura cambiaria', flat: true, leaves: [
+          { key: 'fe.recibos.abonar', label: 'Confirmar y deshacer el pago de los abonos' },
+        ]},
+        { key: 'feventas.recurrentes', label: 'Facturas recurrentes', flat: true, leaves: [
+          { key: 'fe.recurrentes.view', label: 'Ver recurrentes' },
+          { key: 'fe.recurrentes.editar', label: 'Crear, editar y terminar recurrencias' },
+          { key: 'fe.recurrentes.emitir', label: 'Emitir la siguiente factura' },
+        ]},
+      ],
+    },
+    {
+      key: 'fecompras', label: 'Compras (DTE recibidos)',
+      groups: [
+        { key: 'fecompras.docs', label: 'Compras', flat: true, leaves: [
+          { key: 'fe.compras.view', label: 'Ver compras' },
+          { key: 'fe.compras.importar', label: 'Importar DTE (XML), correos y Excel' },
+          { key: 'fe.compras.acuse', label: 'Aceptar o rechazar compras', desc: 'Las aceptadas entran al libro de compras.' },
+          { key: 'fe.compras.eliminar', label: 'Eliminar compras por importar' },
+          { key: 'fe.compras.exportar', label: 'Exportar XML' },
+          { key: 'fe.compras.fec', label: 'Emitir factura especial (FESP)', desc: 'Retiene ISR e IVA al vendedor.' },
+          { key: 'fe.compras.fisica', label: 'Registrar compras físicas (en papel)' },
+          { key: 'fe.compras.buzon', label: 'Configurar el buzón de correo' },
+        ]},
+      ],
+    },
+    {
+      key: 'fereportes', label: 'Reportes fiscales',
+      groups: [
+        { key: 'fereportes.libros', label: 'Libros de ventas y compras', leaves: [
+          { key: 'fe.reportes.libros.view', label: 'Ver libros de ventas y compras' },
+          { key: 'fe.reportes.libros.exportar', label: 'Exportar libros de ventas y compras' },
+        ]},
+        { key: 'fereportes.dte', label: 'Listado de DTE', leaves: [
+          { key: 'fe.reportes.dte.view', label: 'Ver Listado de DTE' },
+          { key: 'fe.reportes.dte.exportar', label: 'Exportar Listado de DTE' },
+        ]},
+        { key: 'fereportes.general', label: 'Reporte general', leaves: [
+          { key: 'fe.reportes.general.view', label: 'Ver Reporte general' },
+          { key: 'fe.reportes.general.exportar', label: 'Exportar Reporte general' },
+        ]},
+        { key: 'fereportes.importe', label: 'Impuestos por unidad gravable', leaves: [
+          { key: 'fe.reportes.importe.view', label: 'Ver impuestos por unidad gravable' },
+          { key: 'fe.reportes.importe.exportar', label: 'Exportar impuestos por unidad gravable' },
+        ]},
+        { key: 'fereportes.rechazados', label: 'Documentos rechazados', leaves: [
+          { key: 'fe.reportes.rechazados.view', label: 'Ver Documentos rechazados' },
+          { key: 'fe.reportes.rechazados.exportar', label: 'Exportar Documentos rechazados' },
+        ]},
+      ],
+    },
+    {
+      key: 'feconfig', label: 'Configuración de facturación',
+      groups: [
+        { key: 'feconfig.tributaria', label: 'Información tributaria (Empresa)', leaves: [
+          { key: 'fe.config.tributaria.view', label: 'Ver información tributaria' },
+          { key: 'fe.config.tributaria.editar', label: 'Editar dirección fiscal (departamento, municipio y código postal), correos y teléfono' },
+          { key: 'fe.config.tributaria.actividades', label: 'Editar afiliación al IVA, régimen de ISR y frases' },
+          { key: 'fe.config.tributaria.credenciales', label: 'Agregar y editar certificadores (usuario, contraseña e identificador) y elegir el principal' },
+          { key: 'fe.config.tributaria.ambiente', label: 'Cambiar el ambiente (pruebas o producción)' },
+        ]},
+        { key: 'feconfig.sucursales', label: 'Establecimientos', leaves: [
+          { key: 'fe.config.sucursales.view', label: 'Ver establecimientos' },
+          { key: 'fe.config.sucursales.crear', label: 'Crear establecimiento', desc: 'Además, el plan debe permitirlo.' },
+          { key: 'fe.config.sucursales.editar', label: 'Editar establecimiento (nombre, dirección, teléfono y correo)' },
+          { key: 'fe.config.sucursales.codigo', label: 'Cambiar el código del establecimiento' },
+        ]},
+        { key: 'feconfig.cajas', label: 'Cajas', leaves: [
+          { key: 'fe.config.cajas.view', label: 'Ver cajas' },
+          { key: 'fe.config.cajas.crear', label: 'Crear caja' },
+          { key: 'fe.config.cajas.editar', label: 'Editar caja' },
+          { key: 'fe.config.cajas.eliminar', label: 'Eliminar caja' },
+        ]},
+        { key: 'feconfig.impuestos', label: 'Unidades gravables', leaves: [
+          { key: 'fe.config.impuestos.view', label: 'Ver unidades gravables' },
+          { key: 'fe.config.impuestos.crear', label: 'Crear unidad gravable' },
+          { key: 'fe.config.impuestos.editar', label: 'Editar unidad gravable (valor, cuenta y estado)' },
+          { key: 'fe.config.impuestos.eliminar', label: 'Eliminar unidad gravable' },
+        ]},
+        { key: 'feconfig.unidades', label: 'Unidades de medida', leaves: [
+          { key: 'fe.config.unidades.view', label: 'Ver unidades de medida' },
+          { key: 'fe.config.unidades.crear', label: 'Crear unidad de medida' },
+          { key: 'fe.config.unidades.editar', label: 'Editar unidad de medida' },
+          { key: 'fe.config.unidades.eliminar', label: 'Eliminar unidad de medida' },
+        ]},
+        { key: 'feconfig.descuentos', label: 'Descuentos', leaves: [
+          { key: 'fe.config.descuentos.view', label: 'Ver descuentos' },
+          { key: 'fe.config.descuentos.crear', label: 'Crear descuento' },
+          { key: 'fe.config.descuentos.editar', label: 'Editar descuento' },
+          { key: 'fe.config.descuentos.eliminar', label: 'Eliminar descuento' },
+        ]},
+        { key: 'feconfig.receptores', label: 'Receptores', leaves: [
+          { key: 'fe.config.receptores.view', label: 'Ver receptores' },
+          { key: 'fe.config.receptores.crear', label: 'Crear receptor' },
+          { key: 'fe.config.receptores.editar', label: 'Editar datos (NIT, CUI o pasaporte, nombre, dirección y correos)' },
+          { key: 'fe.config.receptores.credito', label: 'Editar días de crédito' },
+          { key: 'fe.config.receptores.cuenta', label: 'Crear su cuenta contable' },
+        ]},
+        { key: 'feconfig.grupos', label: 'Clasificación de producto', leaves: [
+          { key: 'fe.config.grupos.view', label: 'Ver clasificaciones de producto' },
+          { key: 'fe.config.grupos.crear', label: 'Crear clasificación de producto' },
+          { key: 'fe.config.grupos.editar', label: 'Editar clasificación de producto' },
+          { key: 'fe.config.grupos.eliminar', label: 'Eliminar clasificación de producto' },
+        ]},
+        { key: 'feconfig.productos', label: 'Productos / Servicios', leaves: [
+          { key: 'fe.config.productos.view', label: 'Ver productos y servicios' },
+          { key: 'fe.config.productos.crear', label: 'Crear producto o servicio' },
+          { key: 'fe.config.productos.editar', label: 'Editar producto o servicio' },
+          { key: 'fe.config.productos.eliminar', label: 'Eliminar productos y servicios' },
+          { key: 'fe.config.productos.importar', label: 'Importar desde Excel' },
+          { key: 'fe.config.productos.exportar', label: 'Descargar el listado' },
+        ]},
+        { key: 'feconfig.cuentas', label: 'Cuentas contables de facturación', leaves: [
+          { key: 'fe.config.cuentas.view', label: 'Ver cuentas contables de facturación' },
+          { key: 'fe.config.cuentas.editar', label: 'Editar cuentas contables de facturación' },
+        ]},
+      ],
+    },
+    {
+      key: 'fedashboard', label: 'Dashboard de facturación',
+      leaves: [
+        { key: 'fe.dashboard.view', label: 'Ver la pestaña Factura electrónica del Dashboard' },
+        { key: 'fe.dashboard.card_avisos', label: 'Tarjeta: Avisos de facturas emitidas solas' },
+        { key: 'fe.dashboard.card_recurrentes', label: 'Tarjeta: Facturas recurrentes' },
+        { key: 'fe.dashboard.card_creditos', label: 'Tarjeta: Facturas cambiarias por cobrar' },
+        { key: 'fe.dashboard.card_indicadores', label: 'Tarjeta: Indicadores (certificados, rechazados, ingresos)' },
+        { key: 'fe.dashboard.card_ultimos', label: 'Tarjeta: Últimos documentos' },
+        { key: 'fe.dashboard.card_compras', label: 'Tarjeta: Compras por aceptar' },
+        { key: 'fe.dashboard.card_no_enviados', label: 'Tarjeta: Documentos no enviados por correo' },
+      ],
+    },
+  ],
+};
+// Las claves nuevas de Guatemala que equivalen a una de Costa Rica (para los permisos guardados antes)
+export const EQUIVALENTES_GT: Record<string, string> = {
+  'fe.compras.fisica': 'fe.compras.importar',
+  'fe.reportes.libros.view': 'fe.reportes.iva.view', 'fe.reportes.libros.exportar': 'fe.reportes.iva.exportar',
+  'fe.reportes.dte.view': 'fe.reportes.actividad.view', 'fe.reportes.dte.exportar': 'fe.reportes.actividad.exportar',
+  'fe.config.unidades.view': 'fe.config.productos.view', 'fe.config.unidades.crear': 'fe.config.productos.crear',
+  'fe.config.unidades.editar': 'fe.config.productos.editar', 'fe.config.unidades.eliminar': 'fe.config.productos.eliminar',
+  'fe.ventas.emitir:Factura cambiaria': 'fe.ventas.emitir:Factura electrónica',
+};
+
 // ── Árbol según los módulos contratados ────────────────────────────────────
 // Solo facturación (sin Contabilidad): fuera todo lo contable (asientos,
 // bancos, reportes y estados contables, catálogo, parámetros contables,
@@ -595,13 +760,15 @@ export const PERMISSIONS_TREE: PermCategory[] = [
 const ARBOL_COMPLETO: PermCategory[] = PERMISSIONS_TREE.map(c => ({ ...c, modules: [...c.modules] }));
 const MODULOS_CONTABLES = new Set(['bandeja', 'bancos', 'reportes', 'estadosfin', 'paramgen', 'catalogo', 'clientesprov', 'actividadbancaria']);
 const HOJAS_CONTABLES = new Set(['fe.config.cuentas.view', 'fe.config.cuentas.editar', 'fe.config.receptores.cuenta', 'empresa.consecutivos']);
-let arbolDe = 'completo';
+let arbolDe = 'completo-CR';
 export function ajustarArbolPermisos(m: { contabilidad: boolean; facturacion: boolean }) {
-  const clave = `${m.contabilidad}-${m.facturacion}`;
+  const gt = esGuatemalaActual();
+  const clave = `${m.contabilidad}-${m.facturacion}-${gt ? 'GT' : 'CR'}`;
   if (clave === arbolDe) return;
   arbolDe = clave;
   const filtrarHojas = (l: PermLeaf[]) => l.filter(h => m.contabilidad || (!HOJAS_CONTABLES.has(h.key) && !h.key.startsWith('dashboard.card_')));
   const nuevo: PermCategory[] = ARBOL_COMPLETO
+    .map(c => (gt && c.key === 'facturacion' ? FACTURACION_GT : c))
     .filter(c => m.facturacion || c.key !== 'facturacion')
     .map(c => ({
       ...c,
@@ -619,13 +786,13 @@ export function ajustarArbolPermisos(m: { contabilidad: boolean; facturacion: bo
 }
 
 // Un permiso general de reportes fiscales equivale al de cada reporte.
-const REPORTES_FISCALES = ['iva', 'general', 'importe', 'actividad', 'rechazados'];
+const REPORTES_FISCALES = ['iva', 'general', 'importe', 'actividad', 'rechazados', 'libros', 'dte'];
 // Permisos generales de configuración de facturación: cada uno equivale a
 // todas las acciones de las secciones que cubre.
 export const CONFIG_FE_VIEJOS: Record<string, string[]> = {
   'fe.config.tributaria': ['tributaria'],
   'fe.config.sucursales': ['sucursales', 'cajas'],
-  'fe.config.productos': ['productos', 'grupos'],
+  'fe.config.productos': ['productos', 'grupos', 'unidades'],
   'fe.config.impuestos': ['impuestos', 'descuentos', 'exoneraciones'],
   'fe.config.receptores': ['receptores'],
   'fe.config.cuentas': ['cuentas'],
@@ -636,7 +803,7 @@ export function normalizarPermisos(lista: Iterable<string>): Set<string> {
     if (!s.has(viejo)) continue;
     s.delete(viejo);
     const prefijos = secciones.map(x => `fe.config.${x}.`);
-    ARBOL_COMPLETO.flatMap(allLeafKeysOfCategory).filter(k => prefijos.some(p => k.startsWith(p))).forEach(k => s.add(k));
+    [...ARBOL_COMPLETO.flatMap(allLeafKeysOfCategory), ...allLeafKeysOfCategory(FACTURACION_GT)].filter(k => prefijos.some(p => k.startsWith(p))).forEach(k => s.add(k));
   }
   for (const [viejo, accion] of [['fe.reportes.view', 'view'], ['fe.reportes.exportar', 'exportar']] as const) {
     if (!s.has(viejo)) continue;
@@ -646,9 +813,9 @@ export function normalizarPermisos(lista: Iterable<string>): Set<string> {
   return s;
 }
 // Cuántos permisos del usuario se ven en el árbol actual (sin los de módulos no contratados)
+// Cuenta como el total (totalLeavesInTree): un permiso con sub-opciones cuenta una vez.
 export function contarPermisosVisibles(perms: Set<string>): number {
-  const visibles = new Set(allLeafKeysGlobal());
-  return [...perms].filter(k => visibles.has(k)).length;
+  return PERMISSIONS_TREE.reduce((s, cat) => s + cat.modules.reduce((s2, m) => s2 + countChecked(m, perms), 0), 0);
 }
 
 export function isFirmaLeafKey(key: string): boolean {
@@ -673,7 +840,7 @@ function allLeafKeys(): string[] {
   ));
   return base.flatMap(l => l.subOptions ? l.subOptions.map(o=>`${l.key}:${o}`) : [l.key]);
 }
-const PERM_TODOS = new Set(allLeafKeys());
+const PERM_TODOS = new Set([...allLeafKeys(), ...allLeafKeysOfCategory(FACTURACION_GT)]);
 const PERM_BASICO = new Set(['dashboard.card_asientos','dashboard.card_situacion','bandeja.view']);
 
 const PERM_CONTADOR = new Set([
@@ -684,13 +851,15 @@ const PERM_CONTADOR = new Set([
   'analitico.view:Detalle','analitico.view_asientos','analitico.export:Individual','analitico.exportformato:PDF',
   // Facturación: consulta, compras y reportes fiscales
   'fe.ventas.view','fe.ventas.descargar','fe.ventas.correo','fe.compras.view','fe.compras.importar','fe.compras.acuse','fe.compras.exportar',
-  ...['iva','general','importe','actividad','rechazados'].flatMap(r => [`fe.reportes.${r}.view`, `fe.reportes.${r}.exportar`]),
+  ...['iva','general','importe','actividad','rechazados','libros','dte'].flatMap(r => [`fe.reportes.${r}.view`, `fe.reportes.${r}.exportar`]),
+  'fe.compras.fisica',
   'fe.config.cuentas.view','fe.config.cuentas.editar','fe.dashboard.view','fe.recurrentes.view',
   'fe.dashboard.card_compras',
 ]);
 // Facturación del día a día (recepción, caja)
 const PERM_FACTURADOR = [
   'fe.ventas.view','fe.ventas.emitir:Factura electrónica','fe.ventas.emitir:Tiquete electrónico','fe.ventas.emitir:Nota de crédito',
+  'fe.ventas.emitir:Factura cambiaria','fe.ventas.emitir:Recibo de anticipos',
   'fe.ventas.borrador','fe.ventas.reenviar','fe.ventas.correo','fe.ventas.descargar','fe.recibos.abonar',
   'fe.recurrentes.view','fe.recurrentes.emitir','fe.dashboard.view',
   'fe.dashboard.card_avisos','fe.dashboard.card_recurrentes','fe.dashboard.card_creditos','fe.dashboard.card_indicadores',
@@ -771,7 +940,7 @@ export function flatPermissionRows(): PermFlatRow[] {
   const rows: PermFlatRow[] = [];
   function pushLeaf(l: PermLeaf, categoria: string, modulo: string, grupo?: string) {
     if (l.subOptions) {
-      for (const o of l.subOptions) rows.push({ key: `${l.key}:${o}`, categoria, modulo, grupo, permiso: l.label, subopcion: o });
+      for (const o of l.subOptions) rows.push({ key: `${l.key}:${o}`, categoria, modulo, grupo, permiso: l.label, subopcion: l.optionLabels?.[o] ?? o });
     } else {
       rows.push({ key: l.key, categoria, modulo, grupo, permiso: l.label });
     }

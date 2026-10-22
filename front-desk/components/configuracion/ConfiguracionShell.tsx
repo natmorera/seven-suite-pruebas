@@ -1,29 +1,23 @@
 'use client';
 
-// Encabezado de Configuración: título de la sección + «Cancelar» / «Guardar cambios».
-// Los botones actúan sobre el store de toda la configuración (store.tsx):
-// Guardar fija los cambios y Cancelar los descarta (con confirmación). Como en Accounting,
-// los botones solo aparecen cuando se detectan cambios.
+// Marco de Configuración: título de la sección y, cuando hay cambios sin guardar, una barra al pie con
+// «Descartar» / «Guardar cambios». La barra actúa sobre el store de toda la configuración (store.tsx):
+// Guardar fija los cambios y Descartar los deshace (con confirmación). El header queda libre para las
+// acciones propias de cada pestaña.
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { CONFIG } from '@/components/layout/nav';
-import { Button, StatusBadge, Toast } from '@/components/suite/ui';
+import { Button, Toast } from '@/components/suite/ui';
+import { C } from '@/components/suite/tokens';
 import { Pantalla } from '@/components/layout/Pantalla';
-import { ConfigProvider, useConfig } from './store';
-import { PermisosProvider } from './permisos/store';
+import { useConfig } from './store';
 import { useConfirmar } from './kit';
 
 /** Usuarios y permisos guarda con sus propios botones (como en el resto de la suite). */
 const SIN_ACCIONES = ['/configuracion/usuarios-permisos'];
 
 export function ConfiguracionShell({ children }: { children: ReactNode }) {
-  return (
-    <ConfigProvider>
-      <PermisosProvider>
-        <Encabezado>{children}</Encabezado>
-      </PermisosProvider>
-    </ConfigProvider>
-  );
+  return <Encabezado>{children}</Encabezado>;
 }
 
 function Encabezado({ children }: { children: ReactNode }) {
@@ -36,16 +30,19 @@ function Encabezado({ children }: { children: ReactNode }) {
   const conAcciones = !SIN_ACCIONES.some((r) => pathname.startsWith(r));
 
   return (
-    <Pantalla titulo={titulo} izquierda={sucio ? <StatusBadge label="Cambios sin guardar" color="yellow" /> : undefined} conRanuras
-      acciones={conAcciones && sucio && (
-          <>
-            <Button variant="secondary"
-              onClick={() => pedir('Descartar cambios', 'Se perderán todos los cambios que no guardaste en Configuración. ¿Continuar?', () => { descartar(); setToast('Cambios descartados'); }, { accion: 'Descartar' })}>
-              Cancelar
-            </Button>
-            <Button onClick={() => { guardar(); setToast('Cambios guardados'); }}>Guardar cambios</Button>
-          </>
-        )}>
+    <Pantalla titulo={titulo} conRanuras
+      pie={conAcciones && sucio ? (
+        <>
+          <span style={{ marginRight: 'auto', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: C.n900 }}>
+            <i style={{ width: 8, height: 8, borderRadius: '50%', background: C.warning }} />Tienes cambios sin guardar
+          </span>
+          <Button variant="secondary"
+            onClick={() => pedir('Descartar cambios', 'Se perderán todos los cambios que no guardaste en Configuración. ¿Continuar?', () => { descartar(); setToast('Cambios descartados'); }, { accion: 'Descartar' })}>
+            Descartar
+          </Button>
+          <Button onClick={() => { guardar(); setToast('Cambios guardados'); }}>Guardar cambios</Button>
+        </>
+      ) : undefined}>
       {children}
       {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
       {dialogo}

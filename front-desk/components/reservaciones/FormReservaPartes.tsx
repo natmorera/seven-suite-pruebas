@@ -9,6 +9,7 @@ import { nuevoId } from '@/components/hotel/store';
 import { CONCEPTOS_CARGO, contratoDeTarifa, fmtF, fmtRango, noches, type Cargo, type DetallesReserva, type HuespedAdicional, type Perfil } from '@/components/hotel/datos';
 import { precioTarifa } from '@/components/hotel/reservas';
 import { TC, fmtMon } from '@/components/hotel/finanzas';
+import { MontoCelda } from '@/components/suite/Monto';
 
 export interface Huesped { nombre: string; identificacion: string; nacionalidad: string; email: string; telefono: string; adicionales: HuespedAdicional[] }
 export interface Linea { key: string; entrada: string; salida: string; tipo: string; hab: string; adultos: number; ninos: number; regimen: string; precio: number; manual: boolean; cargos: Cargo[]; huesped: Huesped; obs: string }
@@ -144,7 +145,7 @@ export function CargosLinea({ l, moneda, onClose, onGuardar }: { l: Linea; moned
               <td style={{ padding: 4, width: 130 }}><input type="date" value={c.hasta} min={c.desde} max={l.salida} aria-label="Hasta" onChange={e => set(c.id, { hasta: e.target.value })} className="suite-campo" style={ctl} /></td>
               <td style={{ padding: 4, width: 80 }}><input value={c.cantidad} aria-label="Cantidad" onChange={e => set(c.id, { cantidad: Math.max(0, Number(e.target.value) || 0) })} className="suite-campo" style={{ ...ctl, textAlign: 'right' }} /></td>
               <td style={{ padding: 4, width: 110 }}><input value={c.precio} aria-label="Precio" onChange={e => set(c.id, { precio: Math.max(0, Number(e.target.value.replace(/[^\d.]/g, '')) || 0) })} className="suite-campo" style={{ ...ctl, textAlign: 'right' }} /></td>
-              <td style={{ padding: 4, width: 120, fontSize: 12, textAlign: 'right' }}>{fmtMon(c.cantidad * c.precio * Math.max(1, noches(c.desde, c.hasta) || 1), moneda)}</td>
+              <td style={{ padding: 4, width: 120, fontSize: 12, textAlign: 'right' }}><MontoCelda texto={fmtMon(c.cantidad * c.precio * Math.max(1, noches(c.desde, c.hasta) || 1), moneda)} /></td>
               <td style={{ padding: 4 }}><button type="button" aria-label="Quitar cargo" onClick={() => setCs(cs.filter(x => x.id !== c.id))} style={{ border: 'none', background: 'none', color: C.error, cursor: 'pointer' }}><IcTrash /></button></td>
             </tr>
           ))}</tbody>

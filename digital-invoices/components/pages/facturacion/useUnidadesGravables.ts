@@ -16,5 +16,8 @@ export function useUnidadesGravablesActivas() {
     return () => { vivo = false; };
   }, [gt]);
   // Mientras carga (o si la unidad no está en el catálogo) se considera activa
-  return (impuesto: number, codigo: number) => !lista || lista.find(u => u.impuesto === impuesto && u.codigo === codigo)?.activo !== false;
+  const activa = (impuesto: number, codigo: number) => !lista || lista.find(u => u.impuesto === impuesto && u.codigo === codigo)?.activo !== false;
+  // Nombre con que se configuró la unidad (Configuración › Unidades gravables)
+  const nombre = (impuesto: number, codigo: number, porDefecto: string) => lista?.find(u => u.impuesto === impuesto && u.codigo === codigo)?.nombre || porDefecto;
+  return Object.assign(activa, { nombre });
 }

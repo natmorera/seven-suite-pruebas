@@ -73,7 +73,7 @@ export interface Reserva {
   nacionalidad: string; identificacion: string; email: string; telefono: string; vip: boolean;
   tarjetaLista: boolean; checkinEn: string | null; checkoutEn: string | null;
   cuentas: Cuenta[]; cargos: Cargo[]; adicionales: HuespedAdicional[]; descuento: number;
-  /** Reservas de varias habitaciones: cada habitación es una línea con el mismo `grupo` (número RD-4400_1, RD-4400_2…). */
+  /** Reservas de varias habitaciones: cada habitación es una línea con el mismo `grupo` (número RE-4400_1, RE-4400_2…). */
   grupo?: string; creada?: string; idExterno?: string; depRequerido?: number; detalles?: DetallesReserva;
   /** Reserva de varias habitaciones: «individual» (múltiple: cada habitación es su propia reserva y cuenta)
    *  o «grupo» (todo a una sola factura: folio de agencia con el hospedaje + una cuenta de consumo por habitación). */
@@ -81,6 +81,10 @@ export interface Reserva {
   /** Individual múltiple: se decide en el check-in. true = una sola factura; false = factura separada por habitación. */
   facturaUnica?: boolean;
   anulacion?: { fecha: string; usuario: string; motivo: string };
+  /** Estancia dividida en el check-in: id de la línea anterior (el huésped cambia de habitación al llegar a esta). */
+  continuaDe?: string;
+  /** Cómo se completó la tarjeta de registro: el huésped desde el Web Check-In o el colaborador en recepción. */
+  registro?: { origen: 'web' | 'recepcion'; fecha: string; idioma?: string; tipoDoc?: string; direccion?: string; firmada?: boolean };
 }
 
 export type TipoId = 'Cédula Física' | 'Cédula Jurídica' | 'DIMEX' | 'NITE' | 'Pasaporte';
@@ -115,6 +119,8 @@ export interface Movimiento { hora: string; concepto: string; monto: number }
 export interface Caja { id: string; nombre: string; estado: 'Abierta' | 'Precierre' | 'Cerrada'; apertura: string; cajero: string; fondo: number; movimientos: Movimiento[] }
 export interface Alerta { id: string; modulo: string; texto: string; fecha: string; accion?: { label: string; href: string } }
 
+/** Correo del usuario del sistema (los recordatorios por email se envían ahí). */
+export const correoUsuario = (nombre: string) => `${nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(' ').slice(0, 2).join('.')}@hotelfortuna.com`;
 export const USUARIOS = ['Juan Pérez', 'Carlos Rayo', 'Ernesto Ríos', 'Daniel Viera', 'Fabián Araya', 'Luis Duarte', 'María Laura Céspedes Morales', 'Carlos Morales'];
 export const USUARIO_ACTUAL = 'Juan Pérez';
 export const NACIONALIDADES: Record<string, string> = {
@@ -186,7 +192,7 @@ export const TARIFAS_NOMBRES = TARIFAS.map(t => t.nombre);
 
 export const TIPOS: TipoHab[] = [
   { id: 'STD', codigo: 'STD', nombre: 'Estándar', tarifa: 120 },
-  { id: 'SUP', codigo: 'SUP', nombre: 'Superior 2 camas', tarifa: 160 },
+  { id: 'SUP', codigo: 'SUP', nombre: 'Superior Vista al Mar con Balcón y 2 Camas Queen', tarifa: 160 },
   { id: 'DLX', codigo: 'DLX', nombre: 'Deluxe', tarifa: 210 },
   { id: 'FAM', codigo: 'FAM', nombre: 'Familiar', tarifa: 250 },
   { id: 'JRS', codigo: 'JRS', nombre: 'Junior Suite', tarifa: 320 },

@@ -5,14 +5,15 @@ import { C, FONT, radius } from '@/components/suite/tokens';
 import { Button, Input, Modal } from '@/components/suite/ui';
 import { useHotel } from '@/components/hotel/store';
 import { CAJEROS, DENOMINACIONES, TC, cajeroDe, fmtCRC, fmtN, fmtUSD, totalConteo, type Conteo } from '@/components/hotel/finanzas';
-import { Banda, FiltroUno, Firma } from '../comun';
+import { AvisoPie, Banda, FiltroUno, Firma } from '../comun';
 import { CONFIG_CAJA, type Declaracion } from './calc';
 
 export type Vista =
   | { v: 'inicio'; tab?: string; usuario?: string }
   | { v: 'abrir'; modo: 'caja' | 'turno'; cajero: string }
-  | { v: 'arqueo'; turnoId: string; decl?: Declaracion; obs?: string }
-  | { v: 'resumen'; turnoId: string; decl: Declaracion; obs: string }
+  // `desde: 'cierreDia'`: el turno se cierra desde el cierre del día y al terminar se vuelve ahí
+  | { v: 'arqueo'; turnoId: string; decl?: Declaracion; obs?: string; desde?: 'cierreDia' }
+  | { v: 'resumen'; turnoId: string; decl: Declaracion; obs: string; desde?: 'cierreDia' }
   | { v: 'turnoCerrado'; turnoId: string }
   | { v: 'cierreDia'; obs?: string }
   | { v: 'resumenDia'; obs: string };
@@ -100,19 +101,26 @@ export function FirmaModal({ titulo, sub, firmante, resumen, aviso, onClose, onF
   const [recibido, setRecibido] = useState('');
   const [error, setError] = useState('');
   const modo = CONFIG_CAJA.firma;
+  const pideTrazo = modo === 'trazo' || modo === 'ambos';
+  const pidePin = modo === 'pin' || modo === 'ambos';
   const ok = () => {
-    if ((modo === 'trazo' || modo === 'ambos') && !firma) return setError('Falta la firma en pantalla.');
-    if ((modo === 'pin' || modo === 'ambos') && pin !== (cajeroDe(firmante)?.pin ?? '')) return setError('PIN incorrecto. (PIN de prueba: 1234)');
+    if (pideTrazo && !firma) return setError('Firma en el recuadro para continuar.');
+    if (pidePin && !pin) return setError('Escribe tu PIN para continuar.');
+    if (pidePin && pin !== (cajeroDe(firmante)?.pin ?? '')) return setError('El PIN no coincide. Vuelve a escribirlo.');
     onFirmar({ recibidoPor: recibido.trim() });
   };
+  const limpiarError = () => error && setError('');
   return (
     <Modal open title={titulo} onClose={onClose} width={640}
-      footer={<><Button variant="secondary" onClick={onClose}>{extra ? 'Volver' : 'Cancelar'}</Button><Button onClick={ok} style={peligro ? { background: C.error, borderColor: C.error } : undefined}>{confirmar}</Button></>}>
+      footer={<>{error && <AvisoPie>{error}</AvisoPie>}<Button variant="secondary" onClick={onClose}>{extra ? 'Volver' : 'Cancelar'}</Button><Button onClick={ok} style={peligro ? { background: C.error, borderColor: C.error } : undefined}>{confirmar}</Button></>}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 13 }}>
         <span style={{ fontSize: 12, color: C.n700, marginTop: -8 }}>{sub}</span>
         <div style={{ border: `1px solid ${peligro ? 'rgba(244,67,54,.3)' : C.brandBd}`, background: peligro ? 'rgba(244,67,54,.05)' : '#EEF2FA', borderRadius: radius.md, padding: '12px 16px' }}>{resumen}</div>
-        {modo !== 'pin' && <div><span>Firma {extra ? 'del Cajero Responsable' : 'en pantalla'} <span style={{ color: C.error }}>*</span></span><div style={{ marginTop: 6 }}><Firma onChange={setFirma} placeholder={`Firma de ${firmante}`} /></div></div>}
-        {modo !== 'trazo' && <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>Confirma tu PIN<Input type="password" value={pin} onChange={setPin} inputMode="numeric" maxLength={6} aria-label="PIN" style={{ textAlign: 'center', letterSpacing: 6, maxWidth: extra ? 240 : undefined }} /></label>}
+        {modo !== 'pin' && <div><span>Firma {extra ? 'del Cajero Responsable' : 'en pantalla'} <span style={{ color: C.error }}>*</span></span><div style={{ marginTop: 6 }}><Firma onChange={v => { setFirma(v); limpiarError(); }} placeholder={`Firma de ${firmante}`} alto={extra ? 110 : 130} /></div></div>}
+        {modo !== 'trazo' && <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><span>PIN de {firmante} <span style={{ color: C.error }}>*</span></span>
+          <Input type="password" value={pin} onChange={v => { setPin(v.replace(/\D/g, '')); limpiarError(); }} inputMode="numeric" maxLength={6} aria-label="PIN" style={{ textAlign: 'center', letterSpacing: 6, maxWidth: 240 }} />
+          {/* Sin inicio de sesión todavía: los cajeros de ejemplo comparten el PIN de prueba */}
+          <span style={{ fontSize: 11.5, color: C.n700 }}>Mientras no haya inicio de sesión, el PIN de prueba es 1234.</span></label>}
         {extra === 'contabilidad' && <div style={{ background: C.n200, border: `1px solid ${C.n500}`, borderRadius: radius.md, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={{ fontSize: 11, color: C.n700, fontWeight: 600, letterSpacing: '.04em' }}>RECIBIDO POR CONTABILIDAD</span>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -121,7 +129,6 @@ export function FirmaModal({ titulo, sub, firmante, resumen, aviso, onClose, onF
           </div>
         </div>}
         <Banda tono="info">{aviso}</Banda>
-        {error && <p role="alert" style={{ margin: 0, color: C.error, fontSize: 12 }}>{error}</p>}
       </div>
     </Modal>
   );

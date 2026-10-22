@@ -6,6 +6,8 @@ import { tarifasIva, tarifaPorcentaje } from '@/data/catalogosHacienda';
 import { esGuatemalaActual, simboloLocal } from '@/lib/paisActual';
 import { calcularLinea } from '@/lib/calculoFactura';
 import { tipoDteDe } from '@/lib/perfilPais';
+// Tarifa general del IVA: 13 % en Costa Rica, 12 % en Guatemala
+const tarifaGeneral = () => (esGuatemalaActual() ? 12 : 13);
 
 export type Lado = 'venta' | 'compra';
 export type CreditoFiscal = 'pleno' | 'parcial' | 'sin_derecho';
@@ -178,7 +180,7 @@ function normalizarVenta(d: any, actividadDe: (emisorId: string | null) => strin
   } else {
     // Sin líneas (PMS/POS/demo): se usa el encabezado del documento.
     const total = Number(d.total ?? 0);
-    const sub = d.subtotal != null ? Number(d.subtotal) : total / 1.13;
+    const sub = d.subtotal != null ? Number(d.subtotal) : total / (1 + tarifaGeneral() / 100);
     const imp = d.iva != null ? Number(d.iva) : total - sub;
     const tarifa = sub > 0 ? tarifaOficial((imp / sub) * 100) : 0;
     if (tarifa > 0) { gravado = sub; iva = imp; sumarTarifa(porTarifa, tarifa, sub, imp); }
@@ -234,7 +236,7 @@ const ORIGEN_COMPRA: Record<string, string> = { xml: 'XML', correo: 'Correo', ma
 function normalizarCompra(r: any, actividadDefault: string): Comprobante {
   const signo = esNotaCredito(r.tipo) ? -1 : 1;
   const total = Number(r.total_factura ?? 0);
-  const tarifaReg = r.tarifa != null ? Number(r.tarifa) : 13;
+  const tarifaReg = r.tarifa != null ? Number(r.tarifa) : tarifaGeneral();
   const estimado = r.subtotal == null;
   const sub = !estimado ? Number(r.subtotal) : (tarifaReg > 0 ? total / (1 + tarifaReg / 100) : total);
   const iva = r.iva != null ? Number(r.iva) : total - sub;
@@ -292,8 +294,8 @@ function normalizarCompra(r: any, actividadDefault: string): Comprobante {
     incompleto: !r.numero_factura,
     estimado,
     partes: { bienes: firmarParteC(partesC.bienes), servicios: firmarParteC(partesC.servicios) },
-    // Guatemala, documentos físicos de compra: el código va al inicio del tipo («SCOM · …»)
-    tipoDte: /^[A-Z]{4} · /.test(String(r.tipo ?? '')) ? String(r.tipo).slice(0, 4)
+    // Guatemala: el tipo de DTE guardado; los documentos físicos viejos lo llevan al inicio del tipo («SCOM · …»)
+    tipoDte: r.tipo_dte ? String(r.tipo_dte) : /^[A-Z]{4} · /.test(String(r.tipo ?? '')) ? String(r.tipo).slice(0, 4)
       : r.tipo === 'Nota de crédito' ? 'NCRE' : r.tipo === 'Nota de débito' ? 'NDEB' : r.tipo === 'Factura electrónica de compra' ? 'FESP' : 'FACT',
     nit: String(r.proveedor_identificacion ?? ''),
   };
@@ -430,9 +432,9 @@ export function sumar(lista: Comprobante[], f: Filtros): Totales {
   return t;
 }
 
-// Tarifas presentes en un conjunto de comprobantes (13% siempre se muestra).
+// Tarifas presentes en un conjunto de comprobantes (la general, 13 % o 12 %, siempre se muestra).
 export function tarifasPresentes(lista: Comprobante[]): number[] {
-  const s = new Set<number>([13]);
+  const s = new Set<number>([tarifaGeneral()]);
   for (const c of lista) for (const [k, m] of Object.entries(c.porTarifa)) if (m.base !== 0 || m.iva !== 0) s.add(Number(k));
   return Array.from(s).sort((a, b) => b - a);
 }

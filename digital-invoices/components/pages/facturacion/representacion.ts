@@ -28,7 +28,7 @@ export const NOMBRE_MODULO = { front: 'Front Desk', pos: 'Punto de Venta (POS)' 
 export function formatosDe(_doc: DocCompleto): { value: FormatoImpresion; label: string }[] {
   return [
     { value: 'carta', label: 'Carta' },
-    { value: 'tiquete', label: 'Tiquete (80 mm)' },
+    { value: 'tiquete', label: esGuatemalaActual() ? 'Rollo (80 mm)' : 'Tiquete (80 mm)' },
   ];
 }
 export function esAngosto(_doc: DocCompleto, formato: FormatoImpresion) {

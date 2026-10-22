@@ -8,18 +8,18 @@ import { Button, Input, StatusBadge } from '@/components/suite/ui';
 import { CardTabs, Popover } from '@/components/configuracion/kit';
 import { Alerta, usePrint } from '@/components/hotel/ui';
 import { useHotel, saldoReserva } from '@/components/hotel/store';
-import { HOY, REGIMENES, contratoDeTarifa, fmtF, fmtRango, type EstadoReserva, type Reserva } from '@/components/hotel/datos';
+import { HOY, REGIMENES, contratoDeTarifa, fmtF, fmtRango, noches, type EstadoReserva, type Reserva } from '@/components/hotel/datos';
 import { ESTADO_UI, TRANSICIONES, claveDe, esAgencia, estadoGrupo, facturaAgrupada, modalidadDe, numeroDe, reservaCerrada, type GrupoReserva } from '@/components/hotel/reservas';
 import { fmtMon, r2 } from '@/components/hotel/finanzas';
 import { FormularioCheckIn } from '@/components/hotel/CheckInFormulario';
-import { QRCheckIn, TarjetaRegistro } from '@/components/hotel/TarjetaRegistro';
+import { TarjetaRegistro } from '@/components/hotel/TarjetaRegistro';
 import { IcChevronDown } from '@/components/suite/icons';
 import { ChipEstado, ConfirmacionReserva, Desglose, SeleccionHabitacion, nombreTipo, totales } from '../comun';
 import { AgregarHabitacion, AnularReserva, CambioHabitacion, DuplicarReserva, ElegirLinea, EnviarCorreo, Prorroga } from './Acciones';
 import { TabBitacora, TabDepositos, TabDetalles, TabEmpresa, TabHuesped, TabMensajes, TabObservaciones } from './Pestanas';
 import { TabFacturacion } from './Facturacion';
 
-type Dlg = null | 'anular' | 'noshow' | 'duplicar' | 'correo' | 'tarjeta' | 'web' | 'agregar' | 'confirmar' | 'confirmarSinDep' | 'espera'
+type Dlg = null | 'anular' | 'noshow' | 'duplicar' | 'correo' | 'tarjeta' | 'agregar' | 'confirmar' | 'confirmarSinDep' | 'espera'
   | { cambio: Reserva } | { prorroga: Reserva } | { elegir: 'cambio' | 'prorroga' | 'checkin' | 'checkout' } | { checkin: string } | { checkout: Reserva } | { pendiente: Reserva } | { revertir: Reserva } | { noshowLinea: Reserva };
 
 export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbrir: (clave: string) => void; onToast: (t: string) => void }) {
@@ -67,7 +67,7 @@ export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbr
   const irAFacturacion = (r: Reserva) => { setFolioSel(r.id); setTab(tabs.find(x => x.startsWith('Facturación'))!); setDlg(null); };
 
   const opcionesAcciones: { grupo: string; items: { l: string; on: () => void; dis?: boolean; peligro?: boolean }[] }[] = [
-    { grupo: 'Información de la reserva', items: [{ l: 'Tarjeta de registro', on: () => setDlg('tarjeta') }, { l: 'Web Check-In', on: () => setDlg('web') }] },
+    { grupo: 'Información de la reserva', items: [{ l: p.tarjetaLista ? 'Tarjeta de registro' : 'Registro pendiente (Web Check-In)', on: () => setDlg('tarjeta') }] },
     { grupo: 'Editar reserva', items: [{ l: 'Duplicar reserva', on: () => setDlg('duplicar') }, { l: 'Cambio de habitación', on: () => cambio(), dis: !g.lineas.some(l => ['Solicitada', 'Confirmada', 'Lista de espera', 'In-House'].includes(l.estado)) }] },
     { grupo: 'Operaciones de Reserva', items: [{ l: 'Enviar por correo', on: () => setDlg('correo') }, { l: 'Marcar reserva como No-Show', on: () => transicion('No-Show'), dis: !TRANSICIONES[estado].some(x => x.a === 'No-Show') },
       { l: 'Anular reserva', on: () => setDlg('anular'), dis: !TRANSICIONES[estado].some(x => x.a === 'Anulada'), peligro: true }] },
@@ -76,21 +76,27 @@ export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbr
   function cambio() { if (editables.length > 1) setDlg({ elegir: 'cambio' }); else if (editables[0]) setDlg({ cambio: editables[0] }); }
   function prorroga() { if (enCasa.length > 1) setDlg({ elegir: 'prorroga' }); else if (enCasa[0]) setDlg({ prorroga: enCasa[0] }); }
 
+  const entradaG = g.lineas.reduce((m, l) => (l.entrada < m ? l.entrada : m), p.entrada);
+  const salidaG = g.lineas.reduce((m, l) => (l.salida > m ? l.salida : m), p.salida);
+  const vigentes = g.lineas.filter(l => l.estado !== 'Anulada');
+  const pagado = r2(vigentes.reduce((s, l) => s + l.pagado, 0));
+  const saldo = r2(vigentes.reduce((s, l) => s + saldoReserva(l), 0));
+  const adultos = g.lineas.reduce((s, l) => s + l.adultos, 0), ninos = g.lineas.reduce((s, l) => s + l.ninos, 0);
+  const titular = agencia ? p.empresa : (perfil?.nombre ?? p.nombre);
   const resumen: [string, ReactNode][] = [
-    ['Perfil asociado', <span key="p" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>{agencia ? p.empresa : (perfil?.nombre ?? p.nombre)}<StatusBadge label={agencia || perfil?.tipo === 'empresa' ? 'Empresa' : 'Cliente'} color="brand" /></span>],
-    ['Tarifa', contratoDeTarifa(p.tarifa)], ['Check-in', fmtF(g.lineas.reduce((m, l) => (l.entrada < m ? l.entrada : m), p.entrada))], ['Check-out', fmtF(g.lineas.reduce((m, l) => (l.salida > m ? l.salida : m), p.salida))],
-    ['Habitaciones', String(g.lineas.length).padStart(2, '0')], ['Creación', fmtF(p.creada?.slice(0, 10))],
-    ['Adultos', String(g.lineas.reduce((s, l) => s + l.adultos, 0)).padStart(2, '0')], ['Niños', String(g.lineas.reduce((s, l) => s + l.ninos, 0)).padStart(2, '0')],
+    ['Perfil', <span key="p" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}><span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titular}</span><StatusBadge label={agencia || perfil?.tipo === 'empresa' ? 'Empresa' : 'Cliente'} color="brand" /></span>],
+    ['Tarifa', contratoDeTarifa(p.tarifa)],
+    [`Estancia · ${noches(entradaG, salidaG)} noches`, fmtRango(entradaG, salidaG)],
+    ['Habitaciones', `${g.lineas.length} · ${adultos} adultos${ninos ? ` · ${ninos} niños` : ''}`],
   ];
-
   return (
     <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14, fontFamily: FONT }}>
       {/* Encabezado */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 14, fontWeight: 600, color: C.n900 }}>Reserva {agencia ? 'Agencia' : p.cliente === 'Tarifa Corporativa' ? 'C. Empresa' : 'Directa'}</span>
-        <span style={{ fontSize: 12, color: C.n700 }}>Nro. Reserva: <b style={{ color: C.n900, fontWeight: 600 }}>{numeroDe(p)}</b></span>
-        {modalidad && <span title={modalidad === 'grupo' ? 'Una sola factura: folio de agencia + cuenta de consumo por habitación' : p.facturaUnica === undefined ? 'La facturación se define en el check-in' : p.facturaUnica ? 'Una sola factura' : 'Factura separada por habitación'}><StatusBadge label={modalidad === 'grupo' ? 'Grupal' : 'Individual (múltiple)'} color="brand" /></span>}
-        {p.idExterno && <span style={{ fontSize: 12, color: C.n700, borderLeft: `1px solid ${C.n500}`, paddingLeft: 12 }}>ID: <b style={{ color: C.n900, fontWeight: 600 }}>{p.idExterno}</b></span>}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: C.n900 }}>{p.numero.replace(/_\d+$/, '')}</h2>
+            <span style={{ fontSize: 15, color: C.n900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 360 }}>{titular}</span>
         <span style={{ position: 'relative', display: 'inline-flex' }}>
           <button type="button" onClick={() => setVerEstados(v => !v)} aria-label={`Estado: ${estado}. Cambiar estado`} aria-expanded={verEstados} disabled={!TRANSICIONES[estado].length}
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 26, padding: '0 12px', border: 'none', borderRadius: radius.pill, background: ESTADO_UI[estado].hex, color: '#fff', fontSize: 12, fontFamily: FONT, cursor: TRANSICIONES[estado].length ? 'pointer' : 'default' }}>
@@ -104,8 +110,16 @@ export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbr
             </div>
           </Popover>
         </span>
-        <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => imprimir(<ConfirmacionReserva ls={g.lineas} perfil={perfil} />)}>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12, color: C.n700 }}>
+            <span>Reserva {agencia ? 'de agencia' : p.cliente === 'Tarifa Corporativa' ? 'corporativa' : 'directa'}</span>
+            {p.creada && <span>· Creada el {fmtF(p.creada.slice(0, 10))}</span>}
+            {p.idExterno && <span>· ID externo <b style={{ color: C.n900, fontWeight: 500 }}>{p.idExterno}</b></span>}
+            {modalidad && <span title={modalidad === 'grupo' ? 'Una sola factura: folio de agencia + cuenta de consumo por habitación' : p.facturaUnica === undefined ? 'La facturación se define en el check-in' : p.facturaUnica ? 'Una sola factura' : 'Factura separada por habitación'}><StatusBadge label={modalidad === 'grupo' ? 'Grupal' : 'Individual (múltiple)'} color="brand" /></span>}
+          </div>
+        </div>
+        <span style={{ display: 'flex', gap: 8 }}>
+          <Button variant="secondary" onClick={() => imprimir(<ConfirmacionReserva ls={g.lineas} perfil={perfil} />)}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z" /><path d="M14 3v5h5" /></svg>PDF</span>
           </Button>
           <span style={{ position: 'relative', display: 'inline-flex' }}>
@@ -126,16 +140,17 @@ export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbr
       </div>
 
       {/* Resumen */}
-      <div style={{ background: C.n000, borderRadius: radius.card, border: `1px solid ${C.n500}`, padding: '14px 18px', display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        {resumen.map(([l, v]) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 11.5, color: C.n700 }}>{l}</span><span style={{ fontSize: 13, color: C.n900 }}>{v}</span></div>)}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative' }}>
-          <span style={{ fontSize: 11.5, color: C.brand }}>Total</span>
-          <button type="button" onClick={() => setVerTotal(v => !v)} aria-label="Ver desglose del total" style={{ border: 'none', background: 'none', padding: 0, fontSize: 13, color: C.brand, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            {p.moneda} {fmtMon(t.subtotalII, p.moneda)}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+      <div style={{ background: C.n000, borderRadius: radius.card, border: `1px solid ${C.n500}`, padding: '14px 18px', display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,.9fr) minmax(0,1.3fr) minmax(0,1.1fr) repeat(3, minmax(0,1fr))', gap: 18, alignItems: 'start' }}>
+        {resumen.map(([l, v]) => <div key={l} style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}><span style={{ fontSize: 11.5, color: C.n700 }}>{l}</span><span style={{ fontSize: 13, color: C.n900, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v}</span></div>)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, position: 'relative', borderLeft: `1px solid ${C.n500}`, paddingLeft: 18 }}>
+          <span style={{ fontSize: 11.5, color: C.n700 }}>Total</span>
+          <button type="button" onClick={() => setVerTotal(v => !v)} aria-label="Ver desglose del total" style={{ border: 'none', background: 'none', padding: 0, fontSize: 14, fontWeight: 600, color: C.brand, textDecoration: 'underline', textUnderlineOffset: 2, cursor: 'pointer', fontFamily: FONT, textAlign: 'left', whiteSpace: 'nowrap' }}>
+            {fmtMon(t.subtotalII, p.moneda)}
           </button>
           <Popover open={verTotal} onClose={() => setVerTotal(false)} width={300} align="right"><Desglose ls={g.lineas} moneda={p.moneda} /></Popover>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 11.5, color: C.n700 }}>Pagado</span><span style={{ fontSize: 14, fontWeight: 600, color: C.n900, whiteSpace: 'nowrap' }}>{fmtMon(pagado, p.moneda)}</span></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><span style={{ fontSize: 11.5, color: C.n700 }}>Saldo</span><span style={{ fontSize: 14, fontWeight: 600, color: saldo > 0.005 ? '#B45309' : '#0E7A57', whiteSpace: 'nowrap' }}>{fmtMon(Math.max(0, saldo), p.moneda)}</span></div>
       </div>
 
       {/* Tabs */}
@@ -168,7 +183,6 @@ export function DetalleReserva({ g, onAbrir, onToast }: { g: GrupoReserva; onAbr
       {dlg === 'duplicar' && <DuplicarReserva g={g} onClose={() => setDlg(null)} onListo={(c, m) => { setDlg(null); onToast(m); onAbrir(c); }} />}
       {dlg === 'correo' && <EnviarCorreo g={g} onClose={() => setDlg(null)} onListo={listo} />}
       {dlg === 'tarjeta' && <TarjetaRegistro reservaId={p.id} onClose={() => setDlg(null)} />}
-      {dlg === 'web' && <QRCheckIn reservaId={p.id} onClose={() => setDlg(null)} />}
       {dlg === 'agregar' && <AgregarHabitacion g={g} onClose={() => setDlg(null)} onListo={listo} />}
       {dlg && typeof dlg === 'object' && 'elegir' in dlg && (
         <ElegirLinea titulo={{ checkin: 'Check-in · elige la habitación', cambio: 'Cambio de habitación', prorroga: 'Prórroga de habitación', checkout: 'Check-out · elige la habitación' }[dlg.elegir]}
@@ -219,11 +233,11 @@ function TabAlojamiento({ g, estado, onAgregar, onCambio, onProrroga, onCheckin,
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 600, marginRight: 'auto' }}>Detalle de la Reserva</span>
         {enCasa ? <>
-          <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={onCambio}>Cambio de habitación</Button>
-          <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={onProrroga}>Prórroga de habitación</Button>
+          <Button variant="secondary" onClick={onCambio}>Cambio de habitación</Button>
+          <Button variant="secondary" onClick={onProrroga}>Prórroga de habitación</Button>
         </> : !terminal && (
           <span title={estado === 'Solicitada' ? undefined : 'Solo se puede agregar habitación cuando la reserva es «Solicitada». Si pasa a In-House debe crearse una nueva.'}>
-            <Button variant="secondary" disabled={estado !== 'Solicitada'} style={{ color: C.brand, borderColor: C.brandBd }} onClick={onAgregar}>+ Agregar habitación</Button>
+            <Button variant="secondary" disabled={estado !== 'Solicitada'} onClick={onAgregar}>+ Agregar habitación</Button>
           </span>
         )}
       </div>
@@ -251,7 +265,7 @@ function TabAlojamiento({ g, estado, onAgregar, onCambio, onProrroga, onCheckin,
               </>}
               {l.estado === 'In-House' && <>
                 <button type="button" onClick={() => onCuenta(l)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 10px', border: `1px solid ${C.n500}`, background: C.n200, borderRadius: radius.control, fontSize: 12, color: C.n700, cursor: 'pointer', fontFamily: FONT }}>{cuenta}<IcExt /></button>
-                {l.checkinEn === HOY && <Button variant="secondary" style={{ color: C.brand, borderColor: C.brandBd }} onClick={() => onRevertir(l)}>Revertir Check-In ⊗</Button>}
+                {l.checkinEn === HOY && <Button variant="secondary" onClick={() => onRevertir(l)}>Revertir Check-In ⊗</Button>}
                 <Button style={verde} onClick={() => onCheckout(l)}>Check-out ↦</Button>
               </>}
               <Button variant="secondary" onClick={() => setAbierta(abierta === l.id ? null : l.id)}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{abierta === l.id ? 'Cerrar' : 'Detalle'}<IcChevronDown size={11} style={{ transform: abierta === l.id ? 'rotate(180deg)' : undefined }} /></span></Button>

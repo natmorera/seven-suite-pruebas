@@ -11,9 +11,10 @@ import { createPortal } from 'react-dom';
 import { C, FONT, radius } from '@/components/suite/tokens';
 import { Button, Checkbox, Toast } from '@/components/suite/ui';
 import { Alerta, FiltroChecks, exportarCSV, money, usePrint } from '@/components/hotel/ui';
+import { Popover } from '@/components/configuracion/kit';
+import { IcChevronDown } from '@/components/suite/icons';
 import { useHotel, saldoReserva, totalReserva } from '@/components/hotel/store';
 import { FormularioCheckIn } from '@/components/hotel/CheckInFormulario';
-import { NuevaReservaModal } from '@/components/hospedaje/NuevaReserva';
 import { SeleccionHabitacion } from './comun';
 import { HOY, REGIMENES, TIPOS, diaSemana, fmtF, noches, sumarDias, type Reserva } from '@/components/hotel/datos';
 import { ESTADO_UI, bloqueaHabitacion, numeroDe } from '@/components/hotel/reservas';
@@ -23,22 +24,36 @@ import { bloqueadasEn, fechasEntre, inventario } from './inventario';
 const W = 46; // ancho de un día
 const ALTO = 30;
 const MOSTRAR: Reserva['estado'][] = ['Solicitada', 'Confirmada', 'In-House', 'Completada'];
+/** Periodos rápidos: la fecha de inicio más N días. «Personalizado» permite elegir la fecha final. */
+const PERIODOS = [7, 15, 20, 30];
+const MAX_DIAS = 90;
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 export default function Planificador() {
   const h = useHotel();
   const router = useRouter();
-  const [inicio, setInicio] = useState(sumarDias(HOY, -2));
-  const [dias, setDias] = useState('21');
+  const [inicio, setInicio] = useState(HOY);
+  const [dias, setDias] = useState('15');
+  const [hastaManual, setHastaManual] = useState(sumarDias(HOY, 15));
+  const [verSinHab, setVerSinHab] = useState(false);
   const [tipos, setTipos] = useState<string[]>([]);
   const [pisos, setPisos] = useState<string[]>([]);
   const [solicitadas, setSolicitadas] = useState(true);
   const [hover, setHover] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
-  const [nueva, setNueva] = useState<{ hab: string; entrada: string } | null>(null);
+  // Nueva reserva: formulario completo de Reservas con habitación y fecha precargadas.
+  const setNueva = (n: { hab: string; entrada: string }) => router.push(`/reservaciones/reservas?nueva=1${n.hab ? `&hab=${n.hab}` : ''}&entrada=${n.entrada}`);
   const [toast, setToast] = useState<string | null>(null);
   const { imprimir, portal } = usePrint();
-  const fin = sumarDias(inicio, Number(dias) - 1);
+  const personalizado = dias === 'personalizado';
+  // En personalizado el final nunca queda antes del inicio ni más allá del máximo visible.
+  const fin = personalizado
+    ? (hastaManual < inicio ? inicio : hastaManual > sumarDias(inicio, MAX_DIAS) ? sumarDias(inicio, MAX_DIAS) : hastaManual)
+    : sumarDias(inicio, Number(dias));
+  const elegirPeriodo = (v: string) => {
+    if (v === 'personalizado') setHastaManual(fin);
+    setDias(v || '15');
+  };
   const fechas = fechasEntre(inicio, fin);
   const habs = h.habitaciones.filter(x => (!tipos.length || tipos.includes(x.tipo)) && (!pisos.length || pisos.includes(String(x.piso))));
   const visibles = useMemo(() => h.reservas.filter(r => r.habitacion && (MOSTRAR.includes(r.estado)) && (solicitadas || r.estado !== 'Solicitada') && r.entrada <= fin && r.salida > inicio), [h.reservas, inicio, fin, solicitadas]);
@@ -52,7 +67,12 @@ export default function Planificador() {
     const b = Math.min(fechas.length, dd(inicio, hasta) + 0.5);
     return { left: a * W, width: Math.max(8, (b - a) * W - 2) };
   };
-  const ir = (n: number) => setInicio(sumarDias(inicio, n));
+  /** Mueve el inicio; en personalizado la fecha final se mueve igual para conservar el largo del periodo. */
+  const moverInicio = (nuevo: string) => {
+    if (personalizado) setHastaManual(sumarDias(fin, dd(inicio, nuevo)));
+    setInicio(nuevo);
+  };
+  const ir = (n: number) => moverInicio(sumarDias(inicio, n));
   const csv = () => exportarCSV('planificador', ['Habitación', 'Tipo', ...fechas.map(fmtF)], habs.map(x => [x.numero, x.tipo, ...fechas.map(d => {
     const r = visibles.find(y => y.habitacion === x.numero && y.entrada <= d && y.salida > d);
     return r ? `${numeroDe(r)} ${r.estado}` : '';
@@ -67,15 +87,49 @@ export default function Planificador() {
   return (
     <PaginaFact titulo="Planificador" acciones={<>
       <Exportar onCSV={csv} onPDF={pdf} titulo="Planificador" criterio={`Del ${fmtF(inicio)} al ${fmtF(fin)} · ${habs.length} habitaciones`} />
+      {sinHab.length > 0 && (
+        <span style={{ position: 'relative', display: 'inline-flex' }}>
+          <Button variant="secondary" onClick={() => setVerSinHab(v => !v)}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              Asignar habitaciones
+              <span style={{ minWidth: 18, height: 18, padding: '0 5px', borderRadius: radius.pill, background: '#EEB300', color: '#3D2E00', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{sinHab.length}</span>
+              <IcChevronDown size={12} />
+            </span>
+          </Button>
+          <Popover open={verSinHab} onClose={() => setVerSinHab(false)} width={320} align="right">
+            <div style={{ padding: '10px 12px 6px', fontSize: 11.5, color: C.n700 }}>Reservas sin habitación del {fmtF(inicio)} al {fmtF(fin)}</div>
+            <div role="menu" style={{ padding: '0 6px 6px', display: 'flex', flexDirection: 'column', maxHeight: 280, overflowY: 'auto' }}>
+              {sinHab.map(r => (
+                <button key={r.id} role="menuitem" type="button" className="suite-fila" onClick={() => { setSel(r.id); setVerSinHab(false); }}
+                  style={{ display: 'flex', gap: 8, alignItems: 'center', textAlign: 'left', padding: '8px 10px', border: 'none', background: sel === r.id ? C.brandBg : 'none', fontSize: 12, fontFamily: FONT, borderRadius: radius.control, cursor: 'pointer', color: C.n900 }}>
+                  <b style={{ fontWeight: 600 }}>{numeroDe(r)}</b>
+                  <span style={{ color: C.n700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nombre(r)}</span>
+                  <span style={{ color: C.n700 }}>{r.tipo} · {fmtF(r.entrada)}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ borderTop: `1px solid ${C.n500}`, padding: 8, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button onClick={() => router.push('/reservaciones/asignacion-de-habitaciones')}>Ir a asignación de habitaciones</Button>
+            </div>
+          </Popover>
+        </span>
+      )}
       <Button onClick={() => setNueva({ hab: '', entrada: HOY })}>Nueva reserva</Button></>}
       filtros={<>
           <span style={{ display: 'inline-flex', border: `1px solid ${C.n500}`, borderRadius: radius.control, overflow: 'hidden' }}>
             <button type="button" aria-label="Semana anterior" onClick={() => ir(-7)} style={nav}>‹</button>
-            <button type="button" onClick={() => setInicio(sumarDias(HOY, -2))} style={{ ...nav, width: 'auto', padding: '0 12px', borderLeft: `1px solid ${C.n500}`, borderRight: `1px solid ${C.n500}` }}>Hoy</button>
+            <button type="button" onClick={() => moverInicio(HOY)} style={{ ...nav, width: 'auto', padding: '0 12px', borderLeft: `1px solid ${C.n500}`, borderRight: `1px solid ${C.n500}` }}>Hoy</button>
             <button type="button" aria-label="Semana siguiente" onClick={() => ir(7)} style={nav}>›</button>
           </span>
-          <input type="date" value={inicio} onChange={e => e.target.value && setInicio(e.target.value)} aria-label="Fecha de inicio" className="suite-campo" style={{ height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT }} />
-          <FiltroUno label="Periodo" value={dias} onChange={v => setDias(v || '21')} todos={null} prefijo={false} opciones={[{ value: '14', label: '14 días' }, { value: '21', label: '21 días' }, { value: '31', label: '31 días' }]} />
+          <input type="date" value={inicio} onChange={e => e.target.value && moverInicio(e.target.value)} aria-label="Fecha de inicio" className="suite-campo" style={{ height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT }} />
+          <FiltroUno label="Periodo" value={dias} onChange={elegirPeriodo} todos={null} prefijo={false} ancho={180}
+            opciones={[...PERIODOS.map(n => ({ value: String(n), label: `+ ${n} días` })), { value: 'personalizado', label: 'Personalizado' }]} />
+          {personalizado && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.n700 }}>
+              hasta
+              <input type="date" value={fin} min={inicio} max={sumarDias(inicio, MAX_DIAS)} onChange={e => e.target.value && setHastaManual(e.target.value)} aria-label="Fecha final" className="suite-campo" style={{ height: 32, border: `1px solid ${C.n500}`, borderRadius: radius.control, padding: '0 8px', fontSize: 12, fontFamily: FONT }} />
+            </span>
+          )}
           <FiltroChecks label="Tipo de habitación" value={tipos} onChange={setTipos} opciones={TIPOS.map(t => ({ value: t.id, label: `${t.codigo} - ${t.nombre}` }))} />
           <FiltroChecks label="Piso" value={pisos} onChange={setPisos} opciones={[1, 2, 3, 4].map(p => ({ value: String(p), label: `Piso ${p}` }))} ancho={160} />
           <Checkbox checked={solicitadas} onChange={setSolicitadas} label="Mostrar solicitadas" />
@@ -148,17 +202,9 @@ export default function Planificador() {
             })}
           </div>
         </div>
-        {sinHab.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 12, background: 'rgba(238,179,0,.08)', borderRadius: radius.md, padding: '10px 14px' }}>
-            <b style={{ fontWeight: 600, color: '#7A5C00' }}>{sinHab.length} reservas sin habitación en el periodo:</b>
-            {sinHab.slice(0, 8).map(r => <button key={r.id} type="button" onClick={() => setSel(r.id)} aria-pressed={sel === r.id} style={{ border: `1px solid ${sel === r.id ? C.brand : C.n500}`, background: sel === r.id ? C.brandBg : C.n000, borderRadius: radius.pill, padding: '2px 10px', fontSize: 11.5, cursor: 'pointer', fontFamily: FONT }}>{numeroDe(r)} · {r.tipo} · {fmtF(r.entrada)}</button>)}
-            <Button variant="secondary" onClick={() => router.push('/reservaciones/asignacion-de-habitaciones')} style={{ marginLeft: 'auto' }}>Asignar habitaciones</Button>
-          </div>
-        )}
       </Tarjeta>
       {sel && h.reservas.some(r => r.id === sel) && <PanelReserva id={sel} onClose={() => setSel(null)} onToast={setToast} />}
       </div>
-      {nueva && <NuevaReservaModal hab={nueva.hab || undefined} entrada={nueva.entrada} onClose={() => setNueva(null)} onListo={t => { setNueva(null); setToast(t); }} />}
       {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
       {portal}
     </PaginaFact>

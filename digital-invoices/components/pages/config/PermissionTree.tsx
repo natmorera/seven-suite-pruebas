@@ -84,7 +84,7 @@ function LeafRowSubOptions({ leaf, perms, onSetMany }: {
                 fontSize:10, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
                 border:`1px solid ${on?BRAND:'#D8D8D8'}`, background:on?BRAND:'#fff', color:on?'#fff':C.n700,
               }}>
-                {o}
+                {leaf.optionLabels?.[o] ?? o}
               </button>
             );
           })}

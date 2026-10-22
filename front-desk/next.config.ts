@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-// Configuración se reorganizó en 10 secciones: las direcciones anteriores
+// Configuración se reorganizó en 9 secciones: las direcciones anteriores
 // llevan a la sección donde quedó cada pantalla.
 const anteriores: [string, string][] = [
   ['/configuracion/general', '/configuracion/empresa'],
@@ -12,6 +12,7 @@ const anteriores: [string, string][] = [
   ['/configuracion/sistema/:x+', '/configuracion/usuarios-permisos'],
   ['/configuracion/sistema', '/configuracion/usuarios-permisos'],
   ['/configuracion/configuracion-contable', '/configuracion/empresa'],
+  ['/configuracion/operaciones', '/configuracion/parametros-generales'],
 ];
 
 const nextConfig: NextConfig = {

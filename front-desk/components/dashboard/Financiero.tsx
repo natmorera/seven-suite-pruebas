@@ -6,14 +6,16 @@ import { C, FONT, fmtNum, radius, SIZE } from '@/components/suite/tokens';
 import { useHotel } from '@/components/hotel/store';
 import { HOY, diaSemana, fmtF, sumarDias } from '@/components/hotel/datos';
 import { Dona, Panel, Progreso } from '@/components/hotel/ui';
-import { fmtCorto, forecast, metricas, promedio, rango, topContratos, variacion, type RangoSel } from './datos';
-import { Ext, Grafico, Kpi, MESES, Punto, Rangos, Seccion, VERDE, ROJO } from './piezas';
+import { fmtCorto, forecast, metricas, promedio, rango, topContratos, variacion } from './datos';
+import { Ext, Grafico, Kpi, MESES, Punto, Seccion, VERDE, ROJO } from './piezas';
 
 const filaContrato: React.CSSProperties = { display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) minmax(140px, 1.1fr) 64px 92px', columnGap: 14, alignItems: 'center' };
 /** Variación como en el diseño: «↓ - 18.87%», «↑ + 0%». */
 const vsTexto = (v: number) => `${v >= 0 ? '↑ +' : '↓ -'} ${Math.abs(v) < 0.005 ? '0' : fmtNum(Math.abs(v), 2)}%`;
 
-export function Financiero({ dia, dias, rango: r, onRango }: { dia: string; dias: string[]; rango: RangoSel; onRango: (v: RangoSel) => void }) {
+export function Financiero({ dia, dias: diasPeriodo }: { dia: string; dias: string[] }) {
+  // Con un solo día en el período, el gráfico muestra los 7 días que terminan en ese día.
+  const dias = useMemo(() => (diasPeriodo.length > 1 ? diasPeriodo : rango(sumarDias(dia, -6), dia)), [diasPeriodo, dia]);
   const h = useHotel();
   const m = metricas(h, dia);
   const ini = dia.slice(0, 8) + '01';
@@ -41,7 +43,7 @@ export function Financiero({ dia, dias, rango: r, onRango }: { dia: string; dias
         <Kpi titulo="Mensuales" valor={fmtNum(mensual)} sub={`${fmtF(ini)} - ${dia === HOY ? 'Hoy' : fmtF(dia)}`} />
       </div>
 
-      <Panel titulo="Ingresos totales en el tiempo" acciones={<Rangos label="Rango de ingresos" valor={r} onChange={onRango} />}>
+      <Panel titulo="Ingresos totales en el tiempo" acciones={<span style={{ fontSize: 12.5, color: C.n700 }}>{fmtF(dias[0])} – {fmtF(dias[dias.length - 1])}{diasPeriodo.length === 1 ? ' · últimos 7 días' : ''}</span>}>
         <Grafico datos={serie} />
       </Panel>
 

@@ -246,6 +246,24 @@ export function accionesFinanzas(mut: Mut) {
       return y;
     }),
     eliminarFolio: (folioId: string) => mut(x => ({ ...x, foliosCta: x.foliosCta.filter(c => c.id !== folioId) })),
+    /** Asocia un perfil a un folio externo: el titular y los datos de facturación pasan a ser los del perfil. */
+    asociarPerfil: (folioId: string, perfilId: string, usuario: string, cuando: string) => mut(x => {
+      const p = x.perfiles.find(y => y.id === perfilId);
+      if (!p) return x;
+      const y = enFolio(x, folioId, e => ({ ...e, bitacora: [...e.bitacora, ev(cuando, usuario, `Perfil asociado: ${p.nombre}`)] }));
+      return { ...y, foliosCta: y.foliosCta.map(c => (c.id === folioId ? { ...c, perfilId, nombre: p.nombre.toUpperCase(), titular: p.nombre, fiscal: { activa: false, tipoId: '', numeroId: '', razon: '', email: '', actividad: '', direccion: '' } } : c)) };
+    }),
+    /** Asocia depósitos en garantía sin asignar a un folio externo; su importe pasa al depósito del folio. */
+    asociarDepositos: (folioId: string, ids: string[], usuario: string, cuando: string) => mut(x => {
+      const deps = x.depositos.filter(d => ids.includes(d.id) && d.estado === 'Activo' && !d.folioId && !d.reservaId);
+      if (!deps.length) return x;
+      const usd = r2(deps.reduce((s, d) => s + aUSD(d.importe, d.moneda), 0));
+      const y = enFolio(x, folioId, e => ({ ...e, bitacora: [...e.bitacora, ev(cuando, usuario, `Depósitos en garantía asociados: ${deps.map(d => `DG-${d.numero}`).join(', ')} (USD ${fmtN(usd)})`)] }));
+      return {
+        ...y, depositos: y.depositos.map(d => (deps.some(z => z.id === d.id) ? { ...d, folioId } : d)),
+        foliosCta: y.foliosCta.map(c => (c.id === folioId ? { ...c, depGarantia: r2(c.depGarantia + usd) } : c)),
+      };
+    }),
     emitirNota: (folioId: string, tipo: 'Nota de crédito' | 'Nota de débito', importe: number, motivo: string, sobre: string, usuario: string, cuando: string) => mut(x => {
       const pref = tipo === 'Nota de crédito' ? 'NC' : 'ND';
       const numero = `${pref}-${x.seq.factura}`;

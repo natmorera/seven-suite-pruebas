@@ -13,6 +13,7 @@ import { ESTADO_UI, habitacionLibre, numeroDe, usoDe } from '@/components/hotel/
 import { fmtMon, fmtN, r2 } from '@/components/hotel/finanzas';
 import { FiltroUno, HojaSistema, TablaReporte, Visor, tdR } from '@/components/facturacion/comun';
 import { bloqueadaEnEstancia, inventario } from './inventario';
+import { MontoCelda } from '@/components/suite/Monto';
 
 export const nombreTipo = (id: string) => TIPOS.find(t => t.id === id)?.nombre ?? id;
 export const IVA = 0.13;
@@ -125,26 +126,22 @@ export function DisponibilidadCupos({ onClose, desde: d0 = HOY, hasta: h0 }: { o
   const [rango, setRangoS] = useState({ d: d0, h: h0 ?? sumarDias(d0, 13) });
   const [tarifa, setTarifa] = useState('');
   const [estado, setEstado] = useState('con');
-  const [release, setRelease] = useState(false);
   const dias = useMemo(() => inventario(h, rango.d, rango.h, { tarifa: tarifa || undefined, incluirSolicitadas: estado === 'con' }), [h, rango, tarifa, estado]);
-  // Con «Respetar release» no se venden cupos con menos de 2 días de anticipación
-  const val = (fecha: string, n: number) => (release && fecha < sumarDias(HOY, 2) ? Math.min(0, n) : n);
   const tabla = (
     <TablaReporte headers={['Día', ...TIPOS.map(t => t.codigo), 'Total']} derecha={TIPOS.map((_, i) => i + 1).concat(TIPOS.length + 1)}>
       {dias.map(d => (
         <tr key={d.fecha}><td style={tdR()}>{diaSemana(d.fecha)} {fmtF(d.fecha)}</td>
-          {d.porTipo.map(x => <td key={x.tipo} style={num(val(d.fecha, x.libres))}>{val(d.fecha, x.libres)}</td>)}
-          <td style={num(val(d.fecha, d.total.libres), { fontWeight: 600 })}>{val(d.fecha, d.total.libres)}</td></tr>
+          {d.porTipo.map(x => <td key={x.tipo} style={num(x.libres)}>{x.libres}</td>)}
+          <td style={num(d.total.libres, { fontWeight: 600 })}>{d.total.libres}</td></tr>
       ))}
     </TablaReporte>
   );
   return (
     <Visor titulo="Disponibilidad sobre cupos contratados" onClose={onClose} ancho={980}
-      onCSV={() => exportarCSV('disponibilidad-cupos', ['Día', ...TIPOS.map(t => t.codigo), 'Total'], dias.map(d => [fmtF(d.fecha), ...d.porTipo.map(x => val(d.fecha, x.libres)), val(d.fecha, d.total.libres)]))}>
+      onCSV={() => exportarCSV('disponibilidad-cupos', ['Día', ...TIPOS.map(t => t.codigo), 'Total'], dias.map(d => [fmtF(d.fecha), ...d.porTipo.map(x => x.libres), d.total.libres]))}>
       <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div className="no-print"><FiltrosInventario desde={rango.d} hasta={rango.h} setRango={(d, x) => setRangoS({ d, h: x })} tarifa={tarifa} setTarifa={setTarifa} estado={estado} setEstado={setEstado}
-          extra={<Checkbox checked={release} onChange={setRelease} label="Respetar release" />} /></div>
-        <HojaSistema titulo="Disponibilidad de cupos" subtitulo="Habitaciones libres por tipo y día" criterio={`Desde ${fmtF(rango.d)} hasta ${fmtF(rango.h)} · Tarifa: ${tarifa || 'Todas'} · ${ESTADOS_INV.find(e => e.value === estado)!.label}${release ? ' · Respetando release' : ''}`}>{tabla}</HojaSistema>
+        <div className="no-print"><FiltrosInventario desde={rango.d} hasta={rango.h} setRango={(d, x) => setRangoS({ d, h: x })} tarifa={tarifa} setTarifa={setTarifa} estado={estado} setEstado={setEstado} /></div>
+        <HojaSistema titulo="Disponibilidad de cupos" subtitulo="Habitaciones libres por tipo y día" criterio={`Desde ${fmtF(rango.d)} hasta ${fmtF(rango.h)} · Tarifa: ${tarifa || 'Todas'} · ${ESTADOS_INV.find(e => e.value === estado)!.label}`}>{tabla}</HojaSistema>
       </div>
     </Visor>
   );
@@ -194,10 +191,10 @@ export function RevisionPrecios({ onClose, tarifa: t0 = 'DIR', tipo: tp0 = TIPOS
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: C.n700 }}>Entrada<input type="date" value={f.entrada} onChange={e => e.target.value && setF({ ...f, entrada: e.target.value, salida: f.salida > e.target.value ? f.salida : sumarDias(e.target.value, 1) })} className="suite-campo" style={inp} /></label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: C.n700 }}>Salida<input type="date" value={f.salida} min={sumarDias(f.entrada, 1)} onChange={e => e.target.value && setF({ ...f, salida: e.target.value })} className="suite-campo" style={inp} /></label>
         </div>
-        <HojaSistema titulo="Resumen de tarifas por contrato" subtitulo={`${contratoDeTarifa(f.tarifa)} / ${f.tipo} - ${nombreTipo(f.tipo)}`} criterio={`Desde ${fmtF(f.entrada)} hasta ${fmtF(f.salida)} · Estancia mínima: 1 noche · Release: 2 días · Sin restricciones de llegada`}>
+        <HojaSistema titulo="Resumen de tarifas por contrato" subtitulo={`${contratoDeTarifa(f.tarifa)} / ${f.tipo} - ${nombreTipo(f.tipo)}`} criterio={`Desde ${fmtF(f.entrada)} hasta ${fmtF(f.salida)} · Estancia mínima: 1 noche · Sin restricciones de llegada`}>
           <TablaReporte headers={['Fecha', 'Contrato', 'Uso de habitación', 'Precio i.i', 'I.V.A. 13%', 'Precio sin impuestos']} derecha={[3, 4, 5]}>
-            {dias.map(d => <tr key={d}><td style={tdR()}>{diaSemana(d)} {fmtF(d)}</td><td style={tdR()}>{f.tarifa}</td><td style={tdR()}>{nombreTipo(f.tipo)} ({f.tipo})</td><td style={tdR(true)}>{fmtMon(precio)}</td><td style={tdR(true)}>{fmtMon(r2(precio - precio / (1 + IVA)))}</td><td style={tdR(true)}>{fmtMon(r2(precio / (1 + IVA)))}</td></tr>)}
-            <tr><td colSpan={3} style={tdR(false, { fontWeight: 600 })}>Total estancia ({dias.length} noches)</td><td style={tdR(true, { fontWeight: 600 })}>{fmtMon(precio * dias.length)}</td><td style={tdR(true)}>{fmtMon(r2((precio - precio / (1 + IVA)) * dias.length))}</td><td style={tdR(true)}>{fmtMon(r2(precio / (1 + IVA) * dias.length))}</td></tr>
+            {dias.map(d => <tr key={d}><td style={tdR()}>{diaSemana(d)} {fmtF(d)}</td><td style={tdR()}>{f.tarifa}</td><td style={tdR()}>{nombreTipo(f.tipo)} ({f.tipo})</td><td style={tdR(true)}><MontoCelda texto={fmtMon(precio)} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(r2(precio - precio / (1 + IVA)))} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(r2(precio / (1 + IVA)))} /></td></tr>)}
+            <tr><td colSpan={3} style={tdR(false, { fontWeight: 600 })}>Total estancia ({dias.length} noches)</td><td style={tdR(true, { fontWeight: 600 })}><MontoCelda texto={fmtMon(precio * dias.length)} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(r2((precio - precio / (1 + IVA)) * dias.length))} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(r2(precio / (1 + IVA) * dias.length))} /></td></tr>
           </TablaReporte>
         </HojaSistema>
       </div>
@@ -253,7 +250,7 @@ export function ConfirmacionReserva({ ls, perfil }: { ls: Reserva[]; perfil?: Pe
       criterio={`Titular: ${perfil?.nombre ?? p.nombre} · Tarifa: ${p.tarifa} (${contratoDeTarifa(p.tarifa)}) · ${fmtF(p.entrada)} → ${fmtF(p.salida)} · ${ls.length} habitación(es)`}>
       <TablaReporte headers={['#', 'Hab.', 'Tipo', 'Uso', 'Entrada', 'Salida', 'Noches', 'Pax', 'Régimen', 'Precio i.i', 'Total']} derecha={[6, 7, 9, 10]}>
         {ls.map((r, i) => <tr key={r.id}><td style={tdR()}>{i + 1}</td><td style={tdR()}>{r.habitacion || '—'}</td><td style={tdR()}>{nombreTipo(r.tipo)}</td><td style={tdR()}>{usoDe(r)}</td><td style={tdR()}>{fmtF(r.entrada)}</td><td style={tdR()}>{fmtF(r.salida)}</td>
-          <td style={tdR(true)}>{noches(r.entrada, r.salida)}</td><td style={tdR(true)}>{r.adultos}+{r.ninos}</td><td style={tdR()}>{REGIMENES[r.regimen] ?? r.regimen}</td><td style={tdR(true)}>{fmtMon(r.precio, r.moneda)}</td><td style={tdR(true)}>{fmtMon(totalReserva(r), r.moneda)}</td></tr>)}
+          <td style={tdR(true)}>{noches(r.entrada, r.salida)}</td><td style={tdR(true)}>{r.adultos}+{r.ninos}</td><td style={tdR()}>{REGIMENES[r.regimen] ?? r.regimen}</td><td style={tdR(true)}><MontoCelda texto={fmtMon(r.precio, r.moneda)} /></td><td style={tdR(true)}><MontoCelda texto={fmtMon(totalReserva(r), r.moneda)} /></td></tr>)}
       </TablaReporte>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
         <div style={{ width: 280, fontSize: 11.5 }}>

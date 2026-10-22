@@ -1,6 +1,6 @@
 // Lógica del Tarifario (Configuración → Tarifas / Contratos → Tarifario):
 // valor efectivo de cada celda, claves de excepciones por día y pax adicionales
-// por escalón. La usan la grilla y la Actualización colectiva.
+// por escalón. La usan la grilla y la Actualización masiva.
 import type { Tarifa, VistaTarifario } from './datos';
 
 export const fecha = (iso: string) => new Date(iso + 'T12:00:00');
@@ -37,6 +37,7 @@ export function valor(t: Tarifa, tipo: string, dia: string, vista: Vista, tarifa
   const k = mapa[clave(tipo, t.id, dia, vista)];
   if (k !== undefined) return k;
   if (BOOL.includes(vista)) return false;
+  if (vista === 'Cupos') return 0;
   if (vista === 'Estancia Min') return t.restricciones.estMin;
   if (vista === 'Estancia Max') return t.restricciones.estMax;
   const madre = t.derivaDe && prof < 5 ? tarifas.find(x => x.id === t.derivaDe) : undefined;

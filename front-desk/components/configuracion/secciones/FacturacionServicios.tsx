@@ -8,7 +8,7 @@ import { Button, Input, Modal, Select } from '@/components/suite/ui';
 import { IcPlus } from '@/components/suite/icons';
 import { useDato } from '../store';
 import { CrudCatalogo } from '../CrudCatalogo';
-import { Aviso, Buscador, Campo, CardTabs, Celda, Fila, FilaVacia, Grid, IcTrash, IconButton, ItemMaestro, OutlineButton, PillTabs, Tabla, norm, uid, useConfirmar } from '../kit';
+import { Buscador, Campo, CardTabs, Celda, Fila, FilaVacia, Grid, IcTrash, IconButton, ItemMaestro, OutlineButton, PillTabs, Tabla, norm, uid, useConfirmar } from '../kit';
 import { MONEDAS_OPC, type ServAgencia, type ServFacturacion, type ServSimple } from '../datos';
 import { CabeceraDetalle, MaestroDetalle, ops } from './FacturacionPiezas';
 
@@ -92,8 +92,7 @@ function ServFact() {
 
   return (
     <>
-      <Aviso>Selecciona un servicio para configurar sus precios por moneda, impuestos aplicables y descuentos.</Aviso>
-      <MaestroDetalle lista={<>
+      <MaestroDetalle titulo="Servicios de facturación" contador={lista.length} lista={<>
         <BarraSeccion filtros={<Buscador value={q} onChange={setQ} placeholder="Buscar servicio" width={240} />}
           acciones={<><BotonExportar disabled={!lista.length} titulo="Servicios de facturación" onCSV={() => exportarCSV('servicios-facturacion', ['Código', 'Nombre', 'Concepto', 'Precios'], lista.filter(s => norm(s.nombre + s.codigo).includes(norm(q))).map(s => [s.codigo, s.nombre, s.concepto, s.precios.map(p => `${p.moneda} ${p.precio}`).join(' · ')]))} /><Button icon={<IcPlus size={12} />} onClick={nuevo.abrir}>Nuevo servicio</Button></>} />
         <div>{lista.filter(s => norm(s.nombre + s.codigo).includes(norm(q))).map(s => <ItemMaestro key={s.id} titulo={s.nombre} detalle={s.codigo} activo={s.id === selId} onClick={() => setSelId(s.id)} />)}</div>
@@ -144,8 +143,7 @@ function ServAg() {
   const set = (p: Partial<ServAgencia>) => sel && setLista(l => l.map(s => (s.id === sel.id ? { ...s, ...p } : s)));
   return (
     <>
-      <Aviso>Servicios que se cargan en las reservas de agencia: combinan el uso de habitación, el régimen y los impuestos.</Aviso>
-      <MaestroDetalle lista={<>
+      <MaestroDetalle titulo="Servicios de agencia" contador={lista.length} lista={<>
         <BarraSeccion filtros={<Buscador value={q} onChange={setQ} placeholder="Buscar servicio" width={240} />}
           acciones={<><BotonExportar disabled={!lista.length} titulo="Servicios de agencia" onCSV={() => exportarCSV('servicios-agencia', ['Código', 'Nombre', 'Uso', 'Régimen', 'Tipo'], lista.filter(s => norm(s.nombre + s.codigo).includes(norm(q))).map(s => [s.codigo, s.nombre, s.uso, s.regimen, s.tipo]))} /><Button icon={<IcPlus size={12} />} onClick={nuevo.abrir}>Nuevo servicio</Button></>} />
         <div>{lista.filter(s => norm(s.nombre + s.codigo).includes(norm(q))).map(s => <ItemMaestro key={s.id} titulo={s.nombre} detalle={s.codigo} activo={s.id === selId} onClick={() => setSelId(s.id)} />)}</div>

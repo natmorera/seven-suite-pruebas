@@ -8,9 +8,13 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ExportListModal, FilterDropdown, Pagination, StatusBadge, C } from '@/components/ui/primitives';
 import { tiposDocumento } from '@/data/catalogosHacienda';
+import { nombreCompraGT, nombreDte } from '@/lib/perfilPais';
 import { Comprobante, ESTADO_COLOR, aplicarFiltros, enVista, filtrosIniciales, fmtFechaHora, simbolo, useComprobantes, Filtros } from './comun/datos';
 import { BarraFiltros, Cargando, Encabezado, Enlace, Fila, FilaTotal, FilaVacia, Monto, ReporteLayout, Tabla, Td, TdTotal, Th, descripcionFiltros, txtMonto } from './comun/ui';
 import { esGuatemalaActual } from '@/lib/paisActual';
+
+// Guatemala: el nombre del DTE (Factura, Factura cambiaria, Recibo de anticipos…)
+const nombreTipo = (c: { lado: string; tipo: string; tipoDte: string }) => (!esGuatemalaActual() ? c.tipo : c.lado === 'compra' ? nombreCompraGT(c.tipoDte, c.tipo) : nombreDte(c.tipoDte));
 
 const TABS = ['Ver todo', 'Ventas', 'Compras'] as const;
 const INICIAL = filtrosIniciales();
@@ -23,6 +27,7 @@ export default function ReporteGeneral() {
   const { comprobantes, cargando, error } = useComprobantes();
   // Filtro por actividad: las de los documentos (la de cada venta o compra)
   const actividades = useMemo(() => Array.from(new Set(comprobantes.map(c => c.actividad))).sort(), [comprobantes]);
+  const gt = esGuatemalaActual();
   const [tab, setTab] = useState(1);
   const [filtros, setFiltros] = useState<Filtros>(INICIAL);
   const [tipos, setTipos] = useState<Set<string>>(new Set());
@@ -32,6 +37,7 @@ export default function ReporteGeneral() {
   const [pageSize, setPageSize] = useState(10);
 
   const lado = tab === 1 ? 'venta' : tab === 2 ? 'compra' : null;
+  const tiposGT = useMemo(() => Array.from(new Set(comprobantes.filter(c => !lado || c.lado === lado).map(nombreTipo))).sort(), [comprobantes, lado]);
   const colContraparte = tab === 1 ? 'Cliente' : tab === 2 ? 'Proveedor' : 'Cliente / proveedor';
   const colOrigen = tab === 1 ? 'Módulo origen' : 'Origen';
   const placeholder = tab === 1 ? 'Busca cliente o consecutivo…' : tab === 2 ? 'Busca proveedor o consecutivo…' : 'Busca cliente, proveedor o consecutivo…';
@@ -40,7 +46,7 @@ export default function ReporteGeneral() {
   const opcionesOrigen = useMemo(() => Array.from(new Set(delLado.map(c => c.origen))).sort(), [delLado]);
 
   const filas = useMemo(() => aplicarFiltros(delLado, filtros)
-    .filter(c => tipos.size === 0 || tipos.has(c.tipo))
+    .filter(c => tipos.size === 0 || tipos.has(nombreTipo(c)))
     .filter(c => origenes.size === 0 || origenes.has(c.origen))
     .sort((a, b) => b.fecha.localeCompare(a.fecha)),
   [delLado, filtros, tipos, origenes]);
@@ -68,7 +74,7 @@ export default function ReporteGeneral() {
           hayExtraActivo={tipos.size > 0 || origenes.size > 0}
           onLimpiarExtra={() => { setTipos(new Set()); setOrigenes(new Set()); }}
           extra={<>
-            <FilterDropdown label="Tipo de comprobante" options={[...tiposDocumento()]} selected={tipos}
+            <FilterDropdown label={gt ? 'Tipo de DTE' : 'Tipo de comprobante'} options={gt ? tiposGT : [...tiposDocumento()]} selected={tipos}
               onApply={s => { setTipos(s); setPage(1); }} onClear={() => setTipos(new Set())} />
             <FilterDropdown label={colOrigen} options={opcionesOrigen} selected={origenes}
               onApply={s => { setOrigenes(s); setPage(1); }} onClear={() => setOrigenes(new Set())} />
@@ -80,7 +86,7 @@ export default function ReporteGeneral() {
       <Tabla minWidth={1100}>
         <Encabezado>
           {conTipo && <Th>Tipo</Th>}
-          <Th>{colContraparte}</Th><Th>Tipo de comprobante</Th><Th>Consecutivo</Th><Th>Fecha de emisión</Th>
+          <Th>{colContraparte}</Th><Th>{gt ? 'Tipo de DTE' : 'Tipo de comprobante'}</Th><Th>{gt ? 'Serie y número' : 'Consecutivo'}</Th><Th>Fecha de emisión</Th>
           <Th>Estado</Th><Th>{colOrigen}</Th><Th>Moneda</Th>
           <Th right>Subtotal</Th><Th right>IVA</Th><Th right>Total</Th>
         </Encabezado>
@@ -89,10 +95,10 @@ export default function ReporteGeneral() {
             <Fila key={c.lado + c.id} i={i}>
               {conTipo && <Td muted>{c.lado === 'venta' ? 'Venta' : 'Compra'}</Td>}
               <Td>{c.contraparte}</Td>
-              <Td nowrap>{c.tipo}</Td>
+              <Td nowrap>{nombreTipo(c)}</Td>
               <Td nowrap>
                 {c.incompleto
-                  ? <span style={{ color: C.error }}>Sin consecutivo</span>
+                  ? <span style={{ color: C.error }}>{gt ? 'Sin autorización' : 'Sin consecutivo'}</span>
                   : c.lado === 'venta'
                     ? <Enlace onClick={() => router.push(`/facturacion/emitidos/${c.id.replace('#', '')}`)}>{c.consecutivo}</Enlace>
                     : <span style={{ fontVariantNumeric: 'tabular-nums' }}>{c.consecutivo}</span>}
@@ -100,7 +106,7 @@ export default function ReporteGeneral() {
               <Td nowrap>{fmtFechaHora(c.fecha)}</Td>
               <Td><StatusBadge label={c.estado} color={ESTADO_COLOR[c.estado] ?? 'gray'} /></Td>
               <Td nowrap>{c.origen}</Td>
-              <Td muted>{c.moneda}</Td>
+              <Td muted>{gt && c.moneda === 'CRC' ? 'GTQ' : c.moneda}</Td>
               <Td right><Monto n={v(c, subtotal(c))} sym={sym} /></Td>
               <Td right><Monto n={v(c, c.iva)} sym={sym} /></Td>
               <Td right bold><Monto n={v(c, c.total)} sym={sym} /></Td>
@@ -114,7 +120,7 @@ export default function ReporteGeneral() {
           {excluidos.length > 0 && (
             <tr style={{ background: '#FAFAFA' }}>
               <td colSpan={span} style={{ padding: '6px 12px 10px', fontSize: 11, color: C.n700 }}>
-                No suman: {excluidos.length} rechazado{excluidos.length === 1 ? '' : 's'} o sin consecutivo
+                No suman: {excluidos.length} rechazado{excluidos.length === 1 ? '' : 's'}{gt ? ' o sin autorización' : ' o sin consecutivo'}
               </td>
               <td /><td />
               <td style={{ padding: '6px 12px 10px', textAlign: 'right', fontSize: 11, color: C.n700, whiteSpace: 'nowrap' }}>
@@ -139,9 +145,9 @@ export default function ReporteGeneral() {
           ]}
           rows={[
             ...filas.map(c => ({
-              lado: c.lado === 'venta' ? 'Venta' : 'Compra', contraparte: c.contraparte, tipo: c.tipo,
-              consecutivo: c.incompleto ? 'Sin consecutivo' : c.consecutivo, fecha: fmtFechaHora(c.fecha),
-              estado: c.estado, origen: c.origen, moneda: c.moneda,
+              lado: c.lado === 'venta' ? 'Venta' : 'Compra', contraparte: c.contraparte, tipo: nombreTipo(c),
+              consecutivo: c.incompleto ? (gt ? 'Sin autorización' : 'Sin consecutivo') : c.consecutivo, fecha: fmtFechaHora(c.fecha),
+              estado: c.estado, origen: c.origen, moneda: gt && c.moneda === 'CRC' ? 'GTQ' : c.moneda,
               subtotal: txtMonto(v(c, subtotal(c)), sym), iva: txtMonto(v(c, c.iva), sym), total: txtMonto(v(c, c.total), sym),
             })),
             { lado: '', contraparte: `Totalizado (${suman.length} válidos, sin rechazados)`, tipo: '', consecutivo: '', fecha: '', estado: '', origen: '', moneda: '',

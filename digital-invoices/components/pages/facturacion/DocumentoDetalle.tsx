@@ -267,12 +267,29 @@ export default function DocumentoDetalle({ id }: { id: string }) {
             </div>
           </Tarjeta>
 
+          {/* Factura cambiaria: los abonos van justo después de los datos, porque es lo que se cobra */}
+          {doc.tipo_dte === 'FCAM' && (() => {
+            let abonos: AbonoFcam[] = [];
+            try { abonos = doc.abonos_json ? JSON.parse(String(doc.abonos_json)) : []; } catch { abonos = []; }
+            return (
+              <Tarjeta titulo="Abonos de la factura cambiaria">
+                {abonos.length
+                  ? <AbonosCambiaria documentoId={id} inicial={abonos} moneda={m} puedeConfirmar={puede('fe.recibos.abonar') || puede('fe.ventas.emitir')} />
+                  : <p style={{ margin: 0, fontSize: 12.5, color: C.n700 }}>Esta factura cambiaria no tiene abonos registrados.</p>}
+              </Tarjeta>
+            );
+          })()}
+          {doc.tipo_dte === 'RANT' && (
+            <div style={{ fontSize: 12.5, background: C.brandBg, border: `1px solid ${C.brandBd}`, borderRadius: radius.md, padding: '10px 14px' }}>
+              Recibo de anticipos: solo lleva servicios y no lleva IVA ni impuesto de turismo. Esos impuestos se cobran en la factura que se emite cuando se presta el servicio.
+            </div>
+          )}
           <Tarjeta titulo="Líneas">
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', minWidth: 760, borderCollapse: 'collapse' }}>
                 <thead><tr>
                   <th style={th}>Descripción</th><th style={th}>B/S</th><th style={{ ...th, textAlign: 'right' }}>Cant.</th>
-                  <th style={{ ...th, textAlign: 'right' }}>Precio con IVA</th><th style={{ ...th, textAlign: 'right' }}>Descuento</th>
+                  <th style={{ ...th, textAlign: 'right' }}>{doc.tipo_dte === 'RANT' ? 'Precio' : 'Precio con IVA'}</th><th style={{ ...th, textAlign: 'right' }}>Descuento</th>
                   <th style={{ ...th, textAlign: 'right' }}>Impuestos</th><th style={{ ...th, textAlign: 'right' }}>Total</th>
                 </tr></thead>
                 <tbody>
@@ -287,7 +304,7 @@ export default function DocumentoDetalle({ id }: { id: string }) {
                         <td style={td}>{esServicio(String(l.codigo_cabys ?? '')) ? 'Servicio' : 'Bien'}</td>
                         <td style={tdR}>{l.cantidad}</td><td style={tdR}>{m(l.precio_unitario)}</td>
                         <td style={tdR}>{c.descuentoConIva ? `− ${m(c.descuentoConIva)}` : '-'}</td>
-                        <td style={tdR}>IVA {c.tarifa}% · {m(c.impuesto)}{c.otroImpuesto > 0 ? <div style={{ fontSize: 11, color: C.n700 }}>ITH {m(c.otroImpuesto)}</div> : null}</td>
+                        <td style={tdR}>{doc.tipo_dte === 'RANT' ? 'Sin impuestos' : <>IVA {c.tarifa}% · {m(c.impuesto)}</>}{c.otroImpuesto > 0 ? <div style={{ fontSize: 11, color: C.n700 }}>ITH {m(c.otroImpuesto)}</div> : null}</td>
                         <td style={{ ...tdR, fontWeight: 600 }}>{m(c.totalLinea)}</td>
                       </tr>
                     );
@@ -303,8 +320,9 @@ export default function DocumentoDetalle({ id }: { id: string }) {
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
               <div style={{ width: 'min(360px, 100%)', display: 'grid', gridTemplateColumns: '1fr auto', rowGap: 6, fontSize: 12.5, fontVariantNumeric: 'tabular-nums' }}>
                 {descuentos > 0 && <><span style={{ color: C.n700 }}>Descuentos</span><span style={{ textAlign: 'right' }}>− {m(descuentos)}</span></>}
+                {doc.tipo_dte !== 'RANT' && <>
                 <span style={{ color: C.n700 }}>Monto gravable</span><span style={{ textAlign: 'right' }}>{m(doc.subtotal)}</span>
-                <span style={{ color: C.n700 }}>IVA e impuesto de turismo</span><span style={{ textAlign: 'right' }}>{m(doc.iva)}</span>
+                <span style={{ color: C.n700 }}>IVA e impuesto de turismo</span><span style={{ textAlign: 'right' }}>{m(doc.iva)}</span></>}
                 {otros > 0 && <><span style={{ color: C.n700 }}>Otros cargos</span><span style={{ textAlign: 'right' }}>{m(otros)}</span></>}
                 <span style={{ fontWeight: 600, fontSize: 15, borderTop: `1px solid ${C.n500}`, paddingTop: 6 }}>Total</span>
                 <span style={{ fontWeight: 600, fontSize: 15, borderTop: `1px solid ${C.n500}`, paddingTop: 6, textAlign: 'right' }}>{m(doc.total)}</span>
@@ -323,18 +341,12 @@ export default function DocumentoDetalle({ id }: { id: string }) {
           {(() => {
             const leer = <T,>(t: unknown): T[] => { try { return t ? JSON.parse(String(t)) : []; } catch { return []; } };
             const frases = leer<FraseEmisor>(doc.frases_json);
-            const abonos = leer<AbonoFcam>(doc.abonos_json);
             return <>
               {frases.length > 0 && (
                 <Tarjeta titulo="Frases">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5 }}>
                     {frases.map(f => <div key={`${f.tipo}-${f.escenario}`}><span style={{ color: C.n700 }}>Tipo {f.tipo} · {nombreTipoFrase(f.tipo)}, escenario {f.escenario}:</span> {textoFraseDocumento(f)}</div>)}
                   </div>
-                </Tarjeta>
-              )}
-              {abonos.length > 0 && (
-                <Tarjeta titulo="Abonos de la factura cambiaria">
-                  <AbonosCambiaria documentoId={id} inicial={abonos} moneda={m} puedeConfirmar={puede('fe.ventas.emitir')} />
                 </Tarjeta>
               )}
             </>;

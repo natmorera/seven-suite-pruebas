@@ -1,6 +1,6 @@
 'use client';
 import { useSyncExternalStore } from 'react';
-import { USUARIOS_INIT, CONFIG_FE_VIEJOS } from '@/components/pages/config/permissionsData';
+import { USUARIOS_INIT, CONFIG_FE_VIEJOS, EQUIVALENTES_GT } from '@/components/pages/config/permissionsData';
 import { USUARIO_ACTUAL } from '@/components/ui/primitives';
 
 interface U { usuario: string; admin?: boolean; permisos: Set<string> | string[] }
@@ -30,7 +30,12 @@ export function puedeUsuario(clave: string, u: U | undefined): boolean {
   const conf = /^fe\.config\.(\w+)\.\w+$/.exec(clave);
   if (conf && !lista.some(k => /^fe\.config\.\w+\.\w+$/.test(k))
     && Object.entries(CONFIG_FE_VIEJOS).some(([viejo, secciones]) => lista.includes(viejo) && secciones.includes(conf[1]))) return true;
-  return lista.some(k => k === clave || k.startsWith(clave + ':'));
+  if (lista.some(k => k === clave || k.startsWith(clave + ':'))) return true;
+  // Permisos guardados antes de que existieran las claves propias de Guatemala: valen los equivalentes
+  const equivalente = EQUIVALENTES_GT[clave];
+  const nuevas = Object.keys(EQUIVALENTES_GT);
+  if (equivalente && !lista.some(k => nuevas.some(n => k === n || k.startsWith(n + ':')))) return lista.some(k => k === equivalente || k.startsWith(equivalente + ':'));
+  return false;
 }
 
 export function usePermisos() {

@@ -109,3 +109,23 @@ body {
 }
 @keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
 .tabla-config > tbody > tr:last-child { border-bottom: 0 !important; }
+
+/* Desplegables nativos: flecha propia con el mismo margen a la derecha que el texto a la izquierda. */
+select:not(.sin-flecha) {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23616161' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 12px 12px !important;
+  padding-right: 30px !important;
+  text-overflow: ellipsis;
+}
+select:not(.sin-flecha):disabled { background-image: none !important; }
+
+/* Indicadores en fila: separador entre cada uno (Caja, turnos). */
+.kpis-separados > .kpi + .kpi { border-left: 1px solid var(--borde-kpi, #E0E0E0); }
+.kpis-separados > .kpi:first-child { padding-left: 0; }
+
+/* En las tablas, todo lo que abre algo (enlaces) va en azul y subrayado. */
+table a[href] { color: #213C89; text-decoration: underline; text-underline-offset: 2px; }

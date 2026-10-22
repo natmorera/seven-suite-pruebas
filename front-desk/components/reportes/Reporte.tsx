@@ -17,6 +17,8 @@
 //
 // Cada reporte solo arma sus datos (`DatosReporte`) y sus filtros (`useFiltros`).
 // ─────────────────────────────────────────────────────────────────────────────
+import { Paginacion } from '@/components/suite/Paginacion';
+import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { C, FONT, PAGE_PAD, SIZE, radius } from '@/components/suite/tokens';
 import { Button, Page, FilterBar } from '@/components/suite/ui';
@@ -31,7 +33,8 @@ export interface Contador { valor: ReactNode; label: string }
 
 const POR_PAGINA = 50;
 // ── Pantalla del reporte ────────────────────────────────────────────────────
-export interface SelectorReportes { lista: readonly { id: string; label: string }[]; actual: string; onCambiar: (id: string) => void }
+/** `volver`: ruta del índice de reportes del módulo («‹ Reportes» junto al título). */
+export interface SelectorReportes { lista: readonly { id: string; label: string }[]; actual: string; onCambiar: (id: string) => void; volver?: string }
 
 export function PantallaReporte({ titulo, reportes, filtros, controles, periodo, contadores = [], datos, vacio = 'No hay registros para mostrar.', archivo, antesDeTabla, tabs }: {
   titulo: string; reportes?: SelectorReportes; filtros: Filtros;
@@ -67,6 +70,7 @@ export function PantallaReporte({ titulo, reportes, filtros, controles, periodo,
     <Page>
       <div style={{ height: SIZE.header, minHeight: SIZE.header, background: C.n000, borderBottom: `1px solid ${C.n500}`, padding: `0 ${PAGE_PAD}px`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexShrink: 0, fontFamily: FONT }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          {reportes?.volver && <Link href={reportes.volver} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: C.brand, textDecoration: 'none', whiteSpace: 'nowrap', paddingRight: 12, borderRight: `1px solid ${C.n500}` }}>‹ Reportes</Link>}
           {reportes ? <TituloSelector titulo={titulo} r={reportes} /> : <h1 style={{ fontSize: 16, fontWeight: 500, margin: 0, color: C.n900, whiteSpace: 'nowrap' }}>{titulo}</h1>}
           {periodo && <span style={{ fontSize: 12, color: C.n700, whiteSpace: 'nowrap' }}>{periodo}</span>}
         </div>
@@ -79,16 +83,17 @@ export function PantallaReporte({ titulo, reportes, filtros, controles, periodo,
       <FilterBar><ControlesFiltros f={filtros} />{controles}</FilterBar>
       <ChipsFiltros f={filtros} />
       {contadores.length > 0 && (
-        <div role="status" aria-label="Totales del reporte" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', padding: `10px ${PAGE_PAD}px`, borderBottom: `1px solid ${C.n500}`, background: C.n000, fontFamily: FONT, flexShrink: 0 }}>
-          {contadores.map((x, i) => (
-            <span key={x.label} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, padding: '0 22px', paddingLeft: i ? 22 : 0, borderLeft: i ? `1px solid ${C.n500}` : 'none', fontSize: 13, color: C.n700, whiteSpace: 'nowrap' }}>
-              <b style={{ fontSize: 14, fontWeight: 600, color: C.n900, fontVariantNumeric: 'tabular-nums' }}>{x.valor}</b>{x.label}
-            </span>
+        <div role="status" aria-label="Totales del reporte" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(contadores.length, 6)}, minmax(0, 1fr))`, gap: 12, padding: `12px ${PAGE_PAD}px 0`, background: C.n200, fontFamily: FONT, flexShrink: 0 }}>
+          {contadores.map(x => (
+            <div key={x.label} style={{ background: C.n000, border: `1px solid ${C.n500}`, borderRadius: 10, padding: '10px 14px', minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: C.n700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.label}</div>
+              <div style={{ fontSize: 17, fontWeight: 600, color: C.n900, fontVariantNumeric: 'tabular-nums', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.valor}</div>
+            </div>
           ))}
         </div>
       )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: C.n000, fontFamily: FONT }}>
-        {antesDeTabla && <div style={{ padding: `12px ${PAGE_PAD}px 0` }}>{antesDeTabla}</div>}
+        {antesDeTabla && <div style={{ padding: `12px ${PAGE_PAD}px 0`, background: C.n200 }}>{antesDeTabla}</div>}
         {total === 0 ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 40, textAlign: 'center' }}>
             <b style={{ fontSize: 15, fontWeight: 600, color: C.n900 }}>{vacioFiltrado ? 'No hay resultados con los filtros aplicados' : vacio}</b>
@@ -121,9 +126,8 @@ export function PantallaReporte({ titulo, reportes, filtros, controles, periodo,
         )}
         {datos.nota && total > 0 && <p style={{ margin: 0, padding: `8px ${PAGE_PAD}px`, fontSize: 11.5, color: C.n700 }}>{datos.nota}</p>}
         {total > 0 && (
-          <div className="no-print" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: `8px ${PAGE_PAD}px`, borderTop: `1px solid ${C.n500}` }}>
-            <span style={{ fontSize: 12, color: C.n700 }}>{unico && paginas > 1 ? `Mostrando ${(pag - 1) * POR_PAGINA + 1}–${Math.min(pag * POR_PAGINA, unico.filas.length)} de ${unico.filas.length} filas` : `${total} registro${total === 1 ? '' : 's'}`}</span>
-            {unico && paginas > 1 && <Paginador pagina={pag} total={paginas} onChange={setPagina} />}
+          <div className="no-print" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', minHeight: 48, padding: `8px ${PAGE_PAD}px`, borderTop: `1px solid ${C.n500}`, background: C.n000 }}>
+            <Paginacion pagina={pag} paginas={unico ? paginas : 1} onChange={setPagina} filas={unico ? unico.filas.filter(esDato).length : total} porPagina={unico ? POR_PAGINA : Math.max(1, total)} />
           </div>
         )}
       </div>

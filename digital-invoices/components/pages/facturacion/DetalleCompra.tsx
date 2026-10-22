@@ -14,6 +14,7 @@ import EmitirAcuseModal from './EmitirAcuseModal';
 import CambiarActividadModal from './CambiarActividadModal';
 import { descargarAcuseCompra } from './pdfAcuseCompra';
 import { DatoNumero, consecutivoCompleto } from '@/components/ui/NumeroClave';
+import { nombreCompraGT } from '@/lib/perfilPais';
 import { CREDITO_CORTO, ESTILO_ACUSE, lineasDe, sinAcuse, type CompraRow, type EmisorInfo } from './comprasComun';
 import { Autoridad, esGuatemalaActual, simboloLocal } from '@/lib/paisActual';
 
@@ -89,7 +90,7 @@ export default function DetalleCompra({ id }: { id: string }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <button onClick={() => router.push('/facturacion/recepcion')} aria-label="Volver" title="Volver"
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, padding: 4, color: C.n900 }}>←</button>
-          <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{c.tipo ?? 'Factura electrónica'} {consecutivoCompleto(c.numero_factura, c.clave)}</h1>
+          <h1 style={{ fontSize: 17, fontWeight: 600, margin: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{gt ? nombreCompraGT(c.tipo_dte, c.tipo) : c.tipo ?? 'Factura electrónica'} {consecutivoCompleto(c.numero_factura, c.clave)}</h1>
           <StatusBadge label={estadoLabel} color={estadoColor} />
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
@@ -142,10 +143,11 @@ export default function DetalleCompra({ id }: { id: string }) {
               <DatoNumero tipo="clave" clave={c.clave} />
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+              {gt && <Dato label="Tipo de documento">{c.tipo_dte ? `${c.tipo_dte} · ${nombreCompraGT(c.tipo_dte, c.tipo)}` : nombreCompraGT(null, c.tipo)}</Dato>}
               <Dato label="Fecha de emisión">{c.fecha_emision ? new Date(c.fecha_emision.length <= 10 ? c.fecha_emision + 'T12:00:00' : c.fecha_emision).toLocaleDateString('es-CR', { dateStyle: 'short' }) : null}</Dato>
-              <Dato label="Moneda">{c.moneda ?? 'CRC'}{String(c.moneda).toUpperCase() === 'USD' ? ` (TC ${c.tipo_cambio})` : ''}</Dato>
+              <Dato label="Moneda">{gt && c.moneda !== 'USD' ? 'GTQ' : c.moneda ?? 'CRC'}{String(c.moneda).toUpperCase() === 'USD' ? ` (TC ${c.tipo_cambio})` : ''}</Dato>
               <Dato label="Condición del IVA">{CREDITO_CORTO[c.tipo_credito_fiscal] ?? c.tipo_credito_fiscal}</Dato>
-              <Dato label="Origen">{({ xml: 'XML', correo: 'Correo', manual: 'Manual', auto: 'Correo automático' } as Record<string, string>)[c.origen] ?? c.origen}</Dato>
+              <Dato label="Origen">{({ xml: 'XML', correo: 'Correo', manual: 'Manual', auto: 'Correo automático', fisica: 'Compra física' } as Record<string, string>)[c.origen] ?? c.origen}</Dato>
               {contabilidad && <Dato label="Cuenta del proveedor">{c.cuenta_proveedor ? <span style={{ fontVariantNumeric: 'tabular-nums' }}>{c.cuenta_proveedor}{c.cuenta_proveedor_nombre ? ` · ${c.cuenta_proveedor_nombre}` : ''}</span> : null}</Dato>}
               {contabilidad && <Dato label="Asiento contable">{c.asiento_consecutivo ? <AsientoVinculado documentoId={String(c.id)} consecutivo={c.asiento_consecutivo} /> : c.estado === 'Aceptado' ? <GenerarAsientoBoton url={`/api/recepcion/${c.id}/asiento`} onHecho={() => setVersion(v => v + 1)} /> : 'Se genera al emitir el acuse'}</Dato>}
             </div>
@@ -158,7 +160,7 @@ export default function DetalleCompra({ id }: { id: string }) {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', minWidth: 760, borderCollapse: 'collapse' }}>
                   <thead><tr>
-                    <th style={th}>Bien o servicio</th><th style={th}>CABYS</th>{contabilidad && <th style={th}>Cuenta</th>}
+                    <th style={th}>{gt ? 'Descripción' : 'Bien o servicio'}</th><th style={th}>{gt ? 'B/S' : 'CABYS'}</th>{contabilidad && <th style={th}>Cuenta</th>}
                     <th style={{ ...th, textAlign: 'right' }}>Cant.</th><th style={{ ...th, textAlign: 'right' }}>Precio</th>
                     <th style={{ ...th, textAlign: 'right' }}>Descuento</th><th style={{ ...th, textAlign: 'right' }}>IVA</th><th style={{ ...th, textAlign: 'right' }}>Total</th>
                   </tr></thead>
@@ -166,7 +168,7 @@ export default function DetalleCompra({ id }: { id: string }) {
                     {lineas.map(l => (
                       <tr key={l.numero}>
                         <td style={td}>{l.detalle}{l.codigo ? <div style={{ fontSize: 10.5, color: C.n700 }}>Cód. {l.codigo}</div> : null}</td>
-                        <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{l.cabys}</td>
+                        <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{gt ? (l.cabys === 'B' ? 'Bien' : l.cabys === 'S' ? 'Servicio' : l.cabys) : l.cabys}</td>
                         {contabilidad && <td style={{ ...td, fontVariantNumeric: 'tabular-nums' }}>{l.cuenta || <span style={{ color: C.n700 }}>-</span>}</td>}
                         <td style={tdR}>{l.cantidad}</td><td style={tdR}>{m(l.precioUnitario)}</td>
                         <td style={tdR}>{Number(l.descuento) ? `− ${m(l.descuento)}` : '-'}</td>
@@ -201,7 +203,7 @@ export default function DetalleCompra({ id }: { id: string }) {
               {c.mensaje_acuse && <Dato label={gt ? 'Detalle del registro' : 'Detalle del acuse'}>{c.mensaje_acuse}</Dato>}
             </div>
             {c.ultimo_error && <p style={{ fontSize: 12, color: C.error }}>{c.ultimo_error}</p>}
-            {verXml && <pre style={{ fontSize: 10.5, background: C.n900, color: '#B8E6B8', padding: 14, borderRadius: 8, overflowX: 'auto', marginTop: 12 }}>{c.xml || 'Esta compra no tiene XML guardado (se registró a mano).'}</pre>}
+            {verXml && gt && c.origen === 'fisica' ? <p style={{ fontSize: 12, color: C.n700, marginTop: 12 }}>Las compras físicas (en papel) no tienen XML ni número de autorización.</p> : verXml && <pre style={{ fontSize: 10.5, background: C.n900, color: '#B8E6B8', padding: 14, borderRadius: 8, overflowX: 'auto', marginTop: 12 }}>{c.xml || 'Esta compra no tiene XML guardado (se registró a mano).'}</pre>}
           </Tarjeta>
         </div>
       </div>

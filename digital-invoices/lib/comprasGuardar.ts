@@ -72,6 +72,9 @@ export async function guardarCompra(db: Client, d: any): Promise<ResultadoCompra
       d.actividadEmisor ?? null,
     ],
   });
+  // Guatemala: tipo de DTE (el de la compra física o el que trae el XML de FEL)
+  const tipoDte = d.tipoDte ?? /DatosGenerales[^>]*\bTipo="(\w+)"/.exec(String(d.xml ?? ''))?.[1] ?? null;
+  if (tipoDte) await db.execute({ sql: 'UPDATE documentos_recibidos SET tipo_dte = ? WHERE id = ?', args: [tipoDte, id] }).catch(() => null);
   if (d.correoId) await db.execute({ sql: 'UPDATE correos SET importado = 1 WHERE id = ?', args: [d.correoId] });
   // Proveedor nuevo → se crea con su cuenta auxiliar (nivel 4)
   if (d.crearProveedor && d.cuentaProveedor) {

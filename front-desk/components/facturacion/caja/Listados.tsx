@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { C, radius } from '@/components/suite/tokens';
 import { StatusBadge } from '@/components/suite/ui';
 import { Celda, Fila, FilaVacia, Paginacion, Tabla, usePaginado } from '@/components/configuracion/kit';
-import { FechaBoton, exportarCSV, usePrint } from '@/components/hotel/ui';
+import { FechaBoton, exportarCSV, usePrint, RangoBoton } from '@/components/hotel/ui';
 import { useHotel } from '@/components/hotel/store';
 import { HOY, fmtF } from '@/components/hotel/datos';
 import { CAJEROS, RESPONSABLE, TC, fmtDuracion, fmtFH, fmtN, fmtUSD, r2, type Turno } from '@/components/hotel/finanzas';
@@ -64,7 +64,7 @@ export function Movimientos({ todos, usuarioInicial }: { todos: boolean; usuario
           );
         })}
       </Tabla>
-      {filas.length > 12 && <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} />}
+      <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} filas={pag.filas} porPagina={pag.tam} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 24, background: C.n200, borderRadius: radius.md, padding: '12px 14px', fontSize: 13 }}>
         <b style={{ fontWeight: 600 }}>Total {todos ? 'del día' : 'del turno'} (hasta ahora)</b><span style={{ color: C.n700 }}>{filas.length} movimientos</span>
         <span style={{ marginLeft: 'auto' }}>₡ {fmtN(neto('crc'))}</span><span style={{ minWidth: 110, textAlign: 'right' }}>$ {fmtN(neto('usd'))}</span>
@@ -91,8 +91,7 @@ export function Historial({ soloDe, usuarioInicial }: { soloDe?: string; usuario
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <FiltrosEnBarra>
         {!soloDe && <FiltroUno label="Usuario" value={usuario} onChange={setUsuario} opciones={CAJEROS.filter(c => c.rol !== 'Administrador').map(c => ({ value: c.nombre, label: c.nombre }))} />}
-        <FechaBoton label="Fecha de inicio" value={desde} onChange={setDesde} />
-        <FechaBoton label="Fecha de finalización" value={hasta} onChange={setHasta} />
+        <RangoBoton label="Período" desde={desde} hasta={hasta} onChange={(d, x) => { setDesde(d); setHasta(x); }} />
       </FiltrosEnBarra>
       <AccionesEnHeader>
         <Exportar disabled={!filas.length} titulo={soloDe ? 'Mis turnos anteriores' : 'Historial de turnos'} criterio={`Usuario: ${soloDe ?? (usuario || 'Todos')} · Desde: ${desde ? fmtF(desde) : '…'} · Hasta: ${hasta ? fmtF(hasta) : '…'}`}
@@ -121,7 +120,7 @@ export function Historial({ soloDe, usuarioInicial }: { soloDe?: string; usuario
           );
         })}
       </Tabla>
-      {filas.length > 10 && <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} />}
+      <Paginacion pagina={pag.pagina} total={pag.total} onChange={pag.setPagina} filas={pag.filas} porPagina={pag.tam} />
       {ver && <Visor titulo={ver.fin ? 'Cierre de turno' : 'Precierre de turno'} sub={ver.cajero} ancho={640} onClose={() => setVer(null)}><TicketTurno t={ver} precierre={!ver.fin} ahora={ahora} /></Visor>}
     </div>
   );

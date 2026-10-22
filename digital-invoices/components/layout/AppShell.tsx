@@ -167,6 +167,7 @@ export default function AppShell({ children, empresa }: { children:ReactNode; em
     '/facturacion/emitidos': 'fe.ventas.view', '/facturacion/recepcion': 'fe.compras.view',
     '/reportes/iva': 'fe.reportes.iva.view', '/reportes/general': 'fe.reportes.general.view', '/reportes/importe-iva': 'fe.reportes.importe.view',
     '/reportes/actividad-economica': 'fe.reportes.actividad.view', '/reportes/rechazados': 'fe.reportes.rechazados.view',
+    '/reportes/libros': 'fe.reportes.libros.view', '/reportes/dte': 'fe.reportes.dte.view',
   };
   const CONTABLES = new Set(['registro', 'bancos', 'estados']);
   const REPORTES_CONTABLES = new Set(['/analitico', '/historico', '/diferencial']);
@@ -180,7 +181,7 @@ export default function AppShell({ children, empresa }: { children:ReactNode; em
       .map(c => (gt && c.href === '/reportes/rechazados' ? { ...c, label: 'Documentos rechazados' } : c)) } : n)
     .filter(n => !n.children || n.children.length > 0);
   const CONFIG_CONTABLES = new Set(['/config-contable', '/catalogo', '/clientes', '/config-actividad-bancaria', '/parametros']);
-  const puedeConfigFe = ['sucursales', 'cajas', 'impuestos', 'descuentos', 'exoneraciones', 'receptores', 'grupos', 'productos', ...(contabilidad ? ['cuentas'] : [])].some(x => puede(`fe.config.${x}.view`));
+  const puedeConfigFe = ['sucursales', 'cajas', 'impuestos', 'descuentos', 'exoneraciones', 'receptores', 'grupos', 'productos', 'unidades', ...(contabilidad ? ['cuentas'] : [])].some(x => puede(`fe.config.${x}.view`));
   const configVisible = CONFIG_ITEMS.filter(i => (contabilidad || !CONFIG_CONTABLES.has(i.href)) && (i.href !== '/facturacion-config' || (facturacion && puedeConfigFe)));
   // Una pantalla que no es de esta versión (por enlace o dirección escrita) lleva al Dashboard:
   // sin Contabilidad no se abren asientos, bancos, estados ni catálogo; sin Facturación, sus pantallas

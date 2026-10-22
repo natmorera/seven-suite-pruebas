@@ -11,6 +11,7 @@ import { HojaSistema, TablaReporte, tdR } from '../comun';
 import { datosHotel } from '../ReciboCanje';
 import { consolidadoDia, resumenTurno } from './calc';
 import { useHotel } from '@/components/hotel/store';
+import { MontoCelda, celdaMonto } from '@/components/suite/Monto';
 
 const mono = "'Courier New', ui-monospace, monospace";
 
@@ -65,27 +66,27 @@ export function ReporteCierreCaja({ cierre, hora }: { cierre?: CierreCaja; hora:
       </div>
       <Seccion titulo="Cajeros en el turno">
         <TablaReporte headers={['Cajero', 'Estado', 'Usuario', 'Total']} derecha={[3]}>
-          {c.filas.map(({ t, r }) => <tr key={t.id}><td style={tdR()}>{t.cajero}</td><td style={tdR()}><StatusBadge label={t.fin ? 'CERRADO' : 'ACTIVO'} color={t.fin ? 'gray' : 'green'} /></td><td style={tdR()}>{cajeroDe(t.cajero)?.usuario}</td><td style={tdR(true)}>{fmtUSD(r.ingresos - r.egresos)}</td></tr>)}
+          {c.filas.map(({ t, r }) => <tr key={t.id}><td style={tdR()}>{t.cajero}</td><td style={tdR()}><StatusBadge label={t.fin ? 'CERRADO' : 'ACTIVO'} color={t.fin ? 'gray' : 'green'} /></td><td style={tdR()}>{cajeroDe(t.cajero)?.usuario}</td><td style={tdR(true)}><MontoCelda texto={fmtUSD(r.ingresos - r.egresos)} /></td></tr>)}
           <Total l="TOTAL CAJEROS:" v={fmtUSD(r2(c.ingresos - c.egresos))} />
         </TablaReporte>
       </Seccion>
       <Seccion titulo="Liquidación de comprobantes">
         <TablaReporte headers={['Tipo', 'Moneda', 'Importe', '']} derecha={[2]}>
-          {COMPROBANTES.map(k => <tr key={k.k}><td style={tdR()}>{k.metodo} · {k.detalle}</td><td style={tdR()}>{k.moneda}</td><td style={tdR(true)}>{k.moneda === 'CRC' ? fmtCRC(c.metodos[k.k]) : fmtUSD(c.metodos[k.k])}</td><td style={tdR()} /></tr>)}
+          {COMPROBANTES.map(k => <tr key={k.k}><td style={tdR()}>{k.metodo} · {k.detalle}</td><td style={tdR()}>{k.moneda}</td><td style={tdR(true)}>{celdaMonto(k.moneda === 'CRC' ? fmtCRC(c.metodos[k.k]) : fmtUSD(c.metodos[k.k]))}</td><td style={tdR()} /></tr>)}
           <Total l="TOTAL COMPROBANTES:" v={fmtUSD(r2(c.metodos.pos1 + c.metodos.pos2 / TC + c.metodos.link + c.metodos.transf))} />
         </TablaReporte>
       </Seccion>
       <Seccion titulo="Recuento efectivo">
         <TablaReporte headers={['Denominación', 'Cantidad', 'Importe', '']} derecha={[1, 2]}>
-          {conteoUSD.map(([d, n]) => <tr key={'u' + d}><td style={tdR()}>$ {d}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}>{fmtUSD(d * n)}</td><td style={tdR()} /></tr>)}
-          {conteoCRC.map(([d, n]) => <tr key={'c' + d}><td style={tdR()}>₡ {fmtN(d, 0)}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}>{fmtCRC(d * n)}</td><td style={tdR()} /></tr>)}
+          {conteoUSD.map(([d, n]) => <tr key={'u' + d}><td style={tdR()}>$ {d}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}><MontoCelda texto={fmtUSD(d * n)} /></td><td style={tdR()} /></tr>)}
+          {conteoCRC.map(([d, n]) => <tr key={'c' + d}><td style={tdR()}>₡ {fmtN(d, 0)}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}><MontoCelda texto={fmtCRC(d * n)} /></td><td style={tdR()} /></tr>)}
           <Total l="TOTAL EFECTIVO:" v={fmtUSD(r2(c.metodos.efUSD + c.metodos.efCRC / TC))} />
         </TablaReporte>
       </Seccion>
       <Seccion titulo="Resultado del día">
         <TablaReporte headers={['Concepto', '', 'Importe', '']} derecha={[2]}>
           {[['Saldo inicial de apertura', c.saldoInicial], ['Total ingresos', c.ingresos], ['Total egresos', -c.egresos], ['Saldo esperado al cierre', c.esperado], ['Total declarado', c.declarado], ['Diferencia del día', c.diferencia]].map(([l, v]) =>
-            <tr key={l as string}><td style={tdR()} colSpan={2}>{l}</td><td style={tdR(true, { color: l === 'Diferencia del día' && (v as number) < 0 ? C.error : undefined })}>{fmtUSD(v as number)}</td><td style={tdR()} /></tr>)}
+            <tr key={l as string}><td style={tdR()} colSpan={2}>{l}</td><td style={tdR(true, { color: l === 'Diferencia del día' && (v as number) < 0 ? C.error : undefined })}><MontoCelda texto={fmtUSD(v as number)} /></td><td style={tdR()} /></tr>)}
         </TablaReporte>
         {cierre?.observaciones && <p style={{ fontSize: 11, marginTop: 10 }}><b>Observaciones:</b> {cierre.observaciones}</p>}
       </Seccion>
@@ -118,15 +119,15 @@ export function ReporteMovimientosCajero({ turnos }: { turnos: Turno[] }) {
   return (
     <HojaSistema titulo="Movimientos por cajero" subtitulo="Resumen de movimientos registrados por cajero">
       <TablaReporte headers={['Cajero', 'Entrada', 'Salida', 'Diferencia', 'Estado']} derecha={[1, 2, 3]}>
-        {filas.map(f => <tr key={f.c.nombre}><td style={tdR(false, { fontWeight: 600 })}>{f.c.nombre}</td><td style={tdR(true)}>{fmtUSD(f.entrada)}</td><td style={tdR(true)}>{fmtUSD(f.salida)}</td><td style={tdR(true)}>{fmtUSD(f.dif)}</td>
+        {filas.map(f => <tr key={f.c.nombre}><td style={tdR(false, { fontWeight: 600 })}>{f.c.nombre}</td><td style={tdR(true)}><MontoCelda texto={fmtUSD(f.entrada)} /></td><td style={tdR(true)}><MontoCelda texto={fmtUSD(f.salida)} /></td><td style={tdR(true)}><MontoCelda texto={fmtUSD(f.dif)} /></td>
           <td style={tdR()}><StatusBadge label={f.conciliado ? 'CONCILIADO' : 'PENDIENTE'} color={f.conciliado ? 'green' : 'gray'} /></td></tr>)}
-        <tr style={{ background: '#F5F5F5' }}><td style={tdR(false, { fontWeight: 700 })}>TOTAL</td><td style={tdR(true, { fontWeight: 700 })}>{fmtUSD(tot('entrada'))}</td><td style={tdR(true, { fontWeight: 700 })}>{fmtUSD(tot('salida'))}</td><td style={tdR(true, { fontWeight: 700 })}>{fmtUSD(tot('dif'))}</td><td style={tdR()} /></tr>
+        <tr style={{ background: '#F5F5F5' }}><td style={tdR(false, { fontWeight: 700 })}>TOTAL</td><td style={tdR(true, { fontWeight: 700 })}><MontoCelda texto={fmtUSD(tot('entrada'))} /></td><td style={tdR(true, { fontWeight: 700 })}><MontoCelda texto={fmtUSD(tot('salida'))} /></td><td style={tdR(true, { fontWeight: 700 })}><MontoCelda texto={fmtUSD(tot('dif'))} /></td><td style={tdR()} /></tr>
       </TablaReporte>
       <h2 style={{ margin: '24px 0 10px', fontSize: 16, fontWeight: 600 }}>Cantidad en caja - consolidado</h2>
       <TablaReporte headers={['Item', 'Cantidad', 'Importe', 'Total']} derecha={[1, 2, 3]}>
-        {billetes.map(([d, n]) => <tr key={d}><td style={tdR()}>Billetes $ {d}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}>{fmtUSD(d)}</td><td style={tdR(true)}>{fmtUSD(d * n)}</td></tr>)}
-        <tr><td style={tdR()}>Colones (equiv. USD)</td><td style={tdR(true)}>—</td><td style={tdR(true)}>{fmtCRC(totalConteo(ult?.conteoCierre, 'CRC'))}</td><td style={tdR(true)}>{fmtUSD(totalConteo(ult?.conteoCierre, 'CRC') / TC)}</td></tr>
-        <tr style={{ background: '#F5F5F5' }}><td style={tdR(false, { fontWeight: 700 })}>TOTAL</td><td style={tdR(true, { fontWeight: 700 })}>{billetes.reduce((s, [, n]) => s + n, 0)}</td><td style={tdR()} /><td style={tdR(true, { fontWeight: 700 })}>{fmtUSD(r2(totalConteo(ult?.conteoCierre, 'USD') + totalConteo(ult?.conteoCierre, 'CRC') / TC))}</td></tr>
+        {billetes.map(([d, n]) => <tr key={d}><td style={tdR()}>Billetes $ {d}</td><td style={tdR(true)}>{n}</td><td style={tdR(true)}><MontoCelda texto={fmtUSD(d)} /></td><td style={tdR(true)}><MontoCelda texto={fmtUSD(d * n)} /></td></tr>)}
+        <tr><td style={tdR()}>Colones (equiv. USD)</td><td style={tdR(true)}>—</td><td style={tdR(true)}><MontoCelda texto={fmtCRC(totalConteo(ult?.conteoCierre, 'CRC'))} /></td><td style={tdR(true)}><MontoCelda texto={fmtUSD(totalConteo(ult?.conteoCierre, 'CRC') / TC)} /></td></tr>
+        <tr style={{ background: '#F5F5F5' }}><td style={tdR(false, { fontWeight: 700 })}>TOTAL</td><td style={tdR(true, { fontWeight: 700 })}>{billetes.reduce((s, [, n]) => s + n, 0)}</td><td style={tdR()} /><td style={tdR(true, { fontWeight: 700 })}><MontoCelda texto={fmtUSD(r2(totalConteo(ult?.conteoCierre, 'USD') + totalConteo(ult?.conteoCierre, 'CRC') / TC))} /></td></tr>
       </TablaReporte>
       <p style={{ fontSize: 10, color: C.n700, marginTop: 8, fontFamily: FONT }}>Cantidad en caja según el último arqueo cerrado{ult ? ` (${ult.cajero}, ${fmtFH(ult.fin)})` : ''}.</p>
     </HojaSistema>

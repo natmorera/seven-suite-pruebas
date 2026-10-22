@@ -68,7 +68,7 @@ function Contenido() {
   const NOMBRES: Partial<Record<TabId, string>> = gt ? { sucursales: 'Establecimiento', cajas: 'Cajas', impuestos: textos.pestanaImpuestos, productos: 'Productos', grupos: 'Clasificación' } : {};
   // Mismo orden en los dos países. Guatemala no tiene exoneraciones, sus grupos son
   // clasificaciones de producto y lleva su catálogo de unidades de medida.
-  const permisoDe = (id: TabId) => (id === 'unidades' ? 'productos' : id);
+  const permisoDe = (id: TabId) => id;
   const VISIBLES = TABS
     .filter(t => (contabilidad || t.id !== 'cuentas') && puede(`fe.config.${permisoDe(t.id)}.view`) && !(gt ? t.id === 'exoneraciones' : t.id === 'unidades'))
     .map(t => ({ ...t, label: NOMBRES[t.id] ?? t.label }));
@@ -80,7 +80,7 @@ function Contenido() {
     tab === 'sucursales' ? (implementacion && puede('fe.config.sucursales.crear') ? <Button onClick={() => disparar('sucursales')}>{textos.nuevaSucursal}</Button> : null) :
     tab === 'cajas' ? (puede('fe.config.cajas.crear') ? <Button onClick={() => disparar('cajas')}>+ Nueva caja / terminal</Button> : null) :
     tab === 'impuestos' ? (puede('fe.config.impuestos.crear') ? <Button onClick={() => disparar('impuestos')}>{gt ? '+ Nueva unidad gravable' : '+ Nuevo impuesto'}</Button> : null) :
-    tab === 'unidades' ? (puede('fe.config.productos.crear') ? <Button onClick={() => disparar('unidades')}>+ Nueva unidad de medida</Button> : null) :
+    tab === 'unidades' ? (puede('fe.config.unidades.crear') ? <Button onClick={() => disparar('unidades')}>+ Nueva unidad de medida</Button> : null) :
     tab === 'descuentos' ? (puede('fe.config.descuentos.crear') ? <Button onClick={() => disparar('descuentos')}>+ Nuevo descuento</Button> : null) :
     tab === 'exoneraciones' ? (puede('fe.config.exoneraciones.crear') ? <Button onClick={() => disparar('exoneraciones')}>+ Nueva exoneración</Button> : null) :
     tab === 'receptores' ? (puede('fe.config.receptores.crear') ? <Button onClick={() => disparar('receptores')}>+ Nuevo receptor</Button> : null) :

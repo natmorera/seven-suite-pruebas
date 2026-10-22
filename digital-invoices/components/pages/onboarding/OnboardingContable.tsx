@@ -5,7 +5,9 @@
 // defecto, así que casi siempre basta con «Continuar».
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { C, FONT, Button, FormField, Select, radius } from '@/components/ui/primitives';
+import { C, FONT, Button, FormField, Select, Modal, radius } from '@/components/ui/primitives';
+import SeccionApiKey from '@/components/ui/integracion/SeccionApiKey';
+import { AyudaApiKey, obtenerApiKey, regenerarApiKey } from '@/components/pages/empresa/ApiKeyPagina';
 import CamposIdentificacion from '@/components/pages/empresa/CamposIdentificacion';
 import ConsecutivosDocumentos from '@/components/pages/empresa/ConsecutivosDocumentos';
 import { MONEDAS_CONTABLES, monedaPrimariaDePais, paisPorCodigo, simboloMoneda } from '@/lib/paises';
@@ -57,6 +59,7 @@ export default function OnboardingContable() {
   const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
+  const [verApiKey, setVerApiKey] = useState(false);
   const [emp, setEmp] = useState({ nombreLegal: '', nombreComercial: '', tipoId: '02', numeroId: '', pais: 'CR', zonaHoraria: 'America/Costa_Rica', numeroLegalizacion: '', citasPresentacion: '' });
   const [nom, setNom] = useState<Nomenclatura>(NOMENCLATURA_INICIAL);
   const [primaria, setPrimaria] = useState('CRC');
@@ -208,8 +211,16 @@ export default function OnboardingContable() {
         <div style={{ width: 120, height: 6, borderRadius: 3, background: C.n500, overflow: 'hidden' }}>
           <div style={{ width: `${(estado.completos / PASOS.length) * 100}%`, height: '100%', background: C.brand, transition: 'width .3s' }} />
         </div>
+        {/* La API Key se obtiene sin terminar el asistente: así se conecta el módulo con Management desde el inicio */}
+        <Button variant="secondary" onClick={() => setVerApiKey(true)}>API Key</Button>
         {origen && <Button variant="secondary" onClick={() => salirDeDemostracion(r => router.replace(r))}>Salir de la demostración</Button>}
       </header>
+      {verApiKey && (
+        <Modal open title="API Key para Management" onClose={() => setVerApiKey(false)} width={640}>
+          <AyudaApiKey />
+          <SeccionApiKey obtener={obtenerApiKey} regenerar={regenerarApiKey} marca={C.brand} />
+        </Modal>
+      )}
 
       <div className="onb-cuerpo" style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <div className="onb-grid" style={{ maxWidth: 1280, height: '100%', boxSizing: 'border-box', margin: '0 auto', padding: '20px 24px', display: 'grid', gridTemplateColumns: '240px 1fr', gridTemplateRows: 'minmax(0, 1fr)', gap: 20 }}>

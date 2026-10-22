@@ -1,26 +1,29 @@
 'use client';
-// Panel lateral del folio: se abre sobre la lista (que conserva su ancho) con
-// el resumen arriba (cliente, habitación, estado, saldo y uso del crédito) y
-// las acciones de uso diario a un clic: Registrar pago, Agregar cargo,
-// Prefactura. Debajo, el detalle completo (Información · Cargos · Pagos · Bitácora).
+// Panel lateral del folio (media pantalla): resumen arriba (cliente, habitación, estado, saldo y uso del
+// crédito), el detalle completo en el centro (Información · Cargos · Pagos · Bitácora) y la barra de acciones
+// fija al pie: a la izquierda Eliminar y «Más acciones», a la derecha Prefactura, Agregar cargo y Registrar pago.
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { C, FONT, radius, shadow, Z } from '@/components/suite/tokens';
 import { Button, StatusBadge } from '@/components/suite/ui';
+import { Alerta, MenuBoton, type OpcionMenu } from '@/components/hotel/ui';
+import { useHotel } from '@/components/hotel/store';
 import { fmtF } from '@/components/hotel/datos';
-import { fmtMon } from '@/components/hotel/finanzas';
-import { DetalleFolio } from './Detalle';
+import { ahoraHotel, fmtMon } from '@/components/hotel/finanzas';
+import { DetalleFolio, type DialogoFolio } from './Detalle';
+import { AsociarDepositos, AsociarPerfil } from './Operaciones';
 import { Exoneracion, Referencia } from './Pagos';
 import type { FolioVista } from './modelo';
 
 export const tituloNombre = (s: string) => (s === s.toUpperCase() ? s.toLowerCase().replace(/(^|\s)\S/g, x => x.toUpperCase()) : s);
 
-export function PanelFolio({ folio, onClose, onToast, onEliminado }: { folio: FolioVista; onClose: () => void; onToast: (t: string) => void; onEliminado?: () => void }) {
-  const [dialogo, setDialogo] = useState<null | 'exo' | 'ref'>(null);
+export function PanelFolio({ folio, onClose, onToast, onEliminado, onNuevo }: { folio: FolioVista; onClose: () => void; onToast: (t: string) => void; onEliminado?: () => void; onNuevo?: () => void }) {
+  const h = useHotel();
+  const [dialogo, setDialogo] = useState<null | 'exo' | 'ref' | 'perfil' | 'depositos' | 'eliminar'>(null);
   const [tab, setTab] = useState<'Cargos' | 'Pagos' | 'Información' | 'Bitácora'>('Cargos');
   const [k, setK] = useState(0);
-  const [dlg, setDlg] = useState<'cargo' | 'pago' | 'prefactura' | undefined>(undefined);
+  const [dlg, setDlg] = useState<DialogoFolio | undefined>(undefined);
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !dialogo) onClose(); };
     window.addEventListener('keydown', esc);
@@ -29,7 +32,21 @@ export function PanelFolio({ folio, onClose, onToast, onEliminado }: { folio: Fo
   const abierto = folio.estado === 'Abierto';
   const usoCredito = folio.limite ? Math.min(1, Math.max(0, folio.saldo) / folio.limite) : 0;
   const excede = !!folio.limite && folio.saldo > folio.limite;
-  const ir = (t: typeof tab, d?: 'cargo' | 'pago' | 'prefactura') => { setTab(t); setDlg(d); setK(x => x + 1); };
+  const externo = folio.clase === 'externo';
+  const eliminable = externo && folio.lineas.length === 0 && folio.pagos.length === 0 && folio.depGarantia <= 0 && Math.abs(folio.saldo) < 0.01;
+  const mas: OpcionMenu[] = [
+    ...(externo && onNuevo ? [{ label: 'Nuevo folio externo', onClick: onNuevo }] : []),
+    ...(externo ? [{ label: folio.perfilId ? 'Cambiar perfil asociado' : 'Asociar perfil', onClick: () => setDialogo('perfil') }, { label: 'Asociar depósitos en garantía', onClick: () => setDialogo('depositos'), disabled: !abierto }] : []),
+    { label: 'Trasladar cargos', onClick: () => ir('Cargos', 'traslado'), disabled: !abierto },
+    { label: `Redirigir cargos${folio.redirecciones.length ? ` (${folio.redirecciones.length})` : ''}`, onClick: () => ir('Cargos', 'redirigir'), disabled: !abierto },
+    { label: 'Corrección de cargos', onClick: () => ir('Cargos', 'corregir'), disabled: !abierto || !folio.lineas.some(l => !l.bloqueado && !l.historico && l.importe > 0) },
+    { label: `Exoneración${folio.exoneracion ? ' ✓' : ''}`, onClick: () => setDialogo('exo') },
+    { label: `Referencia${folio.referencia ? ' ✓' : ''}`, onClick: () => setDialogo('ref') },
+    ...(folio.factura ? [{ label: `Ver factura ${folio.factura}`, onClick: () => ir('Información', 'factura') }, { label: 'Nota de crédito / débito', onClick: () => ir('Información', 'nota') }] : []),
+    ...(!abierto && folio.clase !== 'reserva' ? [{ label: 'Reabrir folio', onClick: () => { h.reabrirFolio(folio.id, h.sesion, ahoraHotel()); onToast('Folio reabierto'); } }] : []),
+    ...(abierto && folio.reserva?.estado !== 'In-House' && Math.abs(folio.saldo) < 0.01 ? [{ label: 'Cerrar folio y facturar', onClick: () => ir('Información', 'cerrar') }] : []),
+  ];
+  const ir = (t: typeof tab, d?: DialogoFolio) => { setTab(t); setDlg(d); setK(x => x + 1); };
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: Z.modal, fontFamily: FONT }}>
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(15,15,15,.25)' }} />
@@ -61,20 +78,29 @@ export function PanelFolio({ folio, onClose, onToast, onEliminado }: { folio: Fo
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Button disabled={!abierto || folio.saldo <= 0.009} onClick={() => ir('Pagos', 'pago')} style={{ background: C.success, borderColor: C.success }}>Registrar pago</Button>
-            <Button variant="secondary" disabled={!abierto} onClick={() => ir('Cargos', 'cargo')}>Agregar cargo</Button>
-            <Button variant="secondary" onClick={() => ir('Información', 'prefactura')}>Prefactura</Button>
-            <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-              <Button variant="ghost" onClick={() => setDialogo('exo')}>Exoneración{folio.exoneracion ? ' ✓' : ''}</Button>
-              <Button variant="ghost" onClick={() => setDialogo('ref')}>Referencia{folio.referencia ? ' ✓' : ''}</Button>
-            </span>
-          </div>
         </header>
         <div style={{ flex: 1, overflowY: 'auto', padding: 22 }}>
-          <DetalleFolio key={`${folio.id}-${k}`} folio={folio} tabInicial={tab} dialogoInicial={dlg} sinCabecera onEliminado={onEliminado} />
+          <DetalleFolio key={`${folio.id}-${k}`} folio={folio} tabInicial={tab} dialogoInicial={dlg} sinCabecera accionesFuera onEliminado={onEliminado} />
         </div>
+        <footer style={{ padding: '12px 22px', borderTop: `1px solid ${C.n500}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+          {externo && <Button variant="secondary" style={{ color: C.error }} onClick={() => setDialogo('eliminar')}>Eliminar folio</Button>}
+          <MenuBoton label="Más acciones" align="left" ancho={250} opciones={mas} />
+          <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Button variant="secondary" onClick={() => ir('Información', 'prefactura')}>Prefactura</Button>
+            <Button variant="secondary" disabled={!abierto} onClick={() => ir('Cargos', 'cargo')}>Agregar cargo</Button>
+            <Button disabled={!abierto || folio.saldo <= 0.009} onClick={() => ir('Pagos', 'pago')}>Registrar pago</Button>
+          </span>
+        </footer>
       </aside>
+      {dialogo === 'perfil' && <AsociarPerfil folio={folio} onClose={() => setDialogo(null)} onListo={t => { setDialogo(null); onToast(t); }} />}
+      {dialogo === 'depositos' && <AsociarDepositos folio={folio} onClose={() => setDialogo(null)} onListo={t => { setDialogo(null); onToast(t); }} />}
+      <Alerta open={dialogo === 'eliminar' && !eliminable} titulo="No se puede eliminar este folio" onClose={() => setDialogo(null)} onConfirm={() => setDialogo(null)} confirmar="Entendido" cancelar="Cerrar">
+        El folio {folio.numero} tiene {folio.lineas.length} cargo(s), {folio.pagos.length} pago(s){folio.depGarantia > 0 ? ' y depósitos en garantía' : ''}{Math.abs(folio.saldo) >= 0.01 ? ` y un saldo de ${fmtMon(folio.saldo, folio.moneda)}` : ''}. Solo se pueden eliminar folios sin movimientos ni valor; si ya no se usa, liquídalo o ciérralo.
+      </Alerta>
+      <Alerta open={dialogo === 'eliminar' && eliminable} titulo={`¿Eliminar el folio ${folio.numero}?`} tono="danger" onClose={() => setDialogo(null)} confirmar="Eliminar folio" cancelar="Cancelar"
+        onConfirm={() => { h.eliminarFolio(folio.id); setDialogo(null); onEliminado?.(); }}>
+        El folio no tiene movimientos. Se eliminará de la lista y no se podrá recuperar.
+      </Alerta>
       {dialogo === 'exo' && <Exoneracion folio={folio} onClose={() => setDialogo(null)} onListo={t => { setDialogo(null); onToast(t); }} />}
       {dialogo === 'ref' && <Referencia folio={folio} onClose={() => setDialogo(null)} onListo={t => { setDialogo(null); onToast(t); }} />}
     </div>,

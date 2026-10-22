@@ -155,7 +155,7 @@ export const ARBOL: Categoria[] = [
           g('consultas', 'Consultas', [
             h('consultas.historico', 'Histórico de folios'),
             h('consultas.transacciones', 'Transacciones diarias'),
-            h('consultas.vouchers', 'Vouchers', 'Vistas que puede ver.', ['Vouchers', 'Histórico de tarjetas']),
+            h('consultas.vouchers', 'Vouchers y depósitos', 'Vistas que puede ver.', ['Vouchers y depósitos', 'Vouchers', 'Histórico de tarjetas']),
             exportar('consultas'),
           ]),
         ],
@@ -210,14 +210,14 @@ export const ARBOL: Categoria[] = [
       },
       {
         key: 'historico', label: 'Histórico',
-        hojas: [h('historico.ver', 'Ver histórico')],
+        hojas: [h('historico.ver', 'Ver histórico', 'Pantallas que puede ver.', ['Estancias y huéspedes', 'Bitácora de cambios', 'No-shows', 'Mensajes'])],
       },
     ],
   },
   {
     key: 'configuracion', label: 'CONFIGURACIÓN',
     modulos: [
-      conf('empresa', 'Empresa', ['Datos de empresa', 'Consecutivos de documentos', 'Asignación de impresoras', 'Impresoras', 'Tipos de documento', 'Contabilidad', 'Importar datos']),
+      conf('empresa', 'Empresa', ['Datos de empresa', 'Consecutivos de documentos', 'Asignación de impresoras', 'Impresoras', 'Tipos de documento', 'API Key', 'Importar datos']),
       {
         key: 'cfg.usuarios', label: 'Usuarios y Permisos',
         hojas: [
@@ -230,15 +230,14 @@ export const ARBOL: Categoria[] = [
           exportar('cfg.usuarios'),
         ],
       },
-      conf('parametros', 'Parámetros generales', ['Monedas', 'Tipo de cambio', 'Operación', 'Folios y cargos', 'Comportamiento', 'Políticas']),
+      conf('parametros', 'Parámetros generales', ['Monedas', 'Tipo de cambio', 'Reservas y habitaciones', 'Folios y cargos', 'Políticas', 'Nacionalidades', 'Tipos de tareas']),
       conf('alojamiento', 'Alojamiento', ['Habitaciones', 'Grupos de disponibilidad', 'Regímenes', 'Camareras / Mucamas', 'Rangos de habitación']),
       conf('tarifas', 'Tarifas / Contratos', ['Empresas', 'Mercados', 'Agentes de ventas', 'Referidores', 'Contratos', 'Tarifario'],
-        [h('cfg.tarifas.colectiva', 'Actualización colectiva de tarifas')]),
+        [h('cfg.tarifas.colectiva', 'Actualización masiva de tarifas')]),
       conf('facturacion', 'Facturación', ['Producción', 'Servicios', 'Tipos de cobro', 'Impuestos', 'Exoneración', 'Descuentos', 'Folios externos']),
       conf('caja', 'Caja y cierre', ['Fondo de caja', 'Seguridad', 'Cierre diario']),
-      conf('operaciones', 'Operaciones', ['Tipos de tareas', 'Nacionalidades']),
-      conf('correo', 'Correo electrónico', ['Cuenta', 'Correos especiales', 'Histórico de correos enviados']),
-      conf('integraciones', 'Integraciones', ['Web Check In', 'Formulario Check-In', 'Errores de sincronización', 'DEGA']),
+      conf('correo', 'Correo electrónico', ['Cuenta', 'Correos especiales', 'Notificaciones', 'Histórico de correos enviados']),
+      conf('integraciones', 'Integraciones', ['Servicios', 'Web Check In', 'Formulario Check-In', 'Errores de sincronización', 'DEGA']),
     ],
   },
 ];
@@ -270,6 +269,8 @@ export interface Rol { id: string; nombre: string; permisos: Set<string> }
 export interface UsuarioFD {
   id: string; numero: number; usuario: string; nombre: string; correo: string; rolId: string;
   creado: string; claveCambiada: string; ultimoAcceso: string; activo: boolean; admin: boolean; permisos: Set<string>;
+  /** Impresora personal por código de tipo de documento (Mi cuenta › Impresora). */
+  impresoras?: Record<string, string>;
 }
 
 /** Arma un set con hojas completas por prefijo de clave (p. ej. 'reservas.' o 'caja.ver'). */

@@ -135,7 +135,7 @@ export function MultiSelect({ value, onChange, opciones, placeholder = 'Seleccio
 export function SiNoSelect({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label?: string }) {
   return (
     <span style={{ position: 'relative', display: 'inline-flex' }}>
-      <select value={value ? 'si' : 'no'} onChange={e => onChange(e.target.value === 'si')} aria-label={label ?? 'Activa'}
+      <select value={value ? 'si' : 'no'} onChange={e => onChange(e.target.value === 'si')} aria-label={label ?? 'Activa'} className="sin-flecha"
         style={{ appearance: 'none', height: 22, padding: '0 22px 0 9px', borderRadius: radius.pill, fontSize: 11, fontWeight: 500, fontFamily: FONT, cursor: 'pointer',
           border: `1px solid ${value ? 'rgba(76,175,80,.25)' : 'rgba(244,67,54,.25)'}`, background: value ? 'rgba(76,175,80,.08)' : 'rgba(244,67,54,.08)',
           color: value ? '#2E7D32' : '#C62828', outline: 'none' }}>
@@ -152,14 +152,15 @@ export function SiNoSelect({ value, onChange, label }: { value: boolean; onChang
 export function ItemMaestro({ titulo, detalle, activo, onClick, extra, indent }: {
   titulo: ReactNode; detalle?: ReactNode; activo?: boolean; onClick: () => void; extra?: ReactNode; indent?: boolean;
 }) {
+  // Elemento de la lista maestra: activo con fondo de marca y barra a la izquierda (igual en todas las listas)
   return (
-    <button type="button" onClick={onClick} aria-current={activo ? 'true' : undefined}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, textAlign: 'left', width: '100%', padding: indent ? '7px 10px 7px 12px' : '9px 8px',
-        background: activo ? (indent ? 'transparent' : C.n200) : 'transparent', border: 'none', borderBottom: indent ? 'none' : `1px solid ${C.n500}`, borderRadius: indent ? 0 : radius.control,
+    <button type="button" role="listitem" onClick={onClick} aria-current={activo ? 'true' : undefined} className={activo ? undefined : 'suite-fila'}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, textAlign: 'left', width: '100%', padding: indent ? '6px 10px 6px 22px' : '8px 10px',
+        background: activo ? C.brandBg : 'transparent', border: 'none', borderRadius: radius.control, boxShadow: activo ? `inset 3px 0 0 ${C.brand}` : 'none',
         cursor: 'pointer', fontFamily: FONT }}>
       <span style={{ minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 12, color: indent && activo ? C.brand : C.n900, fontWeight: indent && activo ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo}</span>
-        {detalle && <span style={{ display: 'block', fontSize: 10.5, color: C.n700, marginTop: 2 }}>{detalle}</span>}
+        <span style={{ display: 'block', fontSize: 12.5, color: activo ? C.brand : C.n900, fontWeight: activo ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{titulo}</span>
+        {detalle && <span style={{ display: 'block', fontSize: 11, color: C.n700, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detalle}</span>}
       </span>
       {extra}
     </button>

@@ -19,42 +19,44 @@ export const IDIOMAS = ['Español', 'Inglés', 'Portugués', 'Francés', 'Alemá
 export const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] as const;
 
 // ── Empresa ─────────────────────────────────────────────────────────────────
+export type OrigenFecha = 'Auditoría nocturna' | 'Manual';
+/** Cambio de la fecha de operación: de qué día a qué día, quién y cuándo. */
+export interface CambioFecha { desde: string; hasta: string; origen: OrigenFecha; usuario: string; fecha: string; motivo: string }
 export const GENERAL = {
-  nombre: 'Hotel Seven Suite', razonSocial: 'Seven Hospitality S.A.', cedula: '3-101-XXXXXX', pais: 'Costa Rica',
-  moneda: 'COL – Colón', idioma: 'Español', telefono: '+506 2777-0000', correo: 'info@hotelsevensuit.com',
-  web: 'www.hotelsevensuit.com', direccion: 'Jacó, Puntarenas',
-  actividad: '551001 - Hoteles, moteles y otros alojamientos',
-  // Los consecutivos de Reservas, Registro, Cargos, Factura externo y Rooming pasaron a Empresa › Consecutivos de documentos.
+  nombreLegal: 'Seven Hospitality S.A.', nombreComercial: 'Hotel Seven Suite', tipoId: '02', numeroId: '3-101-XXXXXX',
+  pais: 'CR', zonaHoraria: 'America/Costa_Rica',
+  direccion: 'Jacó, Puntarenas', telefono: '+506 2777-0000', correo: 'info@hotelsevensuit.com', web: 'www.hotelsevensuit.com',
+  fechaOperacion: {
+    fecha: '2026-10-06', origen: 'Auditoría nocturna' as OrigenFecha,
+    historial: [
+      { desde: '2026-10-05', hasta: '2026-10-06', origen: 'Auditoría nocturna', usuario: 'Daniel Viera', fecha: '2026-10-06T00:42:10', motivo: '' },
+      { desde: '2026-10-04', hasta: '2026-10-05', origen: 'Auditoría nocturna', usuario: 'Daniel Viera', fecha: '2026-10-05T00:39:51', motivo: '' },
+      { desde: '2026-10-03', hasta: '2026-10-04', origen: 'Auditoría nocturna', usuario: 'Daniel Viera', fecha: '2026-10-04T00:51:03', motivo: '' },
+    ] as CambioFecha[],
+  },
   operacion: { internoTCP: '5', maxCargosDivisa: '4', formaVenta: 'Server POS' },
   impresionFacturas: { copias: '2', lineas: '10' },
-  cuentasContables: { cargoDivisa: '550101 – (001)', noCheques: '550101 – (001)' },
-  opcionesParametros: {
-    'Imprimir recibo / reserva': true, 'Combinar hab. Limpia / Sucia': false, 'Mostrar hab. fuera de orden como sucia': false,
-    'Cálculo precio medio': true, 'Asignar habitaciones automáticamente': false, 'Permitir desbloquear habitaciones': true,
-    'Código único ProfCard': false, 'Activar NTP (Seven Cloud Printing)': false,
+  opcionesReservas: {
+    'Asignar habitaciones automáticamente': true, 'Permitir desbloquear habitaciones': true,
+    'Combinar hab. Limpia / Sucia': false, 'Mostrar hab. fuera de orden como sucia': false,
+    'Cálculo precio medio': true, 'Imprimir recibo / reserva': true, 'Permitir reservas agencias automáticamente': false,
+    'Confirmación automática de reserva con OE': false, 'Solicitar moderador': false, 'Tiempo sucursal (Stop Over)': false,
+    'Uso solo líneas – registro de reservas': false,
+    'Verificar tarjeta al realizar check-in': true, 'Plataforma aut. reservas agen. al check-in': false,
+    'Uso solo líneas en tarjetas de registro': false, 'Código único ProfCard': false,
   } as Record<string, boolean>,
   lineasTelefonicas: { conceptoCargo: '', conceptoProduccion: '' },
   cambioHabitacion: { conceptoCargo: '', tipoColon: '' },
   opcionesFolios: {
     'Recibo en carga de moneda': false, 'Recibo en depósitos en garantía': true, 'Impresión directa de facturas': false,
     'Cambio de recibo a factura': false, 'Número de factura externo': false, 'Cheques con factura agencia': false,
-  } as Record<string, boolean>,
-  contabilidad: { sistema: 'Seven Accounting', inventario: 'PEPS', libro: '' },
-  opcionesContables: {
-    'No contabilizar producción diariamente': true, 'Contabilización de documentos': false, 'Balance de vías automático': true,
-    'Integración automática de asientos': true, 'Producción a repuestos detallados': false,
+    'Mostrar habitaciones en facturas de agencia': false,
   } as Record<string, boolean>,
   alertas: {
     'Operaciones sobre folios': 'info@hocheguaran.forest.com', 'Reservas': 'info@hocheguaran.forest.com',
     'Operaciones de agencias': 'info@hocheguaran.forest.com', 'Niveles de saldos / créditos': 'info@hocheguaran.forest.com',
     'Cancelación folios y recibos': 'info@hocheguaran.forest.com',
   } as Record<string, string>,
-  reservasCheckin: {
-    'Uso solo líneas en tarjetas de registro': false, 'Uso solo líneas – registro de reservas': false, 'Tiempo sucursal (Stop Over)': false,
-    'Permitir reservas agencias automáticamente': false, 'Solicitar moderador': false, 'Asignar habitaciones automáticamente': true,
-    'Plataforma aut. reservas agen. al check-in': false, 'Verificar tarjeta al realizar check-in': true, 'Permitir desbloquear habitaciones': false,
-    'Confirmación automática de reserva con OE': false, 'Mostrar habitaciones en facturas de agencia': false,
-  } as Record<string, boolean>,
   integraciones: {
     'Activar WebCheckin': true, 'Activar NTP (Seven Cloud Printing)': false, 'Portada OTA / MPos': false,
     'Activar disponibilidad compartida': false, 'Activar AntiBot HubSpot': false, 'Activar GRSA (depósitos en garantía)': false,
@@ -100,11 +102,25 @@ export interface GrupoDisp extends ConId { nombre: string; orden: number; habita
 export interface Regimen extends ConId { codigo: string; descripcion: string; concepto: string; tipo: string; moneda: string; precio: number }
 
 // ── Tarifas / Contratos ─────────────────────────────────────────────────────
-export interface Empresa extends ConId { descripcion: string; directo: boolean; color: string }
-export interface Mercado extends ConId { descripcion: string }
-export interface Agente extends ConId { nombre: string; telefono: string; celular: string; correo: string }
-export interface Referidor extends ConId { descripcion: string }
-export interface Contrato extends ConId { nombre: string; empresa: string; mercado: string; desde: string; hasta: string; cupos: number; release: number; tarifa: string; activo: boolean }
+export interface Empresa extends ConId { descripcion: string; directo: boolean; color: string; activo: boolean }
+export interface Mercado extends ConId { descripcion: string; activo: boolean }
+export interface Agente extends ConId { nombre: string; telefono: string; celular: string; correo: string; activo: boolean }
+export interface Referidor extends ConId { descripcion: string; activo: boolean }
+export interface ServicioContrato { id: string; servicio: string; porPax: boolean; pax: number; automatico: boolean; precio: number }
+export interface ImpuestoContrato { id: string; impuesto: string; incluido: boolean }
+export const RESTRICCIONES_CONTRATO = ['Cerrado', 'CTA', 'CTD', 'Estancia mínima', 'Estancia máxima'] as const;
+export interface RestriccionContrato { id: string; tipo: string; regimen: string; restriccion: (typeof RESTRICCIONES_CONTRATO)[number]; estancias: number; desde: string; hasta: string; aplicar: boolean }
+export interface Contrato extends ConId {
+  codigo: string; nombre: string; nacionalidad: string; empresa: string; mercado: string; descuento: string;
+  /** Tarifa negociada (nombre de la tarifa del Tarifario) */
+  tarifa: string;
+  tasaFija: number; depGarantia: boolean; cSab: number; cpl: boolean; modoPago: string; webCheckin: boolean;
+  cuenta: string; maxDias: number; saldoMax: number; desde: string; hasta: string; activo: boolean; observaciones: string;
+  servicios: ServicioContrato[]; impuestos: ImpuestoContrato[];
+  /** Texto de las políticas por idioma */
+  politicas: Record<string, string>;
+  restricciones: RestriccionContrato[];
+}
 
 /** `base` = personas incluidas en el precio; `max` = capacidad máxima (define cuántos pax adicionales admite). */
 export interface TipoHab extends ConId { nombre: string; codigo: string; base?: number; max?: number }
@@ -119,17 +135,18 @@ export interface Tarifa extends ConId {
   extras: { derivar: boolean; tipo: 'Importe' | 'Porcentaje'; importe: number; pct: number; adulto: number; nino: number; modo?: 'base' | 'escalones'; escalones?: { adulto: number; nino: number }[] };
   restricciones: { estMin: number; estMax: number };
 }
-export const VISTAS_TARIFARIO = ['Tarifas', 'Cerrar ventas', 'CTA', 'CTD', 'Estancia Min', 'Estancia Max', 'Adulto Extra', 'Niño Extra'] as const;
+export const VISTAS_TARIFARIO = ['Tarifas', 'Cupos', 'Cerrar ventas', 'CTA', 'CTD', 'Estancia Min', 'Estancia Max', 'Adulto Extra', 'Niño Extra'] as const;
 export type VistaTarifario = (typeof VISTAS_TARIFARIO)[number];
 export const TERMINOS: Record<VistaTarifario, string> = {
-  'Tarifas': 'Precio por noche por contrato',
-  'Cerrar ventas': 'Bloquear disponibilidad',
-  'CTA': 'Closed to Arrival: no se permite la entrada ese día',
-  'CTD': 'Closed to Departure: no se permite la salida ese día',
-  'Estancia Min': 'Noches mínimas requeridas',
-  'Estancia Max': 'Noches máximas permitidas',
-  'Adulto Extra': 'Cargo por adulto adicional',
-  'Niño Extra': 'Cargo por niño adicional',
+  'Tarifas': 'Precio por noche de la habitación con las personas incluidas.',
+  'Cupos': 'Habitaciones de ese tipo que se guardan ese día para la tarifa y su contrato; el resto del hotel no las puede vender.',
+  'Cerrar ventas': 'La tarifa no se puede vender ese día para ese tipo de habitación.',
+  'CTA': 'Cerrado a la llegada (Closed to Arrival): se puede alojar ese día, pero ninguna reserva puede entrar ese día.',
+  'CTD': 'Cerrado a la salida (Closed to Departure): ninguna reserva puede salir ese día.',
+  'Estancia Min': 'Noches mínimas que debe tener una reserva que llega ese día.',
+  'Estancia Max': 'Noches máximas que puede tener una reserva que llega ese día.',
+  'Adulto Extra': 'Cargo por noche por cada adulto por encima de los incluidos en el precio.',
+  'Niño Extra': 'Cargo por noche por cada niño por encima de los incluidos en el precio.',
 };
 
 // ── Facturación ─────────────────────────────────────────────────────────────
@@ -156,8 +173,7 @@ export interface FolioExterno extends ConId {
 // ── Operaciones / Ama de llaves ─────────────────────────────────────────────
 export interface TipoTarea extends ConId { descripcion: string }
 export interface Moneda extends ConId {
-  codigo: string; descripcion: string; simbolo: string; comision: number; decimales: number; convertible: boolean; facturable: boolean; referencia: boolean;
-  activo: boolean; empresa: string; depAdelantados: string; pagoParcial: string;
+  codigo: string; descripcion: string; simbolo: string; referencia: boolean; activo: boolean;
 }
 export interface Nacionalidad extends ConId { codigo: string; pais: string; idioma: string; activo: boolean }
 export interface Camarera extends ConId { nombre: string; activo: boolean }

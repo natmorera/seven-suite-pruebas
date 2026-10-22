@@ -213,7 +213,7 @@ export default function CajasPage({ hideHeader, addSignal }: { hideHeader?: bool
                 <Td><Switch checked={!!c.activa} onChange={v => toggleActiva(c.id, v)} /></Td>
                 <Td right>
                   <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                    {puede('fe.config.cajas.numeracion') && <Button variant="secondary" onClick={() => abrirNumeracion(c)}>Numeración</Button>}
+                    {!esGuatemalaActual() && puede('fe.config.cajas.numeracion') && <Button variant="secondary" onClick={() => abrirNumeracion(c)}>Numeración</Button>}
                     {puede('fe.config.cajas.editar') && <button title="Editar" onClick={() => abrirEditar(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.n700, display: 'inline-flex', padding: 4 }}><IcEdit className="w-3.5 h-3.5" /></button>}
                     {puede('fe.config.cajas.eliminar') && <button title="Eliminar" onClick={() => eliminar(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.error, display: 'inline-flex', padding: 4 }}><IcTrash className="w-4 h-4" /></button>}
                   </div>

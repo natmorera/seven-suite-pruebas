@@ -29,10 +29,10 @@ export default function HistoricoFolios() {
   const h = useHotel();
   const formas = useMemo(() => [...new Set(h.facturas.map(f => f.formaPago))].sort(), [h.facturas]);
   const defs = useMemo<DefFiltro[]>(() => [
-    { k: 'q', tipo: 'busqueda', placeholder: 'Buscar documento, folio, origen o cliente' },
-    { k: 'ent', tipo: 'rango', label: 'Entrada' },
-    { k: 'sal', tipo: 'rango', label: 'Salida', def: [primeroDeMes, HOY] },
-    { k: 'orden', tipo: 'unico', label: 'Ordenar por', opciones: ORDENES.map(o => ({ value: o.id, label: o.label })), def: 'concepto' },
+    { k: 'q', tipo: 'busqueda', placeholder: 'Documento, folio o cliente', ancho: 190 },
+    { k: 'por', tipo: 'unico', label: 'Fecha', opciones: [{ value: 'sal', label: 'Salida' }, { value: 'ent', label: 'Entrada' }, { value: 'emi', label: 'Emisión' }], def: 'sal' },
+    { k: 'per', tipo: 'rango', label: 'Período', def: [primeroDeMes, HOY] },
+    { k: 'orden', tipo: 'unico', label: 'Orden', opciones: ORDENES.map(o => ({ value: o.id, label: o.label })), def: 'concepto' },
     { k: 'forma', tipo: 'multi', label: 'Forma de pago', opciones: formas.map(x => ({ value: x, label: x })) },
     { k: 'agrupar', tipo: 'radio', label: 'Agrupar', opciones: [{ value: 'cuenta', label: 'Por cuenta' }, { value: 'moneda', label: 'Por moneda' }, { value: 'no', label: 'Sin agrupar' }], def: 'cuenta' },
     { k: 'resumido', tipo: 'toggle', label: 'Resumido por día' },
@@ -41,16 +41,17 @@ export default function HistoricoFolios() {
   const f = useFiltros(defs, 'historico');
   const orden = (f.s('orden') || 'concepto') as Orden;
   const def = ORDENES.find(o => o.id === orden)!;
-  const [ed, eh] = f.r('ent'), [sd, sh] = f.r('sal');
+  const [pd, ph] = f.r('per');
+  const por = f.s('por') || 'sal';
   const q = norm(f.s('q')), formasSel = f.m('forma');
-  const filas = useMemo(() => (orden === 'dia' ? h.facturas.filter(x => x.fecha.startsWith(HOY)) : h.facturas.filter(x => (!ed || x.entrada >= ed) && (!eh || x.entrada <= eh) && (!sd || x.salida >= sd) && (!sh || x.salida <= sh)))
-    .filter(x => (!formasSel.length || formasSel.includes(x.formaPago)) && (!q || norm(`${x.documento} ${x.folio} ${x.origen} ${x.cliente}`).includes(q))), [h.facturas, orden, ed, eh, sd, sh, formasSel, q]);
+  const filas = useMemo(() => (orden === 'dia' ? h.facturas.filter(x => x.fecha.startsWith(HOY)) : h.facturas.filter(x => { const d = por === 'ent' ? x.entrada : por === 'emi' ? x.fecha.slice(0, 10) : x.salida; return (!pd || d >= pd) && (!ph || d <= ph); }))
+    .filter(x => (!formasSel.length || formasSel.includes(x.formaPago)) && (!q || norm(`${x.documento} ${x.folio} ${x.origen} ${x.cliente}`).includes(q))), [h.facturas, orden, pd, ph, por, formasSel, q]);
   const k = f.b('local') ? TC : 1;
   const datos = datosHistorico(orden, filas, { resumido: f.b('resumido'), agrupar: f.s('agrupar') || 'cuenta', local: f.b('local') }, (n: number) => fmtN(n * k));
   const total = r2(filas.reduce((s, x) => s + x.impFactura, 0) * k);
   return (
     <PantallaReporte titulo="Histórico de folios" archivo={`historico-folios-${orden}`} filtros={f} datos={datos}
-      periodo={orden === 'dia' ? fmtF(HOY) : sd || sh ? `${fmtF(sd) || '…'} al ${fmtF(sh) || '…'}` : undefined}
+      periodo={orden === 'dia' ? fmtF(HOY) : pd || ph ? `${por === 'ent' ? 'Entrada' : por === 'emi' ? 'Emisión' : 'Salida'} del ${fmtF(pd) || '…'} al ${fmtF(ph) || '…'}` : undefined}
       antesDeTabla={<span style={{ fontSize: 12, color: '#757575' }}>{def.titulo}</span>}
       contadores={[{ valor: filas.length, label: 'Documentos' }, { valor: new Set(filas.map(x => x.folio)).size, label: 'Folios' }, { valor: `${f.b('local') ? '₡' : '$'} ${fmtN(total)}`, label: 'Facturado' }, { valor: filas.filter(x => x.tipo !== 'Factura').length, label: 'Notas' }]}
       vacio="No hay folios cerrados en el rango seleccionado." />

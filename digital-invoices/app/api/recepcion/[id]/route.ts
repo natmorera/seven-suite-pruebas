@@ -15,7 +15,7 @@ async function manejarGET(_req: NextRequest, { params }: { params: Promise<{ id:
     FROM documentos_recibidos d WHERE d.id = ?`, args: [id] });
   const c = rows[0];
   if (!c) return NextResponse.json({ error: 'No encontrada' }, { status: 404 });
-  const ced = String(c.proveedor_identificacion ?? '').replace(/\D/g, '');
+  const ced = String(c.proveedor_identificacion ?? '').toUpperCase().replace(/[^\dK]/g, '');
   const [{ rows: em }, { rows: pv }] = await Promise.all([
     db.execute('SELECT * FROM emisores ORDER BY activo DESC LIMIT 1'),
     ced ? db.execute({ sql: `SELECT * FROM clientes WHERE REPLACE(REPLACE(COALESCE(numero_identificacion,''),'-',''),' ','') = ? LIMIT 1`, args: [ced] }) : Promise.resolve({ rows: [] as never[] }),

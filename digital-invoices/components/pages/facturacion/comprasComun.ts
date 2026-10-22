@@ -25,7 +25,8 @@ export interface CompraRow {
   iva: number | null;
   tarifa: number;
   tipo_credito_fiscal: CreditoFiscal;
-  origen: 'xml' | 'correo' | 'manual' | 'auto';
+  tipo_dte?: string | null;   // Guatemala: FACT, FCAM, FPEQ, SCOM…
+  origen: 'xml' | 'correo' | 'manual' | 'auto' | 'fisica';
   clave: string | null;
   tipo: string | null;
   proveedor_identificacion: string | null;

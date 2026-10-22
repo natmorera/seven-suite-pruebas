@@ -9,6 +9,12 @@
 //                          consecutivo 20 · situación 1 · código de seguridad 8
 import { useState, type CSSProperties } from 'react';
 import { C, FONT } from './primitives';
+import { esGuatemalaActual } from '@/lib/paisActual';
+
+// Guatemala (FEL): no hay consecutivo de 20 dígitos ni clave de 50. El
+// certificador asigna serie y número (se guardan como «SERIE-NÚMERO») y el
+// número de autorización (UUID), que se guarda en lugar de la clave.
+const partirSerie = (v: string) => { const i = v.indexOf('-'); return i > 0 ? { serie: v.slice(0, i), numero: v.slice(i + 1) } : { serie: '', numero: v }; };
 
 const soloDig = (s: string | null | undefined) => String(s ?? '').replace(/\D/g, '');
 
@@ -17,6 +23,7 @@ const PARTES_CLAVE: [number, string][] = [[3, 'País (506)'], [6, 'Fecha DDMMAA'
 
 // El consecutivo completo: el guardado si ya tiene 20 dígitos; si no, el que va dentro de la clave.
 export function consecutivoCompleto(numero: string | null | undefined, clave?: string | null): string {
+  if (esGuatemalaActual()) return String(numero ?? '');
   const n = soloDig(numero), k = soloDig(clave);
   if (n.length === 20) return n;
   if (k.length === 50) return k.slice(21, 41);
@@ -50,12 +57,17 @@ function Grupos({ valor, partes, total, style, cortes }: { valor: string; partes
 export function Consecutivo({ numero, clave, style }: { numero: string | null | undefined; clave?: string | null; style?: CSSProperties }) {
   const v = consecutivoCompleto(numero, clave);
   if (!v) return null;
+  if (esGuatemalaActual()) {
+    const { serie, numero: n } = partirSerie(v);
+    return <span style={{ fontVariantNumeric: 'tabular-nums', ...style }}>{serie ? <>Serie {serie} · Núm. {n}</> : <>Núm. {n}</>}</span>;
+  }
   return <Grupos valor={v} partes={PARTES_CONSECUTIVO} total={20} style={style} />;
 }
 
 // enDosLineas: país, fecha y cédula arriba; consecutivo, situación y código abajo (tablas)
 export function Clave({ clave, style, enDosLineas }: { clave: string | null | undefined; style?: CSSProperties; enDosLineas?: boolean }) {
   if (!clave) return null;
+  if (esGuatemalaActual()) return <span style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '.01em', ...style }} title="Número de autorización">{clave}</span>;
   return <Grupos valor={clave} partes={PARTES_CLAVE} total={50} style={style} cortes={enDosLineas ? [3] : undefined} />;
 }
 
@@ -65,7 +77,7 @@ export function NumeroYClave({ numero, clave }: { numero: string | null | undefi
     <div style={{ fontFamily: FONT, lineHeight: 1.35, whiteSpace: 'nowrap' }}>
       <Consecutivo numero={numero} clave={clave} style={{ display: 'block', fontSize: 11.5, color: C.n900 }} />
       {clave ? <Clave clave={clave} enDosLineas style={{ display: 'block', fontSize: 10.5, color: C.n700, marginTop: 1 }} />
-        : <span style={{ display: 'block', fontSize: 10.5, color: C.n700 }}>Sin clave todavía</span>}
+        : <span style={{ display: 'block', fontSize: 10.5, color: C.n700 }}>{esGuatemalaActual() ? (numero ? 'Sin número de autorización' : 'Sin autorización todavía') : 'Sin clave todavía'}</span>}
     </div>
   );
 }
@@ -74,15 +86,16 @@ export function NumeroYClave({ numero, clave }: { numero: string | null | undefi
 export function DatoNumero({ tipo, numero, clave }: { tipo: 'consecutivo' | 'clave'; numero?: string | null; clave?: string | null }) {
   const [copiado, setCopiado] = useState(false);
   const valor = tipo === 'consecutivo' ? consecutivoCompleto(numero, clave) : String(clave ?? '');
-  const etiqueta = tipo === 'consecutivo' ? 'Número consecutivo (20 dígitos)' : 'Clave numérica (50 dígitos)';
+  const gt = esGuatemalaActual();
+  const etiqueta = gt ? (tipo === 'consecutivo' ? 'Serie y número' : 'Número de autorización') : tipo === 'consecutivo' ? 'Número consecutivo (20 dígitos)' : 'Clave numérica (50 dígitos)';
   return (
     <div style={{ minWidth: 0 }}>
       <div style={{ fontSize: 10.5, color: C.n700 }}>{etiqueta}</div>
       <div style={{ fontSize: 13, marginTop: 2, display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
         {valor ? (tipo === 'consecutivo' ? <Consecutivo numero={valor} /> : <Clave clave={valor} />)
-          : <span style={{ color: C.n700, fontSize: 12.5 }}>{tipo === 'clave' ? 'Se genera al emitir' : '-'}</span>}
+          : <span style={{ color: C.n700, fontSize: 12.5 }}>{tipo === 'clave' ? (gt ? 'La asigna el certificador' : 'Se genera al emitir') : '-'}</span>}
         {valor && (
-          <button type="button" onClick={() => { navigator.clipboard?.writeText(soloDig(valor) || valor); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(gt ? valor : soloDig(valor) || valor); setCopiado(true); setTimeout(() => setCopiado(false), 1500); }}
             style={{ background: 'none', border: 'none', padding: 0, color: C.brand, fontFamily: FONT, fontSize: 11.5, cursor: 'pointer', textDecoration: 'underline' }}>
             {copiado ? 'Copiado' : 'Copiar'}
           </button>

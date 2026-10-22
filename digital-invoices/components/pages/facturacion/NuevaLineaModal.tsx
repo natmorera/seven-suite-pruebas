@@ -151,17 +151,30 @@ export default function NuevaLineaModal({ favoritos, moneda, tipoDocumento, prec
       </div>
     </Seccion>
   );
-  // Guatemala: unidades gravables de la línea
-  const unidadesGravables = (
+  // Guatemala: unidades gravables de la línea. Las de un producto vienen de
+  // su ficha (no se vuelven a preguntar); en una línea manual se eligen del
+  // catálogo de Configuración › Unidades gravables.
+  const ivaUg = v.codigoTarifa === '08' ? 1 : 2;
+  const nombreIva = ugActiva.nombre(1, ivaUg, ivaUg === 1 ? 'IVA 12 %' : 'IVA exento');
+  const nombreIth = v.ith ? ugActiva.nombre(3, 1, 'Turismo hospedaje 10 %') : '';
+  const unidadesGravables = modo === 'producto' ? (
+    <Seccion titulo="Unidades gravables">
+      <div style={{ fontSize: 12.5, color: C.n900, padding: '10px 14px', background: C.n200, borderRadius: radius.md }}>
+        {nombreIva}{nombreIth ? ` · ${nombreIth}` : ''}
+        <div style={{ fontSize: 11, color: C.n700, marginTop: 2 }}>Vienen del producto. Para cambiarlas, edita el producto o usa una línea manual.</div>
+      </div>
+    </Seccion>
+  ) : (
     <Seccion titulo="Unidades gravables">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
         <Etiqueta texto="IVA" requerido>
           <Select value={v.codigoTarifa} onChange={x => set({ codigoTarifa: x })}
-            options={tarifas.filter(t => ugActiva(1, t.value === '08' ? 1 : 2) || t.value === v.codigoTarifa)} />
+            options={tarifas.filter(t => ugActiva(1, t.value === '08' ? 1 : 2) || t.value === v.codigoTarifa)
+              .map(t => ({ value: t.value, label: ugActiva.nombre(1, t.value === '08' ? 1 : 2, t.label) }))} />
         </Etiqueta>
-        <Etiqueta texto="Impuesto de turismo (ITH)">
+        <Etiqueta texto="Impuesto de turismo">
           <Select value={v.ith ? '1' : ''} onChange={x => set({ ith: x === '1' })}
-            options={[{ value: '', label: 'No aplica' }, ...(ugActiva(3, 1) || v.ith ? [{ value: '1', label: '10% · Unidad gravable 1 (hospedaje)' }] : [])]} />
+            options={[{ value: '', label: 'No aplica' }, ...(ugActiva(3, 1) || v.ith ? [{ value: '1', label: ugActiva.nombre(3, 1, 'Turismo hospedaje 10 %') }] : [])]} />
         </Etiqueta>
       </div>
     </Seccion>

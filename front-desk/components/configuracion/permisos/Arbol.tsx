@@ -5,7 +5,7 @@
 import { useState, type ReactNode } from 'react';
 import { C, FONT, radius } from '@/components/suite/tokens';
 import { Chevron, norm } from '../kit';
-import { ARBOL, TOTAL, TODAS_LAS_HOJAS, clavesDe, clavesDeHojas, contar, hojasDe, marcada, type Hoja, type Modulo } from './datosPermisos';
+import { ARBOL, TOTAL, TODAS_LAS_HOJAS, clavesDe, clavesDeHojas, contar, hojasDe, marcada, type Hoja, type Modulo } from './arbol';
 
 type Cambiar = (claves: string[], on: boolean) => void;
 

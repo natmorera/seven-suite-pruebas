@@ -12,7 +12,8 @@ import { fmtMon, r2 } from '@/components/hotel/finanzas';
 import { Exportar, FiltroUno, HojaSistema, KpiChip, Kpi, PaginaFact, TablaReporte, Tarjeta, tdR } from './comun';
 import { useFolios, type FolioVista } from './folios/modelo';
 import { PanelFolio, tituloNombre } from './folios/Panel';
-import { NuevoFolioExterno } from './folios/NuevoFolioExterno';
+import { NuevoFolioExterno } from './folios/NuevoFolio';
+import { MontoCelda, celdaMonto } from '@/components/suite/Monto';
 
 export default function FoliosExternos() {
   return <Suspense fallback={null}><Pantalla /></Suspense>;
@@ -46,8 +47,8 @@ function Pantalla() {
   const pdf = () => imprimir(
     <HojaSistema titulo="Reporte de Información Básica de Folios" subtitulo="Listado general de folios registrados en el sistema">
       <TablaReporte headers={['N° Folio', 'Perfil', 'Vencimiento', 'Límite de crédito', 'Tipo', 'Cuenta', 'Saldo', 'Estado']} derecha={[3, 6]}>
-        {filas.map(f => <tr key={f.id}><td style={tdR(false, { fontWeight: 600 })}>{f.numero}</td><td style={tdR()}>{f.nombre}</td><td style={tdR()}>{fmtF(f.vencimiento)}</td><td style={tdR(true)}>{f.limite ? fmtMon(f.limite) : '-'}</td>
-          <td style={tdR()}>{f.tipo}</td><td style={tdR()}>{f.cuenta}</td><td style={tdR(true)}>{fmtMon(f.saldo)}</td><td style={tdR(false, { color: f.estado === 'Abierto' ? '#2E7D32' : C.n700, fontWeight: 600 })}>{f.estado.toUpperCase()}</td></tr>)}
+        {filas.map(f => <tr key={f.id}><td style={tdR(false, { fontWeight: 600 })}>{f.numero}</td><td style={tdR()}>{f.nombre}</td><td style={tdR()}>{fmtF(f.vencimiento)}</td><td style={tdR(true)}>{celdaMonto(f.limite ? fmtMon(f.limite) : '-')}</td>
+          <td style={tdR()}>{f.tipo}</td><td style={tdR()}>{f.cuenta}</td><td style={tdR(true)}><MontoCelda texto={fmtMon(f.saldo)} /></td><td style={tdR(false, { color: f.estado === 'Abierto' ? '#2E7D32' : C.n700, fontWeight: 600 })}>{f.estado.toUpperCase()}</td></tr>)}
       </TablaReporte>
     </HojaSistema>);
   const link = (f: FolioVista) => <button type="button" onClick={e => { e.stopPropagation(); setSelId(f.id === selId ? null : f.id); }} style={{ border: 'none', background: 'none', padding: 0, color: C.brand, textDecoration: 'underline', cursor: 'pointer', fontFamily: FONT, fontSize: 12 }}>{f.numero}</button>;
@@ -84,7 +85,7 @@ function Pantalla() {
                 <Celda style={{ maxWidth: 170, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.tipo}</Celda>
                 <Celda muted style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.cuenta}</Celda>
                 <Celda><StatusBadge label={f.estado} color={f.estado === 'Abierto' ? 'green' : 'gray'} /></Celda>
-                <Celda derecha><b style={{ fontWeight: 600, color: excede ? C.error : C.n900 }}>{fmtMon(f.saldo)}</b></Celda>
+                <Celda derecha><b style={{ fontWeight: 600, color: excede ? C.error : C.n900 }}>{celdaMonto(fmtMon(f.saldo))}</b></Celda>
                 <Celda style={{ width: 120 }}>{f.limite ? <span title={`${Math.round(uso * 100)}% de ${fmtMon(f.limite)}`} style={{ display: 'block' }}>
                   <span style={{ display: 'block', fontSize: 11, color: excede ? C.error : C.n700 }}>{excede ? 'Excedido' : `${Math.round(uso * 100)}% de ${fmtMon(f.limite)}`}</span>
                   <span style={{ display: 'block', height: 4, background: C.n500, borderRadius: 2, marginTop: 4 }}><span style={{ display: 'block', width: `${uso * 100}%`, height: '100%', borderRadius: 2, background: excede ? C.error : uso > 0.8 ? '#E0A800' : C.brand }} /></span>
@@ -94,7 +95,7 @@ function Pantalla() {
           })}
         </Tabla>
       </Tarjeta>
-      {sel && <PanelFolio key={sel.id} folio={sel} onClose={() => setSelId(null)} onToast={setToast} onEliminado={() => { setSelId(null); setToast('Cuenta eliminada'); }} />}
+      {sel && <PanelFolio key={sel.id} folio={sel} onClose={() => setSelId(null)} onToast={setToast} onEliminado={() => { setSelId(null); setToast('Folio eliminado'); }} onNuevo={() => { setSelId(null); setNuevo(true); }} />}
       {nuevo && <NuevoFolioExterno onClose={() => setNuevo(false)} onListo={(id, t) => { setNuevo(false); setSelId(id); setToast(t); }} />}
       {toast && <Toast message={toast} type="success" onClose={() => setToast(null)} />}
       {portal}
