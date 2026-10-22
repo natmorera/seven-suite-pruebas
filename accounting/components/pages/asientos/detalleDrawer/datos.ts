@@ -1,7 +1,7 @@
 'use client';
-import { fmtNum } from '../../../ui/formato';
-import { FONT } from '../../../ui/tokens';
-import { ConciliacionAfectada } from '../DescontabilizarModal';
+import { fmtNum } from '@/components/ui/formato';
+import { FONT } from '@/components/ui/tokens';
+import { type ConciliacionAfectada } from '../DescontabilizarModal';
 
 export function fmt2(n: number) { return fmtNum(n, 2); }
 export const F = FONT;

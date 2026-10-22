@@ -1,31 +1,22 @@
 'use client';
 import { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, FONT } from '../../ui/tokens';
-import { Button } from '../../ui/formulario';
-import { IcPlus } from '../../ui/icons';
-import { TabTransferencias } from '../parametros/conceptosLibros/TabTransferencias';
-import Afiliados from '../bancos/Afiliados';
-import { TabCheques } from '../catalogo/ajustes/piezas';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, FONT } from '@/components/ui/tokens';
+import { Button } from '@/components/ui/formulario';
+import { IcPlus } from '@/components/ui/icons';
+import { TabTransferencias } from '@/components/pages/parametros/conceptosLibros/TabTransferencias';
+import Afiliados from '@/components/pages/bancos/Afiliados';
+import { TabCheques } from '@/components/pages/catalogo/ajustes/piezas';
 
 const F = FONT;
 const BRAND = C.brand;
 
-// Configuración > Actividad bancaria: acá vive lo que es SETUP, no operación
-// diaria. Antes esto estaba repartido en dos lugares por error: los
-// formularios de transferencia vivían en Parámetros generales, y los
-// afiliados de datáfono se colaron dentro de la sección operativa de Bancos
-// ("Actividad bancaria" allá abajo). Ambos son configuración de cómo se
-// procesan las transferencias y cobros con tarjeta, así que se unifican acá.
-// La parte operativa de Bancos ahora es solo "Transferencias bancarias"
-// (ver components/pages/bancos/Transferencias.tsx).
-// Issue: "Cheques" (configuración de chequera por cuenta bancaria) vivía
-// dentro de Catálogo de cuentas, pero es configuración de actividad bancaria,
-// no del plan de cuentas - se mueve para acá.
+// Configuración › Actividad bancaria: la configuración de la actividad bancaria (formularios de
+// transferencia, afiliados de datáfono y chequeras por cuenta). La operación diaria está en el
+// menú Bancos.
 export default function ActividadBancariaConfig() {
   const [tab, setTab] = useState<'formularios'|'afiliados'|'cheques'>('formularios');
-  // Issue #10: "Nueva" (formulario) / "Nuevo afiliado" ahora viven en el
-  // header de la página en vez de adentro de cada pestaña.
+  // Los botones «Nueva» (formulario) y «Nuevo afiliado» están en el encabezado de la página.
   const [formularioAddSignal, setFormularioAddSignal] = useState(0);
   const [afiliadoAddSignal, setAfiliadoAddSignal] = useState(0);
 

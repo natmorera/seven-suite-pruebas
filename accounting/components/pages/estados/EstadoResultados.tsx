@@ -1,11 +1,11 @@
 'use client';
 import React, { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { SearchInput } from '../../ui/filtros';
-import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, NivelCuentaFiltro, VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { SearchInput } from '@/components/ui/filtros';
+import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, type NivelCuentaFiltro, type VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
 
 function fmt(n: number) { return fmtNum(n, 2); }
 
@@ -42,7 +42,7 @@ export default function EstadoResultados() {
   const [pageSize, setPageSize] = useState(10);
   const [exportarOpen, setExportarOpen] = useState(false);
 
-  function toggle(c: string) { setExpanded(p=>{const n=new Set(p);n.has(c)?n.delete(c):n.add(c);return n;}); }
+  function toggle(c: string) { setExpanded(p=>{const n=new Set(p);if (n.has(c)) n.delete(c); else n.add(c);return n;}); }
 
   const NUM: React.CSSProperties = { padding:'8px 12px', textAlign:'right', whiteSpace:'nowrap', fontFamily:F, fontSize:12 };
   const NUMh: React.CSSProperties = { ...NUM, padding:'10px 12px', fontWeight:500, color:C.n700, fontSize:11 };
@@ -117,8 +117,8 @@ export default function EstadoResultados() {
               <div>
                 <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px', fontFamily:F }}>Desde - Hasta</p>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-                  <input type="date" value={fDesde} onChange={e=>setFDesde(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
-                  <input type="date" value={fHasta} onChange={e=>setFHasta(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
+                  <input aria-label="Desde - Hasta" type="date" value={fDesde} onChange={e=>setFDesde(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
+                  <input aria-label="Desde - Hasta" type="date" value={fHasta} onChange={e=>setFHasta(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
                 </div>
               </div>
             </div>
@@ -134,7 +134,7 @@ export default function EstadoResultados() {
 
           <FilterBtn id="opciones" label="Opciones" active={!incluirSinMov}>
             <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:12, fontFamily:F }}>
-              <input type="checkbox" checked={incluirSinMov} onChange={e=>setIncluirSinMov(e.target.checked)} style={{ accentColor:BRAND }}/>
+              <input type="checkbox" aria-label="Seleccionar" checked={incluirSinMov} onChange={e=>setIncluirSinMov(e.target.checked)} style={{ accentColor:BRAND }}/>
               Incluir cuentas sin movimiento
             </label>
           </FilterBtn>
@@ -159,7 +159,7 @@ export default function EstadoResultados() {
             </tr>
           </thead>
           <tbody>
-            {/* Ingresos section */}
+            {/* Sección de ingresos */}
             <tr style={{ background:'#F9F9F9' }}><td colSpan={5} style={{ padding:'8px 12px', textTransform:'uppercase', letterSpacing:'.05em' }}>Ingresos</td></tr>
             {visible.filter(r=>r.tipo==='ingreso').length === 0 ? (
               <tr><td colSpan={5} style={TABLA.empty}>Sin cuentas para los filtros seleccionados.</td></tr>

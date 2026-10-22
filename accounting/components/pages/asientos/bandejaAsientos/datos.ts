@@ -1,7 +1,7 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { ConciliacionAfectada } from '../DescontabilizarModal';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { type ConciliacionAfectada } from '../DescontabilizarModal';
 
 export const F = FONT;
 export const BRAND = C.brand;
@@ -174,13 +174,10 @@ export const COLS_DEF = [
   { id:'documento',  label:'Documento',       fija:false, visible:false },
   { id:'observacion',label:'Observación',     fija:false, visible:false },
 ];
-export const ORIGEN_COLORS: Record<string,string> = {
-  FrontDesk:'#3B82F6', Accounting:C.success, Inventario:'#EF9F27', 'Activos fijos':'#7C3AED', POS:C.error,
-};
-// ── Date range filter ──────────────────────────────────────────────────────────
+// ── Filtro de rango de fechas ──────────────────────────────────────────────────────────
 export type DateRange = { from:string; to:string };
-export function toISO(d: Date) { const p=(n:number)=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
-export const MES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function toISO(d: Date) { const p=(n:number)=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+const MES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 export function fmtDMY(iso: string) { if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d} ${MES_CORTO[parseInt(m,10)-1]} ${y}`; }
 export const FECHA_PRESETS: { id:string; label:string }[] = [
   { id:'hoy',        label:'Hoy' },
@@ -212,7 +209,7 @@ export function detectFechaPreset(v: DateRange): string|null {
   for (const p of FECHA_PRESETS) { const r = computeFechaPreset(p.id); if (r.from===v.from && r.to===v.to) return p.id; }
   return null;
 }
-// ── Importe range filter ───────────────────────────────────────────────────────
+// ── Filtro de rango de importe ───────────────────────────────────────────────────────
 export interface ImporteRange { moneda: Moneda; min: number; max: number }
 export const IMPORTE_MAX = 2000000;
 export const IMPORTE_DEFAULT: ImporteRange = { moneda:'CRC', min:0, max:IMPORTE_MAX };
@@ -252,7 +249,6 @@ export function formatMontoTyping(raw: string, decimals: number = 2): string {
   const intPart = intRaw ? Number(intRaw).toLocaleString('en-US') : '';
   return decRaw !== undefined ? `${intPart}.${decRaw.slice(0, decimals)}` : intPart;
 }
-// ── Crear asiento form ─────────────────────────────────────────────────────────
 export interface CrearAsientoInitial { titulo:string; moneda:Moneda; lineas:LineaAsiento[]; origen?:string; documento?:string; observacion?:string; duplicadoDe?:string; }
 // ── Modal de confirmación con preview - Contabilizar (individual o en masa) ────────
 export const CONTABILIZAR_GREEN = C.success;

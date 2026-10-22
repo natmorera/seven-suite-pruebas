@@ -1,7 +1,7 @@
 'use client';
 // Sub-panel «Configuración General» que se abre junto al menú lateral
 import Link from 'next/link';
-import { C, FONT, radius } from '../ui/tokens';
+import { C, FONT, radius } from '@/components/ui/tokens';
 import { CONFIG_ITEMS } from './navegacion';
 
 export const HEADER_H = 52;  // misma altura en las tres columnas (menú, sub-panel y página)

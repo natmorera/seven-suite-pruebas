@@ -1,11 +1,11 @@
-import React from 'react';
-import { C, FONT, radius } from '../../../ui/tokens';
-import { Usuario, PlantillaPermiso, flatPermissionRows, permisosAgrupadosPorUsuario } from '../permissionsData';
+import type React from 'react';
+import { C, FONT, radius } from '@/components/ui/tokens';
+import { type Usuario, type PlantillaPermiso, flatPermissionRows, permisosAgrupadosPorUsuario } from '../permissionsData';
 
 export const F = FONT;
 export const BRAND = C.brand;
 // ── Exportar permisos por usuario (CSV: una fila por permiso concedido) ─────
-export function csvEscapePermisos(v: string) { return `"${String(v).replace(/"/g,'""')}"`; }
+function csvEscapePermisos(v: string) { return `"${String(v).replace(/"/g,'""')}"`; }
 export function exportarPermisosPorUsuario(usuarios: Usuario[], plantillas: PlantillaPermiso[]) {
   const filas = flatPermissionRows();
   const headers = ['Usuario','Descripción','Activo','Rol','Categoría','Módulo','Sección','Permiso','Tipo/Estado'];
@@ -44,17 +44,10 @@ export function filterInputStyle(disabled?: boolean): React.CSSProperties {
 // Se abre encima del detalle de permisos (modal sobre modal) a propósito: el
 // detalle sigue visible/disponible detrás mientras se completa el envío.
 export const EMAIL_RE = /^\S+@\S+\.\S+$/;
-// ── Detalle de permisos por usuario (al tocar la fila) ───────────────────────
-// Reemplaza el popover anterior (que solo mostraba fechas y se abría desde un
-// hipervínculo en el número). La acción principal de la tabla de usuarios es
-// consultar los permisos que tiene cada uno; esta es una vista de SOLO
-// LECTURA - para modificar permisos se usa "Gestionar permisos". Desde acá se
-// puede imprimir (Guardar como PDF) o enviar por correo.
-// ── Exportar detalle de permisos de un usuario a PDF real (jsPDF) ───────────
-// Antes esto abría el diálogo de impresión del navegador ("Guardar como PDF"),
-// que muestra exactamente lo mismo que ya se ve en pantalla. Generar el PDF
-// directamente es más amigable: un clic, sin diálogo del sistema operativo,
-// y el archivo se descarga solo.
+// ── Detalle de permisos por usuario (al tocar la fila) ── Vista de solo lectura de los
+// permisos de cada usuario; para modificarlos se usa «Gestionar permisos». Se puede descargar
+// en PDF o enviar por correo. ── Exportar detalle de permisos de un usuario a PDF (jsPDF) ── El
+// archivo se genera y descarga directamente, sin el diálogo de impresión.
 export async function exportarDetalleUsuarioPDF(u: Usuario, plantillas: PlantillaPermiso[]) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });

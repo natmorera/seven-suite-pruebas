@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { SearchInput } from '../../ui/filtros';
-import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, NivelCuentaFiltro, VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { SearchInput } from '@/components/ui/filtros';
+import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, type NivelCuentaFiltro, type VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
 
 function fmt(n: number) { return fmtNum(n, 2); }
 
@@ -114,7 +114,7 @@ export default function SituacionFinanciera() {
               <OptionList options={['Fecha de corte','Comparar desde'] as const}
                 value={periodoModo==='corte'?'Fecha de corte':'Comparar desde'}
                 onChange={v=>setPeriodoModo(v==='Fecha de corte'?'corte':'rango')}/>
-              <input type="date" value={fCorte} onChange={e=>setFCorte(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
+              <input aria-label="Fecha de corte" type="date" value={fCorte} onChange={e=>setFCorte(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
             </div>
           </FilterBtn>
 
@@ -130,7 +130,7 @@ export default function SituacionFinanciera() {
 
           <FilterBtn id="opciones" label="Opciones" active={!incluirSaldoCero}>
             <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:12, fontFamily:F }}>
-              <input type="checkbox" checked={incluirSaldoCero} onChange={e=>setIncluirSaldoCero(e.target.checked)} style={{ accentColor:BRAND }}/>
+              <input type="checkbox" aria-label="Seleccionar" checked={incluirSaldoCero} onChange={e=>setIncluirSaldoCero(e.target.checked)} style={{ accentColor:BRAND }}/>
               Incluir cuentas con saldo cero
             </label>
           </FilterBtn>

@@ -1,29 +1,20 @@
 // ── Modelo de datos de Usuarios y Permisos ──────────────────────────────────
 import { CATEGORIA_OPERATIVO } from './permisos/arbolOperativo';
 import { CATEGORIA_PARAMETROS } from './permisos/arbolParametros';
-import { type PermCategory, type PermGroup, type PermLeaf, type PermModule } from './permisos/tipos';
+import { type PermCategory, type PermLeaf, type PermModule } from './permisos/tipos';
 
-
-// Estructura calcada de los módulos reales de la app (sidebar de navegación).
-// Convención de nombres, para que no se sienta desordenado al leerlo:
-//   - Todo permiso de solo consulta se llama "Ver <cosa>" (nunca "Visualización
-//     de...", "Acceso a pantalla de...", etc. - eran 4 formas distintas de
-//     decir lo mismo repartidas por el árbol).
-//   - Las acciones siempre en modo imperativo: Crear, Editar, Eliminar,
-//     Duplicar, Anular, Contabilizar, Exportar, Enviar por correo.
-//   - Un solo "Ver" por pantalla - antes algunas pantallas tenían "acceso" Y
-//     "visualización" como dos permisos separados para lo mismo.
+// Estructura igual a la de los módulos de la app (menú lateral). Convención de nombres: todo
+// permiso de consulta se llama «Ver <cosa>», uno solo por pantalla; las acciones van en
+// imperativo: Crear, Editar, Eliminar, Duplicar, Anular, Contabilizar, Exportar, Enviar por
+// correo.
 export const PERMISSIONS_TREE: PermCategory[] = [
   CATEGORIA_OPERATIVO,
   CATEGORIA_PARAMETROS,
 ];
 
-// ── Firma: ya no se pregunta por reporte/estado financiero acá - quién puede
-// incluir su firma al exportar depende únicamente de si esa persona tiene su
-// propia firma configurada (Mi cuenta > Mi firma), no de un permiso más que
-// un administrador tenga que activar por cada reporte. isFirmaLeafKey queda
-// solo para no romper el árbol de permisos por si algún leaf antiguo quedó
-// con el sufijo ".firmar" en datos ya guardados - ningún leaf actual lo usa.
+// ── Firmas: no son un permiso por reporte; se configuran en Parámetros generales › Firmas.
+// isFirmaLeafKey reconoce permisos guardados con el sufijo «.firmar»; ningún permiso actual lo
+// usa.
 export function isFirmaLeafKey(key: string): boolean {
   return key.endsWith('.firmar');
 }
@@ -67,7 +58,7 @@ export const USUARIOS_INIT: Usuario[] = [
   { id:1050, usuario:'lvalverde', descripcion:'Luis Valverde Murillo',    dias:0, activo:true, cambiarClave:false, admin:true,  fechaCreacion:'18/02/2026 10:15:45', ultimoAcceso:'13/08/2026 07:55:21', ultimoCambioClave:'18/02/2026 10:15:45', permisos:new Set(PERM_TODOS) },
 ];
 
-// ── Roles (mock) ─────────────────────────────────────────────────────────────
+// ── Roles (de ejemplo) ─────────────────────────────────────────────────────────────
 export interface PlantillaPermiso { id:number; nombre:string; usuarios:number; permisos:Set<string> }
 
 export const PLANTILLAS_INIT: PlantillaPermiso[] = [
@@ -77,7 +68,7 @@ export const PLANTILLAS_INIT: PlantillaPermiso[] = [
   { id:3, nombre:'Supervisor', usuarios:2, permisos:new Set(['dashboard.card_asientos','dashboard.card_situacion','dashboard.card_usuarios','dashboard.card_estadobancos','bandeja.view','analitico.view:Detalle']) },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Funciones auxiliares ───────────────────────────────────────────────────────────────────
 function allLeavesFlat(mod: PermModule): PermLeaf[] {
   return mod.leaves ?? (mod.groups ?? []).flatMap(g=>g.leaves);
 }
@@ -96,9 +87,6 @@ export function countChecked(mod: PermModule, perms: Set<string>): number {
 }
 export function allLeafKeysOfModule(mod: PermModule): string[] {
   return allLeavesFlat(mod).flatMap(l => l.subOptions ? l.subOptions.map(o=>`${l.key}:${o}`) : [l.key]);
-}
-export function allLeafKeysOfGroup(g: PermGroup): string[] {
-  return g.leaves.flatMap(l => l.subOptions ? l.subOptions.map(o=>`${l.key}:${o}`) : [l.key]);
 }
 export function totalLeavesInTree(): number {
   return PERMISSIONS_TREE.reduce((s,cat)=>s+cat.modules.reduce((s2,m)=>s2+countLeaves(m),0),0);
@@ -122,7 +110,7 @@ export { leafIsChecked };
 
 // ── Árbol aplanado, para reportes/exportación (una fila por permiso, o por
 // cada sub-opción de los leaves que tienen "por tipo"/"por estado") ──────────
-export interface PermFlatRow { key: string; categoria: string; modulo: string; grupo?: string; permiso: string; subopcion?: string }
+interface PermFlatRow { key: string; categoria: string; modulo: string; grupo?: string; permiso: string; subopcion?: string }
 export function flatPermissionRows(): PermFlatRow[] {
   const rows: PermFlatRow[] = [];
   function pushLeaf(l: PermLeaf, categoria: string, modulo: string, grupo?: string) {
@@ -144,9 +132,9 @@ export function flatPermissionRows(): PermFlatRow[] {
 // ── Permisos de un usuario agrupados para lectura (detalle imprimible / envío
 // por correo) - categoría > módulo (+ grupo si aplica) > permiso, uniendo las
 // sub-opciones de un mismo permiso en una sola línea ────────────────────────
-export interface PermisoDetalleItem { permiso: string; subopciones: string[] }
-export interface PermisoDetalleGrupo { modulo: string; grupo?: string; items: PermisoDetalleItem[] }
-export interface PermisoDetalleCategoria { categoria: string; grupos: PermisoDetalleGrupo[] }
+interface PermisoDetalleItem { permiso: string; subopciones: string[] }
+interface PermisoDetalleGrupo { modulo: string; grupo?: string; items: PermisoDetalleItem[] }
+interface PermisoDetalleCategoria { categoria: string; grupos: PermisoDetalleGrupo[] }
 
 export function permisosAgrupadosPorUsuario(permisos: Set<string>): PermisoDetalleCategoria[] {
   const filas = flatPermissionRows().filter(f => permisos.has(f.key));

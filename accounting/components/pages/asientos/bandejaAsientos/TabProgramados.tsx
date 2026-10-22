@@ -1,8 +1,8 @@
 'use client';
-import { RowAction } from '../../../ui/primitives';
-import { C, PAGE_PAD, radius, TABLA } from '../../../ui/tokens';
-import { SearchInput, FilterDropdown } from '../../../ui/filtros';
-import { Checkbox } from '../../../ui/formulario';
+import { RowAction } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { SearchInput, FilterDropdown } from '@/components/ui/filtros';
+import { Checkbox } from '@/components/ui/formulario';
 import { BRAND, F, MON_SYM } from './datos';
 import { IcEditar, IcEliminar } from './piezas';
 import { type EstadoBandeja } from './useBandeja';
@@ -12,7 +12,7 @@ export function TabProgramados({ e }: { e: EstadoBandeja }) {
   const { searchProg, setSearchProg, programados, filtFrecuencia, setFiltFrecuencia, soloActivos, setSoloActivos, programadosFiltrados, handleToggleProgramado, setEditProgramado, setDelProgramado } = e;
   return (
         <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
-          {/* Issue #1: barra de búsqueda */}
+          {/* barra de búsqueda */}
           <div style={{ background:'#FFFFFF', borderBottom:`1px solid ${C.n500}`, padding:'8px 24px', display:'flex', alignItems:'center', gap:8, flexShrink:0, flexWrap:'wrap' }}>
             <SearchInput value={searchProg} onChange={setSearchProg} placeholder="Buscar por nombre o frecuencia…" width={300} />
             <FilterDropdown label="Frecuencia" options={Array.from(new Set(programados.map(p=>p.frecuencia)))} selected={filtFrecuencia} onApply={setFiltFrecuencia} onClear={()=>setFiltFrecuencia(new Set())}/>

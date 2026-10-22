@@ -1,15 +1,12 @@
 'use client';
-import { FONT } from '../../../ui/tokens';
-import { Cuenta } from '../catalogoData';
-import { EnlaceAjuste } from '../datos/ajustes';
+import { FONT } from '@/components/ui/tokens';
+import { type Cuenta } from '../catalogoData';
+import { type EnlaceAjuste } from '../datos/ajustes';
 
 export const F = FONT;
 export const BRAND = '#A77600';
-// ── Helpers ───────────────────────────────────────────────────────────────────
-// Issue: la lista de centros de costo vivía acá duplicada como mock local -
-// ahora viene del contexto compartido (centrosCostoConfig.tsx) para que
-// coincida siempre con lo que ve Presupuesto y cualquier otra pantalla que
-// también la use.
+// ── Helpers ── La lista de centros de costo viene del contexto compartido
+// (centrosCostoConfig.tsx), la misma que usan Presupuesto y el resto de pantallas.
 export const GRUPOS_PATRIMONIO = [
   { value:'001', label:'001 · Capital social'         },
   { value:'002', label:'002 · Reserva legal'          },
@@ -40,7 +37,7 @@ export const NIIF_TREE: Record<string, { label:string; sgs: Record<string, { lab
     '6.1': { label:'Gastos de operación', ssgs: { '6.1.1':'Gastos operativos y administrativos' } },
   }},
 };
-// Lista plana de hojas (sub sub grupo) para el selector con búsqueda - reemplaza la cascada de 3 pasos
+// Lista plana de hojas (sub sub grupo) para el selector con búsqueda
 export interface NiifLeaf { grupo:string; sg:string; ssg:string; grupoLabel:string; sgLabel:string; ssgLabel:string; search:string }
 export const NIIF_LEAVES: NiifLeaf[] = Object.entries(NIIF_TREE).flatMap(([gVal, g]) =>
   Object.entries(g.sgs).flatMap(([sgVal, sg]) =>

@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { radius, TABLA } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { Select, Checkbox } from '../../../ui/formulario';
-import { C } from '../../../ui/tokens';
-import { Cuenta, GRUPOS_NIIF } from '../catalogoData';
+import { radius, TABLA , C } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { Select, Checkbox } from '@/components/ui/formulario';
+import { type Cuenta, GRUPOS_NIIF } from '../catalogoData';
 import { flattenTree } from '../datos/arbol';
 import { AccountRow } from './AccountRow';
 import { F } from './datos';
@@ -20,7 +19,7 @@ export function PlanCuentas({ cuentas, onToggle, onSelect, onAddChild, selectedI
   const [filterEsp, setFE]      = useState(false);   // toggle "Solo especiales"
   const [filterCC, setFCC]      = useState(false);   // toggle "Solo con centro de costo"
 
-  // Issue #10: "Sub grupo" y "Sub sub grupo" son clasificación NIIF fija (no
+  // "Sub grupo" y "Sub sub grupo" son clasificación NIIF fija (no
   // administrable por el usuario) y en el caso típico un Sub grupo envuelve un
   // único Sub sub grupo con un nombre casi idéntico (ej. "Activos corrientes" →
   // "Activos corrientes circulantes"). Mostrar ambos como filas colapsables
@@ -62,12 +61,12 @@ export function PlanCuentas({ cuentas, onToggle, onSelect, onAddChild, selectedI
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar código o nombre…" width={220} />
 
         <div style={{ width:180, flexShrink:0 }}>
-          <Select value={filterGrupo} onChange={setFG}
+          <Select ariaLabel="Grupo" value={filterGrupo} onChange={setFG}
             options={[{ value:'all', label:'Todas las categorías' }, ...GRUPOS_NIIF.map(g=>({ value:g.value, label:g.label }))]} />
         </div>
 
         <div style={{ width:150, flexShrink:0 }}>
-          <Select value={filterNivel} onChange={setFN}
+          <Select ariaLabel="Nivel" value={filterNivel} onChange={setFN}
             options={[
               { value:'all', label:'Todos los niveles' },
               { value:'mayor', label:'Mayor' },
@@ -110,7 +109,7 @@ export function PlanCuentas({ cuentas, onToggle, onSelect, onAddChild, selectedI
               </td></tr>
             )}
             {rows.map(c => (
-              <AccountRow key={c.id} node={c as any} selectedId={selectedId}
+              <AccountRow key={c.id} node={c} selectedId={selectedId}
                 onToggle={onToggle} onSelect={onSelect} onAddChild={onAddChild}/>
             ))}
           </tbody>

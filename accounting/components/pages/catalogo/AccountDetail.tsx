@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { radius } from '../../ui/tokens';
-import { C } from '../../ui/tokens';
-import { Cuenta } from './catalogoData';
+import { radius , C } from '@/components/ui/tokens';
+import { type Cuenta } from './catalogoData';
 import ModalTrasladoSaldo from './ModalTrasladoSaldo';
-import { TrasladoResult } from './modalTrasladoSaldo/datos';
+import { type TrasladoResult } from './modalTrasladoSaldo/datos';
 import { DetailView } from './accountDetail/DetailView';
 import { EditForm } from './accountDetail/EditForm';
 import { F, type Props } from './accountDetail/datos';
@@ -19,7 +18,7 @@ export default function AccountDetail({ mode, account, parentAccount, allNodes, 
   function handleSaveWithTraslado(data: Cuenta) {
     onSave(data);
     onModeChange('view');
-    // Traslado is now manual-only - no automatic popup on create
+    // El traslado de saldo se abre a mano; no se ofrece al crear la cuenta
   }
 
   return (
@@ -31,7 +30,7 @@ export default function AccountDetail({ mode, account, parentAccount, allNodes, 
           allNodes={allNodes}
           isNew={mode==='new'}
           onSave={handleSaveWithTraslado}
-          onCancel={()=>{ mode==='new'?onClose():onModeChange('view'); }}
+          onCancel={()=>{ if (mode==='new') onClose(); else onModeChange('view'); }}
         />
       ) : account ? (
         <>
@@ -50,7 +49,7 @@ export default function AccountDetail({ mode, account, parentAccount, allNodes, 
         </>
       ) : null}
 
-      {/* Traslado modal */}
+      {/* Modal de traslado de saldo */}
       {showTraslado && trasladoCuenta && (
         <ModalTrasladoSaldo
           cuentaDestino={trasladoCuenta}

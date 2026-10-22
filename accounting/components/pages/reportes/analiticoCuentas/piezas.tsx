@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { C, radius, shadow } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
-import { IcDescontabilizar } from '../../asientos/DescontabilizarModal';
+import { C, radius, shadow } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
+import { IcDescontabilizar } from '@/components/pages/asientos/DescontabilizarModal';
 import { BRAND, type Cuenta, ESTADO_STYLE, type EstadoMov, F, type Movimiento, TIPO_CONFIG, type TipoMov, fmt2 } from './datos';
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
@@ -26,7 +26,7 @@ export function EstadoBadge({ estado }: { estado: EstadoMov }) {
 // ── CuentaSelector ────────────────────────────────────────────────────────────
 // Solo permite seleccionar cuentas de nivel detalle o auxiliar
 // ── Acción icon con tooltip ───────────────────────────────────────────────────
-export function ActIc({ label, children, onClick }: { label:string; children:React.ReactNode; onClick?:()=>void }) {
+function ActIc({ label, children, onClick }: { label:string; children:React.ReactNode; onClick?:()=>void }) {
   const [hov,setHov] = useState(false);
   return (
     <div style={{ position:'relative', display:'inline-flex' }}
@@ -38,7 +38,7 @@ export function ActIc({ label, children, onClick }: { label:string; children:Rea
       </button>
       {hov && (
         <div style={{ position:'absolute', bottom:'110%', left:'50%', transform:'translateX(-50%)',
-          background:'#0F0F0F', color:'#FFFFFF', fontSize:10, fontFamily:F, padding:'3px 7px',
+          background:'#0F0F0F', color:'#FFFFFF', fontSize:10.5, fontFamily:F, padding:'3px 7px',
           borderRadius:4, whiteSpace:'nowrap', pointerEvents:'none', zIndex:9999 }}>
           {label}
         </div>
@@ -48,7 +48,6 @@ export function ActIc({ label, children, onClick }: { label:string; children:Rea
 }
 export const IcEye  = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>;
 export const IcPrint = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6V2h8v4"/><rect x="2" y="6" width="12" height="6" rx="1"/><path d="M4 12v2h8v-2"/></svg>;
-export const IcLoop = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>;
 export const IcCopy = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="5" width="8" height="8" rx="1.5"/><path d="M3 11V3h8"/></svg>;
 export const IcBan  = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><circle cx="8" cy="8" r="6.33"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>;
 export function ActionIcons({ mov, onDescontabilizar }: { mov: Movimiento; onDescontabilizar: (m:Movimiento)=>void }) {
@@ -67,7 +66,7 @@ export function ActionIcons({ mov, onDescontabilizar }: { mov: Movimiento; onDes
   );
 }
 // ── SaldoRow ──────────────────────────────────────────────────────────────────
-export function SaldoRow({ label, sym, valor, colSpan, mostrarColAux, mostrarColCuenta }: {
+export function SaldoRow({ label, sym, valor, mostrarColAux, mostrarColCuenta }: {
   label:string; sym:string; valor:number; colSpan:number; mostrarColAux?:boolean; mostrarColCuenta?:boolean;
 }) {
   // Count columns before Debe: checkbox(1)+tipo(1)+fecha(1)+asiento(1)+desc(1)+estado(1)+[aux]+modulo(1)+doc(1) = 8 base + aux
@@ -87,12 +86,10 @@ export function SaldoRow({ label, sym, valor, colSpan, mostrarColAux, mostrarCol
     </tr>
   );
 }
-// Issue #17: el "totalizado" (suma de Debe y de Haber de los movimientos
-// visibles) antes solo aparecía cuando había una cuenta seleccionada - al ver
-// "todas las cuentas" desaparecía por completo. Ahora es siempre visible, y
-// muestra el Debe y el Haber en columnas separadas (Issue #17: la sumatoria
-// del Debe y la del Haber son distintas salvo que la selección esté balanceada).
-export function TotalizadoRow({ sym, totalDebe, totalHaber, colSpan, mostrarColAux, mostrarColCuenta }: {
+// Totalizado: suma del Debe y del Haber de los movimientos visibles, en columnas separadas.
+// Siempre visible, también al ver todas las cuentas (las dos sumas difieren salvo que la
+// selección esté balanceada).
+export function TotalizadoRow({ sym, totalDebe, totalHaber, mostrarColAux, mostrarColCuenta }: {
   sym:string; totalDebe:number; totalHaber:number; colSpan:number; mostrarColAux?:boolean; mostrarColCuenta?:boolean;
 }) {
   const baseColsBefore = 8 + (mostrarColAux?1:0) + (mostrarColCuenta?1:0);
@@ -112,7 +109,7 @@ export function TotalizadoRow({ sym, totalDebe, totalHaber, colSpan, mostrarColA
     </tr>
   );
 }
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 
 // ── DateRangeFilter: modal de período ─────────────────────────────────────────
 export function DateRangeFilter({ label, value, onChange, onClear }: {
@@ -181,10 +178,10 @@ export function DateRangeFilter({ label, value, onChange, onClear }: {
           <p style={{ fontSize:11, fontWeight:500, color:C.n700, margin:'0 0 6px' }}>Rango personalizado</p>
           <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:'4px 8px', alignItems:'center', marginBottom:8 }}>
             <span style={{ fontSize:11, color:C.n700 }}>Desde</span>
-            <input type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))}
+            <input aria-label="Desde" type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))}
               style={{ height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none' }}/>
             <span style={{ fontSize:11, color:C.n700 }}>Hasta</span>
-            <input type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))}
+            <input aria-label="Hasta" type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))}
               style={{ height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none' }}/>
           </div>
           {local.from && local.to && diffDays(local.from,local.to) && (
@@ -192,8 +189,8 @@ export function DateRangeFilter({ label, value, onChange, onClear }: {
               {`${fmtD(local.from)} - ${fmtD(local.to)} · ${diffDays(local.from,local.to)}`}
             </div>
           )}
-          {/* Hoy label */}
-          <p style={{ fontSize:10, color:C.n700, margin:'0 0 10px' }}>Hoy · {new Date().toLocaleDateString('es-CR',{day:'numeric',month:'long',year:'numeric'})}</p>
+          {/* Etiqueta «Hoy» */}
+          <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 10px' }}>Hoy · {new Date().toLocaleDateString('es-CR',{day:'numeric',month:'long',year:'numeric'})}</p>
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={()=>setOpen(false)} style={{ flex:1, height:30, border:`1px solid ${C.n500}`, borderRadius:7, background:'#FFFFFF', cursor:'pointer', fontSize:11, fontFamily:F }}>Cancelar</button>
             <button onClick={()=>{ onChange(local); setOpen(false); }} style={{ flex:1, height:30, border:'none', borderRadius:7, background:BRAND, color:'#FFFFFF', cursor:'pointer', fontSize:11, fontWeight:500, fontFamily:F }}>Aplicar</button>
@@ -240,10 +237,10 @@ export function RangoImporteFilter({ minimo, maximo, onApply, onClear }: {
             <button style={{ flex:1, height:28, border:`1px solid ${C.n500}`, borderRadius:radius.sm, background:'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:F, color:'#0F0F0F' }}>$ USD</button>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr auto 1fr', gap:6, alignItems:'center', marginBottom:12 }}>
-            <input type="number" value={localMin||''} onChange={e=>setLocalMin(+e.target.value||0)} placeholder="₡ 0"
+            <input type="number" value={localMin||''} onChange={e=>setLocalMin(+e.target.value||0)} placeholder="₡ 0" aria-label="Monto"
               style={{ height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', width:'100%', boxSizing:'border-box' }}/>
             <span style={{ color:C.n700, textAlign:'center', fontSize:12 }}>-</span>
-            <input type="number" value={localMax||''} onChange={e=>setLocalMax(+e.target.value||0)} placeholder="₡ 2,000,000"
+            <input type="number" value={localMax||''} onChange={e=>setLocalMax(+e.target.value||0)} placeholder="₡ 2,000,000" aria-label="Monto"
               style={{ height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', width:'100%', boxSizing:'border-box' }}/>
           </div>
           <div style={{ display:'flex', gap:8 }}>
@@ -280,7 +277,7 @@ export function MiniCuentaCombo({ cuentas, value, onSelect, placeholder }: {
         <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, zIndex:40, background:'#FFFFFF', border:`1px solid ${C.n500}`,
           borderRadius:radius.md, width:260, boxShadow:shadow.panel }}>
           <div style={{ padding:6 }}>
-            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Código o nombre…"
+            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Código o nombre…" aria-label="Código o nombre…"
               style={{ width:'100%', height:28, padding:'0 8px', border:`1px solid ${BRAND}`, borderRadius:5, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div style={{ maxHeight:160, overflowY:'auto' }}>
@@ -289,7 +286,7 @@ export function MiniCuentaCombo({ cuentas, value, onSelect, placeholder }: {
                 style={{ display:'block', width:'100%', textAlign:'left', padding:'6px 10px', border:'none', background:'none', cursor:'pointer', fontFamily:F }}
                 onMouseEnter={e=>(e.currentTarget.style.background=C.n200)} onMouseLeave={e=>(e.currentTarget.style.background='none')}>
                 <span style={{ display:'block', fontSize:11, fontWeight:600, color:BRAND }}>{c.code}</span>
-                <span style={{ display:'block', fontSize:10, color:C.n700 }}>{c.nombre}</span>
+                <span style={{ display:'block', fontSize:10.5, color:C.n700 }}>{c.nombre}</span>
               </button>
             ))}
             {filtered.length===0 && <p style={{ padding:'8px 10px', fontSize:11, color:C.n700, margin:0 }}>Sin resultados</p>}

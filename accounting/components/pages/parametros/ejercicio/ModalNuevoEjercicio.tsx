@@ -1,10 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Modal, RowAction } from '../../../ui/primitives';
-import { FormField, Input, Select } from '../../../ui/formulario';
-import { radius, TABLA } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
-import { IcTrash } from '../../../ui/icons';
+import { Modal, RowAction } from '@/components/ui/primitives';
+import { FormField, Input, Select } from '@/components/ui/formulario';
+import { radius, TABLA , C } from '@/components/ui/tokens';
+import { IcTrash } from '@/components/ui/icons';
 import { type Ejercicio, F, type Periodo, diffDiasInclusive, formatDMY, makePeriodos, parseDMY } from './datos';
 
 export function ModalNuevoEjercicio({ ejercicios, onClose, onCrear }: {
@@ -18,7 +17,7 @@ export function ModalNuevoEjercicio({ ejercicios, onClose, onCrear }: {
   const yaExiste = ejercicios.some(e=>e.anio===anio);
   const preview = makePeriodos(anio).map(p=>({ ...p, estado: p.orden===0?'Apertura' as const : p.orden===13?'Cierre' as const : 'Pendiente' as const }));
 
-  // ── Constructor de períodos manual (Issue #12) ──────────────────────────
+  // ── Constructor de períodos manual ──────────────────────────
   const [periodosManual, setPeriodosManual] = useState<Periodo[]>([]);
   const [pTitulo, setPTitulo] = useState('');
   const [pDesde, setPDesde] = useState(`1/1/${anio}`);
@@ -92,22 +91,22 @@ export function ModalNuevoEjercicio({ ejercicios, onClose, onCrear }: {
         {modo==='manual' && (
           <div style={{ padding:'10px 12px', background:C.n200, borderRadius:radius.md, display:'flex', flexDirection:'column', gap:10 }}>
             <p style={{ fontSize:11, color:C.n700, margin:0, lineHeight:1.6 }}>
-              Agregá los períodos uno por uno. Al agregar uno, la fecha "Desde" del siguiente ya viene precargada justo después de donde terminó el anterior.
+              Agregá los períodos uno por uno. Al agregar uno, la fecha &quot;Desde&quot; del siguiente ya viene precargada justo después de donde terminó el anterior.
             </p>
             <div style={{ display:'flex', gap:8, alignItems:'flex-end', flexWrap:'wrap' }}>
               <div style={{ flex:'1 1 140px' }}>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 4px' }}>Título</p>
-                <input value={pTitulo} onChange={e=>setPTitulo(e.target.value)} placeholder="Ej. Enero"
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 4px' }}>Título</p>
+                <input value={pTitulo} onChange={e=>setPTitulo(e.target.value)} placeholder="Ej. Enero" aria-label="Ej. Enero"
                   style={{ width:'100%', height:32, padding:'0 9px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <div style={{ flex:'0 0 130px' }}>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 4px' }}>Desde</p>
-                <input value={pDesde} onChange={e=>setPDesde(e.target.value)} placeholder="D/M/AAAA"
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 4px' }}>Desde</p>
+                <input value={pDesde} onChange={e=>setPDesde(e.target.value)} placeholder="D/M/AAAA" aria-label="Fecha"
                   style={{ width:'100%', height:32, padding:'0 9px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <div style={{ flex:'0 0 130px' }}>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 4px' }}>Hasta</p>
-                <input value={pHasta} onChange={e=>setPHasta(e.target.value)} placeholder="D/M/AAAA"
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 4px' }}>Hasta</p>
+                <input value={pHasta} onChange={e=>setPHasta(e.target.value)} placeholder="D/M/AAAA" aria-label="Fecha"
                   style={{ width:'100%', height:32, padding:'0 9px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <button onClick={agregarPeriodo} disabled={!pValido}

@@ -1,9 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { SearchInput } from '../../ui/filtros';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { SearchInput } from '@/components/ui/filtros';
 import { F, BRAND, FilterBarGroup, FilterBtn, Chip, BotonExportar, ModalExportarEstado } from './estadosCommon';
 
 function fmt(n: number) { return fmtNum(n, 2); }
@@ -65,14 +65,14 @@ export default function CambioPatrimonio() {
           <FilterBtn id="periodo" label={periodoLabel} active={periodoTocado}>
             <div style={{ fontSize:12, display:'flex', flexDirection:'column', gap:8 }}>
               <p style={{ fontSize:11, color:C.n700, margin:0 }}>Fecha de corte</p>
-              <input type="date" value={fCorte} onChange={e=>{ setFCorte(e.target.value); setPeriodoTocado(e.target.value !== '2026-01-31'); }}
+              <input aria-label="Fecha de corte" type="date" value={fCorte} onChange={e=>{ setFCorte(e.target.value); setPeriodoTocado(e.target.value !== '2026-01-31'); }}
                 style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
             </div>
           </FilterBtn>
 
           <FilterBtn id="opciones" label="Opciones" active={!mostrarNotas}>
             <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:12, fontFamily:F }}>
-              <input type="checkbox" checked={mostrarNotas} onChange={e=>setMostrarNotas(e.target.checked)} style={{ accentColor:BRAND }}/>
+              <input type="checkbox" aria-label="Seleccionar" checked={mostrarNotas} onChange={e=>setMostrarNotas(e.target.checked)} style={{ accentColor:BRAND }}/>
               Mostrar notas
             </label>
           </FilterBtn>

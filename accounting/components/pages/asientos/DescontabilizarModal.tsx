@@ -1,12 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { C, FONT, radius } from '../../ui/tokens';
+import { C, FONT, radius } from '@/components/ui/tokens';
 
 const F = FONT;
 const BRAND = C.brand;
 
-// ── Ícono de "Descontabilizar" - reloj de arena: comunica "vuelve a quedar pendiente
-// / en espera", más claro que la flecha circular de "refrescar" que se usaba antes ──
+// Ícono de «Descontabilizar»: reloj de arena, el asiento vuelve a quedar pendiente.
 export function IcDescontabilizar({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
@@ -104,7 +103,7 @@ export default function ModalDescontabilizar({ consecutivo, titulo, conciliacion
           {conciliacion && (
             <div style={{ border:`1px solid ${C.n500}`, borderRadius:radius.md, padding:14, marginBottom:16 }}>
               <label style={{ display:'flex', alignItems:'flex-start', gap:10, cursor:'pointer' }}>
-                <input type="checkbox" checked={desconciliar} onChange={e=>setDesconciliar(e.target.checked)}
+                <input type="checkbox" aria-label="Seleccionar" checked={desconciliar} onChange={e=>setDesconciliar(e.target.checked)}
                   style={{ width:15, height:15, marginTop:2, accentColor:BRAND, cursor:'pointer', flexShrink:0 }}/>
                 <span>
                   <span style={{ fontSize:13, fontWeight:600, color:'#0F0F0F', display:'block' }}>Desconciliar</span>
@@ -124,7 +123,7 @@ export default function ModalDescontabilizar({ consecutivo, titulo, conciliacion
             Motivo{conciliacion ? '' : ' de descontabilización'} <span style={{ color:C.error }}>*</span>
           </label>
           <textarea value={motivo} onChange={e=>setMotivo(e.target.value)} rows={3}
-            placeholder="Ej. Error en la descripción de la línea 2, se corregirá y reconcontabilizará…"
+            placeholder="Ej. Error en la descripción de la línea 2, se corregirá y reconcontabilizará…" aria-label="Ej. Error en la descripción de la línea 2, se corregirá y reconcontabilizará…"
             style={{ width:'100%', padding:'10px 12px', border:`1px solid ${motivoInvalido?C.error:C.n500}`, borderRadius:radius.md,
               fontSize:12, fontFamily:F, outline:'none', resize:'vertical', boxSizing:'border-box' }}/>
           {motivoInvalido && <p style={{ fontSize:11, color:C.error, margin:'4px 0 0' }}>Indica el motivo antes de continuar.</p>}

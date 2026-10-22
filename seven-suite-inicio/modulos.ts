@@ -23,7 +23,10 @@ export const MODULOS_SUITE: ModuloSuite[] = [
     accesos: [{ label: 'Nueva factura', ruta: '/facturacion/emitidos/nuevo' }, { label: 'Ventas', ruta: '/facturacion/emitidos' }, { label: 'Compras', ruta: '/facturacion/recepcion' }] },
   { id: 'ANA', sigla: '', nombre: 'Seven Analytics', descripcion: 'Reportes y análisis de ocupación, ventas y costos.',
     colores: [['#9461EC', '#5A2DBE']], texto: '#5A2DBE', fondo: '#F4EFFD', url: process.env.NEXT_PUBLIC_URL_ANA || 'https://seven-analytics-green.vercel.app/' },
-  { id: 'MGT', sigla: 'MGT', nombre: 'Management', descripcion: 'Empresas, usuarios y configuración común de la suite.', colores: [['#62A847', '#2F6B22']], texto: '#2F6B22', fondo: '#F0F7EC', url: process.env.NEXT_PUBLIC_URL_MGT },
+  // Management (MAN): el módulo de administración de la suite.
+  { id: 'MGT', sigla: 'MAN', nombre: 'Management', descripcion: 'Empresa, usuarios, módulos y configuración común de la suite.',
+    colores: [['#8ADD88', '#34723A']], texto: '#34723A', fondo: '#EFF8EE', url: process.env.NEXT_PUBLIC_URL_MGT || 'https://man-ten-eta.vercel.app/',
+    accesos: [{ label: 'Usuarios', ruta: '/usuarios' }, { label: 'Módulos', ruta: '/modulos' }, { label: 'Perfiles', ruta: '/perfiles' }] },
   { id: 'FDK', sigla: 'FDK', nombre: 'Front Desk', descripcion: 'Reservas, check-in, check-out y folios de huéspedes.', colores: [['#2882DD', '#213C89']], texto: '#213C89', fondo: '#EEF3FB', url: process.env.NEXT_PUBLIC_URL_FDK || 'https://front-desk-cyan.vercel.app/' },
   { id: 'POS', sigla: 'POS', nombre: 'Point of Sales', descripcion: 'Restaurante, bar y tiendas: cuentas, mesas y cobros.', colores: [['#5DB34A', '#0D6916']], texto: '#0D6916', fondo: '#EEF7EC', url: process.env.NEXT_PUBLIC_URL_POS },
   { id: 'TO', sigla: 'TO', nombre: 'Tour Operator', descripcion: 'Tours, transportes y paquetes para huéspedes y agencias.', colores: [['#3E8259', '#1F4A39']], texto: '#1F4A39', fondo: '#EEF4F0', url: process.env.NEXT_PUBLIC_URL_TO },
@@ -34,8 +37,8 @@ export const MODULOS_SUITE: ModuloSuite[] = [
 ];
 
 // Módulos que tiene la empresa, en este orden (por defecto ACC, ACC + DICR y
-// DICR, Seven Analytics y Front Desk). Se cambia con NEXT_PUBLIC_MODULOS_EMPRESA, separados por coma.
-export const MODULOS_EMPRESA = (process.env.NEXT_PUBLIC_MODULOS_EMPRESA || 'ACC,ACC_DICR,DICR,ANA,FDK')
+// DICR, Seven Analytics, Front Desk y Management). Se cambia con NEXT_PUBLIC_MODULOS_EMPRESA, separados por coma.
+export const MODULOS_EMPRESA = (process.env.NEXT_PUBLIC_MODULOS_EMPRESA || 'ACC,ACC_DICR,DICR,ANA,FDK,MGT')
   .split(',').map(x => x.trim()).filter(Boolean);
 
 // Enlace de un módulo: su variable propia o, si no, la dirección principal de

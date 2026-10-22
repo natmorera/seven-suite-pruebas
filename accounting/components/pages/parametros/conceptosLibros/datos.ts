@@ -1,4 +1,4 @@
-import { FONT } from '../../../ui/tokens';
+import { FONT } from '@/components/ui/tokens';
 
 export const F = FONT;
 export const CATS = ['Ajuste','Ingreso','Gasto','Otro'];
@@ -29,11 +29,11 @@ export const TA_INIT: TipoAsiento[] = [
   { id:4, codigo:'D', nombre:'Duplicado',  descripcion:'Generado al duplicar otro asiento existente.', activo:true },
   { id:5, codigo:'P', nombre:'Plantilla',  descripcion:'Generado a partir de una plantilla de asiento.', activo:true },
 ];
-// ── Tab Formularios (previously Transferencias) ──────────────────────────────
+// ── Pestaña Formularios ──────────────────────────────
 export const FORMATOS=[{value:'CSV',label:'CSV'},{value:'TXT',label:'TXT'},{value:'XML',label:'XML'}];
 export const TIPOS_EXP=[{value:'CC',label:'CC - Cuenta Cliente'},{value:'CTA',label:'CTA - Cuenta'}];
-export interface CuentaForm { id:string; cuentaContable:string; iban:string; consecutivo:number; }
-// Cuentas contables de tipo banco disponibles (dropdown #22)
+interface CuentaForm { id:string; cuentaContable:string; iban:string; consecutivo:number; }
+// Cuentas contables de tipo banco disponibles (dropdown)
 export const CUENTAS_BANCARIAS = [
   '110-001-0001 - BAC ₡ 4546-545-466888',
   '110-002-0001 - BAC $ 4563-212-454587',

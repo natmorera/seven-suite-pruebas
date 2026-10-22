@@ -4,13 +4,13 @@ export function genId() { return `c-${Date.now()}-${Math.random().toString(36).s
 export function getNaturaleza(grupo: string): Naturaleza {
   return GRUPOS_NIIF.find(g=>g.value===grupo)?.naturaleza ?? 'Deudora';
 }
-// Posting only at detalle and auxiliar levels
+// Solo se registran movimientos en los niveles detalle y auxiliar
 export function isPosteable(nivel: string) {
   return nivel === 'detalle' || nivel === 'auxiliar';
 }
 // Child level sequence (fijos NIIF no configurables, configurables desde mayor hacia abajo)
 // grupo → subgrupo → subsubgrupo → mayor → submajor → detalle → (auxiliar si posteable)
-export function getChildNivel(parentNivel: Nivel | null): Nivel {
+function getChildNivel(parentNivel: Nivel | null): Nivel {
   const order: Nivel[] = ['grupo','subgrupo','subsubgrupo','mayor','submajor','detalle'];
   const idx = order.indexOf(parentNivel as Nivel);
   if (idx === -1 || idx >= order.length - 1) return 'auxiliar';
@@ -28,7 +28,7 @@ export function getChildNivelConfigurable(parentNivel: Nivel | null): Nivel | nu
   };
   return map[parentNivel] ?? null;
 }
-// Can a node have children added from UI?
+// ¿Se le pueden agregar hijos desde la pantalla?
 export function canAddChild(nivel: Nivel, tipoEspecial?: string | null): boolean {
   if (nivel === 'auxiliar') return false;
   // grupo y subgrupo son puramente de clasificación NIIF - no se les agrega nada desde UI
@@ -46,14 +46,8 @@ export function fmt(n: number, decimals = 2) {
   const int   = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return (n < 0 ? '-' : '') + int + (decimals > 0 ? '.' + parts[1] : '');
 }
-// Build full code from parent code + segment
-export function buildCode(parentCode: string | undefined, segment: string, nivel: Nivel): string {
-  if (nivel === 'mayor') return segment;
-  if (!parentCode) return segment;
-  return parentCode + SEP + segment;
-}
-// Suggest next segment for a new child
-export function suggestSegment(parent: Cuenta): string {
+// Siguiente segmento sugerido para un hijo nuevo
+function suggestSegment(parent: Cuenta): string {
   const childNivel = getChildNivel(parent.nivel);
   const len = LONGITUD[childNivel] ?? 4;
   const siblings = (parent.children || []).filter(s => s.nivel === childNivel);
@@ -73,11 +67,11 @@ export function suggestSegment(parent: Cuenta): string {
   }
   return String(next).padStart(len, '0');
 }
-// Tree helpers
-export function flattenTree(nodes: Cuenta[], depth=0, parentId: string|undefined=undefined): (Cuenta & {depth:number})[] {
+// Funciones del árbol
+export function flattenTree(nodes: Cuenta[], depth=0): (Cuenta & {depth:number})[] {
   return nodes.flatMap(n => [
     { ...n, depth },
-    ...(n.children?.length && n.expanded ? flattenTree(n.children, depth+1, n.id) : []),
+    ...(n.children?.length && n.expanded ? flattenTree(n.children, depth+1) : []),
   ]);
 }
 // Aplana TODO el árbol sin importar el estado "expanded" de la UI - para usar en
@@ -103,7 +97,7 @@ export function addNodeToTree(nodes: Cuenta[], parentId: string|null, newNode: C
     return n;
   });
 }
-export function updateNodeInTree(nodes: Cuenta[], data: Cuenta): Cuenta[] {
+export function updateNodeInTree(nodes: Cuenta[], data: Partial<Cuenta> & { id: string }): Cuenta[] {
   return nodes.map(n => {
     if (n.id === data.id) return { ...n, ...data, children: n.children };
     if (n.children?.length) return { ...n, children: updateNodeInTree(n.children, data) };
@@ -115,8 +109,6 @@ export function removeNodeFromTree(nodes: Cuenta[], id: string): Cuenta[] {
     .filter(n => n.id !== id)
     .map(n => ({ ...n, children: n.children ? removeNodeFromTree(n.children, id) : [] }));
 }
-// Legacy alias
-export const LONGITUD_SEGMENTO = LONGITUD;
 // ─── Funciones usadas por AccountDetail ──────────────────────────────────────
 
 export function suggestNextSegment(parent: Cuenta | null): string {
@@ -124,7 +116,7 @@ export function suggestNextSegment(parent: Cuenta | null): string {
   return suggestSegment(parent);
 }
 // Sugerencia de próximo código Mayor cuando todavía no hay cuenta padre que
-// consultar (Mayor es el primer nivel configurable) - Issue #7: siempre debe
+// consultar (Mayor es el primer nivel configurable): siempre debe
 // ofrecerse una sugerencia. Se basa en el código Mayor más alto existente en
 // todo el catálogo y salta al siguiente múltiplo de 100 (ej. último 600 → 700).
 export function suggestNextMayorSegment(allNodes: (Cuenta & { depth?: number })[]): string {

@@ -1,59 +1,19 @@
 'use client';
-import { useState, Fragment } from 'react';
-import { Modal, Toast, Section } from '../../../ui/primitives';
-import { Button, FormField, Input, Select } from '../../../ui/formulario';
-import { radius, shadow, TABLA, PAGE_PAD } from '../../../ui/tokens';
-import { ExportListModal } from '../../../ui/exportar';
-import { C } from '../../../ui/tokens';
+import { Fragment } from 'react';
+import { Modal, Toast, Section } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select } from '@/components/ui/formulario';
+import { radius, shadow, TABLA, PAGE_PAD , C } from '@/components/ui/tokens';
+import { ExportListModal } from '@/components/ui/exportar';
 import { ModalNuevoEjercicio } from './ModalNuevoEjercicio';
-import { type Ejercicio, F, INIT, type Periodo } from './datos';
+import { F } from './datos';
 import { ModalEditarEjercicio } from './modales';
-import { EstadoDropdown, MenuMas } from './piezas';
+import { MenuMas } from './piezas';
+import { useEjercicioFiscal } from './useEjercicioFiscal';
+import { PeriodosEjercicio } from './PeriodosEjercicio';
 
-export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExportar, onShowExportarChange }: {
-  modalNuevo: boolean; onModalNuevoChange: (v:boolean)=>void;
-  showExportar: boolean; onShowExportarChange: (v:boolean)=>void;
-}) {
-  const [ejercicios,setEjercicios]=useState<Ejercicio[]>(INIT);
-  const [expandedId,setExpandedId]=useState<number|null>(INIT[0].id);
-  const [editId,setEditId]=useState<number|null>(null);
-  const [modalCierreId,setModalCierreId]=useState<number|null>(null);
-  const [modalRevertirId,setModalRevertirId]=useState<number|null>(null);
-  const [cuentaRes,setCuentaRes]=useState('015-004943-0');
-  const [motivo,setMotivo]=useState('');
-  const [toast,setToast]=useState<{message:string;type:'success'|'error'}|null>(null);
-  const [confirm,setConfirm]=useState<{ejercicioId:number; estado:Periodo['estado']; orden:number}|null>(null);
-  const [cierrePeriodo,setCierrePeriodo]=useState<{ejercicioId:number; orden:number}|null>(null);
-  const [cierreStep,setCierreStep]=useState<'validando'|'listo'>(null as any);
-
-  function showT(m:string,t:'success'|'error'='success') { setToast({message:m,type:t}); setTimeout(()=>setToast(null),3500); }
-  function ejercicioById(id:number) { return ejercicios.find(e=>e.id===id)!; }
-
-  function cambiarEstadoPeriodo(ejercicioId:number, orden:number, estado:Periodo['estado']) {
-    setConfirm({ ejercicioId, estado, orden });
-  }
-  function confirmCambio() {
-    if(!confirm) return;
-    setEjercicios(list=>list.map(e=>e.id!==confirm.ejercicioId?e:{ ...e, periodos:e.periodos.map(p=>p.orden===confirm.orden?{...p,estado:confirm.estado}:p) }));
-    setConfirm(null);
-    showT(`Período ${confirm.estado==='Bloqueado'?'cerrado':'reaperturado'} correctamente.`);
-  }
-
-  function ejecutarCierre(id:number) {
-    setEjercicios(list=>list.map(e=>e.id!==id?e:{ ...e, estado:'cerrado', periodos:e.periodos.map(p=>({...p,estado:(p.estado==='Activo'||p.estado==='Pendiente'?'Bloqueado':p.estado) as any})) }));
-    setModalCierreId(null);
-    showT(`Cierre del ejercicio ${ejercicioById(id).anio} ejecutado correctamente.`);
-  }
-  function revertirCierre(id:number) {
-    if(!motivo.trim()){ showT('El motivo de reversión es requerido.','error'); return; }
-    const anio = ejercicioById(id).anio;
-    setEjercicios(list=>list.map(e=>e.id!==id?e:{ ...e, estado:'activo' }));
-    setModalRevertirId(null); setMotivo('');
-    showT(`Cierre del ejercicio ${anio} revertido correctamente.`);
-  }
-
-  const exportEjercicio = expandedId ? ejercicioById(expandedId) : ejercicios[0];
-
+export function TabEjercicioFiscal(props: Parameters<typeof useEjercicioFiscal>[0]) {
+  const e = useEjercicioFiscal(props);
+  const { ejercicios, expandedId, setExpandedId, setEditId, setModalCierreId, setModalRevertirId, showT, cierrePeriodo, ejercicioById, cierreStep, setCierrePeriodo, setCierreStep, cambiarEstadoPeriodo, confirm, setConfirm, confirmCambio, modalCierreId, ejecutarCierre, cuentaRes, setCuentaRes, modalRevertirId, revertirCierre, motivo, setMotivo, editId, setEjercicios, modalNuevo, onModalNuevoChange, showExportar, exportEjercicio, onShowExportarChange, toast, setToast } = e;
   return (
     <div style={{ height:'100%', overflowY:'auto', padding:PAGE_PAD }}><Section title="Ejercicios fiscales" hint="Cada ejercicio con sus períodos. Expandí una fila para ver y cerrar sus períodos.">
 
@@ -114,65 +74,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                     </div>
                   </td>
                 </tr>
-                {isOpen && (
-                  <tr>
-                    <td colSpan={7} style={{ padding:0, background:'#F9F9F9' }}>
-                      <div style={{ padding:'4px 12px 16px 40px' }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:20, flexWrap:'wrap', padding:'10px 0 12px' }}>
-                          <div>
-                            <p style={{ fontSize:10, color:C.n700, margin:0 }}>N.° pág. cheque</p>
-                            <p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{ej.nPagCheque}</p>
-                          </div>
-                          <div>
-                            <p style={{ fontSize:10, color:C.n700, margin:0 }}>Inicio</p>
-                            <p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{ej.inicio}</p>
-                          </div>
-                          <div>
-                            <p style={{ fontSize:10, color:C.n700, margin:0 }}>Cierre</p>
-                            <p style={{ fontSize:12, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>{ej.cierre}</p>
-                          </div>
-                        </div>
-                        <div style={TABLA.wrap}><table className="tabla" style={{ ...TABLA.table, background:'#FFFFFF' }}>
-                          <thead>
-                            <tr style={TABLA.headRow}>
-                              {(['Orden','Desde','Hasta','Título','Días','Estado'] as const).map(h=>(
-                                <th key={h} style={{ ...TABLA.th, textAlign:h==='Orden'||h==='Días'?'right':'left' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {ej.periodos.map(p=>{
-                              const isAct=p.estado==='Activo';
-                              return (
-                                <tr key={p.orden} style={{ borderBottom:'1px solid #ECECEC', background:isAct?C.brandBg:'transparent' }}>
-                                  <td style={{ padding:'8px 12px', fontWeight:isAct?600:400, textAlign:'right' }}>{p.orden}</td>
-                                  <td style={{ padding:'8px 12px', fontWeight:isAct?600:400 }}>{p.desde}</td>
-                                  <td style={{ padding:'8px 12px', fontWeight:isAct?600:400 }}>{p.hasta}</td>
-                                  <td style={{ padding:'8px 12px', fontWeight:isAct?600:400 }}>{p.titulo}</td>
-                                  <td style={{ padding:'8px 12px', textAlign:'right' }}>
-                                    {p.dias>0&&<span style={{ color:C.success }}>{p.dias}</span>}
-                                  </td>
-                                  <td style={{ padding:'8px 12px' }}>
-                                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                                      <EstadoDropdown periodo={p} onCambiar={estado=>cambiarEstadoPeriodo(ej.id,p.orden,estado)} />
-                                      {isAct && (
-                                        <button onClick={()=>setCierrePeriodo({ejercicioId:ej.id, orden:p.orden})}
-                                          style={{ height:26, padding:'0 10px', fontSize:11, fontFamily:F, border:'none',
-                                            borderRadius:5, background:'#A77600', color:'#FFFFFF', cursor:'pointer', fontWeight:500, whiteSpace:'nowrap' }}>
-                                          Cierre
-                                        </button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table></div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
+                {isOpen && <PeriodosEjercicio e={e} ej={ej} />}
                 </Fragment>
               );
             })}
@@ -194,7 +96,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                   <span style={{ fontSize:14,fontWeight:600,color:'#0F0F0F' }}>Cierre de periodo / {per.titulo} {ej.anio}</span>
                   <span style={{ fontSize:11,color:'#757575',marginLeft:8 }}>{isListo?'Todas las validaciones completadas. Listo para cerrar.':'Complete todas las validaciones antes de cerrar el período.'}</span>
                 </div>
-                <button onClick={()=>{setCierrePeriodo(null);setCierreStep(null as any);}} style={{ background:'none',border:'none',cursor:'pointer',color:'#757575',fontSize:20 }}>×</button>
+                <button onClick={()=>{setCierrePeriodo(null);setCierreStep(null);}} style={{ background:'none',border:'none',cursor:'pointer',color:'#757575',fontSize:20 }}>×</button>
               </div>
               <div style={{ padding:20, display:'flex', flexDirection:'column', gap:10 }}>
                 {!isListo && (
@@ -213,7 +115,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                     <div style={{ width:18,height:18,borderRadius:'50%',flexShrink:0,marginTop:1,display:'flex',alignItems:'center',justifyContent:'center',
                       background:item.ok?'#4CAF50':item.warn?'#EEB300':'#ECECEC' }}>
                       {item.ok && <svg width="9" height="7" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"/></svg>}
-                      {!item.ok && !item.warn && <span style={{ fontSize:10,color:'#757575',fontWeight:600 }}>{i+1}</span>}
+                      {!item.ok && !item.warn && <span style={{ fontSize:10.5,color:'#757575',fontWeight:600 }}>{i+1}</span>}
                       {item.warn && <svg width="9" height="9" viewBox="0 0 14 14" fill="none" stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"><path d="M7 4v4M7 10h.01"/></svg>}
                     </div>
                     <div style={{ flex:1 }}>
@@ -222,7 +124,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                       {item.action && (
                         <div style={{ display:'flex',alignItems:'center',gap:8,marginTop:6 }}>
                           <span style={{ fontSize:11,color:'#757575' }}>Tipo de cambio:</span>
-                          <input defaultValue="450.85" style={{ width:80,height:26,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:5,fontSize:12,fontFamily:F,outline:'none' }}/>
+                          <input aria-label="Tipo de cambio:" defaultValue="450.85" style={{ width:80,height:26,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:5,fontSize:12,fontFamily:F,outline:'none' }}/>
                           <button onClick={()=>setCierreStep('listo')}
                             style={{ height:26,padding:'0 10px',border:'none',borderRadius:5,background:'#A77600',color:'#FFFFFF',fontSize:11,cursor:'pointer',fontFamily:F,fontWeight:500 }}>
                             Calcular y aplicar
@@ -231,12 +133,12 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                       )}
                       {item.warn && !isListo && (
                         <label style={{ display:'flex',alignItems:'center',gap:6,marginTop:6,cursor:'pointer',fontSize:11,fontFamily:F,color:'#757575' }}>
-                          <input type="checkbox" onChange={e=>e.target.checked&&setCierreStep('listo')} style={{ accentColor:'#A77600' }}/>
+                          <input type="checkbox" aria-label="Seleccionar" onChange={e=>e.target.checked&&setCierreStep('listo')} style={{ accentColor:'#A77600' }}/>
                           Continuar sin conciliarlas
                         </label>
                       )}
                     </div>
-                    <span style={{ fontSize:10,fontWeight:500,padding:'2px 8px',borderRadius:radius.pill,whiteSpace:'nowrap',flexShrink:0,
+                    <span style={{ fontSize:10.5,fontWeight:500,padding:'2px 8px',borderRadius:radius.pill,whiteSpace:'nowrap',flexShrink:0,
                       color:item.ok?'#2E7D32':item.warn?'#E07B00':'#757575',
                       background:item.ok?'#E8F5E9':item.warn?'#FFF3E0':'#F9F9F9',
                       border:`1px solid ${item.ok?'#A5D6A7':item.warn?'#FFCC80':'#ECECEC'}` }}>
@@ -253,14 +155,14 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
                 )}
               </div>
               <div style={{ padding:'12px 20px',borderTop:'1px solid #ECECEC',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-                <button onClick={()=>{setCierrePeriodo(null);setCierreStep(null as any);}}
+                <button onClick={()=>{setCierrePeriodo(null);setCierreStep(null);}}
                   style={{ height:32,padding:'0 14px',border:'1px solid #ECECEC',borderRadius:7,background:'#FFFFFF',cursor:'pointer',fontSize:12,fontFamily:F,color:'#757575' }}>
                   {isListo?'Cancelar':'Cerrar sin guardar'}
                 </button>
                 {isListo && (
                   <button onClick={()=>{
                     cambiarEstadoPeriodo(cierrePeriodo.ejercicioId,cierrePeriodo.orden,'Bloqueado');
-                    setCierrePeriodo(null);setCierreStep(null as any);
+                    setCierrePeriodo(null);setCierreStep(null);
                     showT(`Período ${per.titulo} cerrado correctamente.`);
                   }} style={{ height:32,padding:'0 18px',border:'none',borderRadius:7,background:'#A77600',color:'#FFFFFF',cursor:'pointer',fontSize:12,fontFamily:F,fontWeight:500 }}>
                     Ejecutar cierre
@@ -291,7 +193,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
         </div>
       )}
 
-      {/* Modal Cierre */}
+      {/* Modal de cierre */}
       {modalCierreId && (() => { const ej = ejercicioById(modalCierreId); return (
         <Modal open title={`Ejecutar cierre de ejercicio ${ej.anio}`} onClose={()=>setModalCierreId(null)}
           footer={<div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}><Button variant="secondary" onClick={()=>setModalCierreId(null)}>Cancelar</Button><Button onClick={()=>ejecutarCierre(ej.id)}>Ejecutar cierre</Button></div>}>
@@ -307,7 +209,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
         </Modal>
       ); })()}
 
-      {/* Modal Revertir */}
+      {/* Modal para revertir */}
       {modalRevertirId && (() => { const ej = ejercicioById(modalRevertirId); return (
         <Modal open title={`Revertir cierre de ejercicio ${ej.anio}`} onClose={()=>setModalRevertirId(null)}
           footer={<div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}><Button variant="secondary" onClick={()=>setModalRevertirId(null)}>Cancelar</Button><Button variant="danger" onClick={()=>revertirCierre(ej.id)}>Revertir cierre</Button></div>}>
@@ -323,7 +225,7 @@ export function TabEjercicioFiscal({ modalNuevo, onModalNuevoChange, showExporta
         </Modal>
       ); })()}
 
-      {/* Modal Editar */}
+      {/* Modal de edición */}
       {editId && (
         <ModalEditarEjercicio ejercicio={ejercicioById(editId)} onClose={()=>setEditId(null)}
           onGuardar={(patch)=>{ setEjercicios(list=>list.map(e=>e.id===editId?{...e,...patch}:e)); setEditId(null); showT('Ejercicio actualizado correctamente.'); }}/>

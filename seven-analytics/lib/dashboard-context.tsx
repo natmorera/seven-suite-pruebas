@@ -32,8 +32,12 @@ type DashboardContextValue = {
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
+// Empresa elegida en el selector: se recuerda al pasar entre Dashboard y Configuración
+let empresaElegida = defaultCompanyId;
+
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
-  const [companyId, setCompanyId] = useState(defaultCompanyId);
+  const [companyId, setCompanyIdEstado] = useState(() => empresaElegida);
+  const setCompanyId = (id: string) => { empresaElegida = id; setCompanyIdEstado(id); };
   const [comparison, setComparison] = useState(comparisonOptions[0]);
   const [date, setDate] = useState(dateOptions[4]);
 

@@ -1,8 +1,7 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
+import { C, FONT } from '@/components/ui/tokens';
 
 export const F = FONT;
-// ── Modal: Nueva transferencia ─────────────────────────────────────────────────
 export const BRAND = '#A77600';
 export const RED = '#F44336';
 export function fmtN(n: number, dec=2): string {

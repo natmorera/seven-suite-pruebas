@@ -1,21 +1,20 @@
 'use client';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { C, FONT, radius, shadow } from '../../ui/tokens';
-import { Chip } from '../../ui/filtros';
-import { useFirmasConfig, firmasParaReporte, EncabezadoAlternativoBloque, FirmasBloque } from '../config/firmasConfig';
+import { C, FONT, radius, shadow } from '@/components/ui/tokens';
+import { Chip } from '@/components/ui/filtros';
+import { useFirmasConfig, firmasParaReporte, EncabezadoAlternativoBloque, FirmasBloque } from '@/components/pages/config/firmasConfig';
 
 export const F = FONT;
 export const BRAND = C.brand;
 export { Chip };
-export function fmtVal(n: number, fmt: (n: number) => string) { return n < 0 ? `(${fmt(Math.abs(n))})` : fmt(n); }
 
-// ── Nivel de cuenta - consistente con el catálogo de cuentas (Issue: corregir opciones) ──
-export const NIVEL_CUENTA_OPTIONS = ['Mayor', 'Sub mayor', 'Detalle', 'Auxiliar'] as const;
+// ── Nivel de cuenta - consistente con el catálogo de cuentas (corregir opciones) ──
+const NIVEL_CUENTA_OPTIONS = ['Mayor', 'Sub mayor', 'Detalle', 'Auxiliar'] as const;
 export type NivelCuentaFiltro = typeof NIVEL_CUENTA_OPTIONS[number];
 
 // ── Vista - acompaña al filtro de Nivel de cuenta en los estados financieros ──
-export const VISTA_OPTIONS = ['Acumulado', 'Período', 'Ambos'] as const;
+const VISTA_OPTIONS = ['Acumulado', 'Período', 'Ambos'] as const;
 export type VistaFiltro = typeof VISTA_OPTIONS[number];
 
 // ── Grupo de filtros - solo un panel puede estar abierto a la vez ──────────────
@@ -91,7 +90,7 @@ export function OptionList<T extends string>({ options, value, onChange }: {
 }
 
 // ── Lista de opciones con fila resaltada - para Vista (fondo dorado suave en la seleccionada) ──
-export function HighlightList<T extends string>({ options, value, onChange }: {
+function HighlightList<T extends string>({ options, value, onChange }: {
   options: readonly T[]; value: T; onChange: (v: T) => void;
 }) {
   return (
@@ -142,7 +141,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
   const router = useRouter();
   const { firmas } = useFirmasConfig();
   const mostrarOpcionEncabezado = true;
-  // Issue: se volvió al modelo centralizado - "Incluir firma(s)" muestra
+  // se volvió al modelo centralizado - "Incluir firma(s)" muestra
   // TODAS las firmas configuradas para este reporte en Parámetros generales
   // > Firmas, en el orden que se definió ahí (no solo la propia).
   const firmasDelReporte = reporteKey ? firmasParaReporte(firmas, reporteKey) : [];
@@ -160,7 +159,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
     URL.revokeObjectURL(url);
   }
-  function handleDescargar() { formato === 'csv' ? descargarCSV() : window.print(); }
+  function handleDescargar() { if (formato === 'csv') descargarCSV(); else window.print(); }
 
   const toggleBtn = (active: boolean): React.CSSProperties => ({
     flex: 1, height: 32, borderRadius: radius.md, border: `1px solid ${active ? BRAND : C.n500}`,
@@ -175,7 +174,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
         body * { visibility:hidden; }
         #export-print-area-estado, #export-print-area-estado * { visibility:visible; }
         /* position:fixed recorta a una sola página - absolute permite que el
-           contenido pagine completo cuando el reporte tiene varias páginas (Issue #9/#30) */
+           contenido pagine completo cuando el reporte tiene varias páginas */
         #export-print-area-estado { position:absolute; left:0; top:0; width:100%; padding:24px; }
         /* Los contenedores con scroll/alto fijo del modal recortan visualmente el
            contenido al imprimir; se neutralizan solo en @media print */
@@ -184,7 +183,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
           max-height:none !important; width:auto !important; display:block !important;
           box-shadow:none !important; padding:0 !important;
         }
-        /* Issue: el encabezado de columnas solo aparecía en la primera página del
+        /* el encabezado de columnas solo aparecía en la primera página del
            PDF - de la página 2 en adelante arrancaba directo en los datos, sin
            saber a qué columna corresponde cada número. display:table-header-group
            es lo que le dice al navegador que repita ese <thead> en cada página. */
@@ -202,7 +201,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
 
         <div style={{ padding: '16px 24px', borderBottom: `1px solid ${C.n500}`, display: 'flex', gap: 24, flexShrink: 0, flexWrap: 'wrap' }}>
           <div>
-            <p style={{ fontSize: 10, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Formato de descarga</p>
+            <p style={{ fontSize: 10.5, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Formato de descarga</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => setFormato('pdf')} style={toggleBtn(formato === 'pdf')}>PDF</button>
               <button onClick={() => setFormato('csv')} style={toggleBtn(formato === 'csv')}>Excel (CSV)</button>
@@ -210,7 +209,7 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
           </div>
           {filtrosResumen && filtrosResumen.length > 0 && (
             <div style={{ flex: 1, minWidth: 220 }}>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Filtros aplicados</p>
+              <p style={{ fontSize: 10.5, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Filtros aplicados</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {filtrosResumen.map((f, i) => (
                   <span key={i} style={{ fontSize: 11, padding: '3px 9px', borderRadius: radius.pill, background: C.brandBg, color: BRAND, border: `1px solid ${C.brandBd}` }}>{f}</span>
@@ -223,22 +222,22 @@ export function ModalExportarEstado({ titulo, subtitulo, filtrosResumen, filenam
               "Firmar" de este reporte específico (Usuarios y Permisos). */}
           {(mostrarOpcionEncabezado || mostrarOpcionFirmas) && (
             <div>
-              <p style={{ fontSize: 10, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Opciones</p>
+              <p style={{ fontSize: 10.5, fontWeight: 600, color: '#757575', textTransform: 'uppercase', letterSpacing: '.05em', margin: '0 0 8px' }}>Opciones</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {mostrarOpcionEncabezado && (
                   <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, fontFamily: F, color: '#0F0F0F' }}>
-                    <input type="checkbox" checked={encabezadoAlt} onChange={e => setEncabezadoAlt(e.target.checked)} style={{ accentColor: BRAND }} />
+                    <input type="checkbox" aria-label="Seleccionar" checked={encabezadoAlt} onChange={e => setEncabezadoAlt(e.target.checked)} style={{ accentColor: BRAND }} />
                     Encabezado alternativo
                   </label>
                 )}
                 {mostrarOpcionFirmas && (
                   firmasDelReporte.length > 0 ? (
                     <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, fontFamily: F, color: '#0F0F0F' }}>
-                      <input type="checkbox" checked={incluirFirmas} onChange={e => setIncluirFirmas(e.target.checked)} style={{ accentColor: BRAND }} />
+                      <input type="checkbox" aria-label="Seleccionar" checked={incluirFirmas} onChange={e => setIncluirFirmas(e.target.checked)} style={{ accentColor: BRAND }} />
                       Incluir firma{firmasDelReporte.length > 1 ? `s (${firmasDelReporte.length})` : ''}
                     </label>
                   ) : (
-                    // Issue: todavía no hay ninguna firma configurada para este
+                    // todavía no hay ninguna firma configurada para este
                     // reporte en Parámetros generales > Firmas - se avisa acá
                     // mismo con el enlace directo para quien tenga acceso.
                     <div style={{ fontSize: 11.5, color: C.n700, fontFamily: F, lineHeight: 1.5, maxWidth: 260 }}>

@@ -1,24 +1,27 @@
 'use client';
+import ComprobanteOperacionModal from '@/components/ui/documento/ComprobanteOperacion';
+import { armarComprobantes } from '@/components/ui/documento/comprobantes';
+import { useEmpresaDoc } from '@/components/ui/documento/useEmpresaDoc';
 import { useState } from 'react';
-import { PageHeader, Modal, Toast } from '../../ui/primitives';
-import { C, PAGE_PAD, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '../../ui/montos';
-import { BulkActionBar, SearchInput, FilterDropdown } from '../../ui/filtros';
+import { PageHeader, Modal, Toast } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '@/components/ui/montos';
+import { BulkActionBar, SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { NuevaLiquidacionModal } from './gestionTarjetas/NuevaLiquidacionModal';
-import { AFILIADOS, BRAND, CUENTAS_TRANSITO, ESTADO_STYLE, F, LIQUIDACIONES_INIT, type Liquidacion, fmt2 } from './gestionTarjetas/datos';
+import { AFILIADOS, BRAND, CUENTAS_TRANSITO, F, LIQUIDACIONES_INIT, type Liquidacion, fmt2 } from './gestionTarjetas/datos';
 import { CorreoLiquidacionModal, DetalleLiquidacionModal } from './gestionTarjetas/modales';
 import { FechasFilter } from './gestionTarjetas/piezas';
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 export default function GestionTarjetas() {
   const [liqs, setLiqs] = useState<Liquidacion[]>(LIQUIDACIONES_INIT);
   const [showNew, setShowNew] = useState(false);
   const [showExportar, setShowExportar] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  function toggleSel(id:number) { setSelected(p=>{ const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; }); }
+  function toggleSel(id:number) { setSelected(p=>{ const n=new Set(p); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
   function toggleSelAll(ids:number[]) { setSelected(p=> p.size===ids.length ? new Set() : new Set(ids)); }
   const [searchQ, setSearch] = useState('');
   const [filtFecha, setFiltFecha] = useState<{from:string;to:string}>({from:'',to:''});
@@ -33,16 +36,15 @@ export default function GestionTarjetas() {
   const [correoLiq, setCorreoLiq] = useState<Liquidacion|null>(null);
   const [anularLiq, setAnularLiq] = useState<Liquidacion|null>(null);
   const [imprimirLiq, setImprimirLiq] = useState<Liquidacion|null>(null);
+  const empresaDoc = useEmpresaDoc();
 
   function anular(liq: Liquidacion) {
     setLiqs(p=>p.map(l=>l.id===liq.id?{...l,estado:'Anulada'}:l));
     setAnularLiq(null); setDetalleLiq(null);
     setToast(`Liquidación ${liq.consecutivo} anulada.`);
   }
-  function imprimir(liq: Liquidacion) {
-    setImprimirLiq(liq);
-    setTimeout(()=>window.print(), 50);
-  }
+  // Imprimir abre el comprobante estándar (se ve, se descarga y se imprime)
+  function imprimir(liq: Liquidacion) { setImprimirLiq(liq); }
 
   const filtered = liqs.filter(l => {
     if (searchQ && !l.consecutivo.toLowerCase().includes(searchQ.toLowerCase()) && !l.afiliado.toLowerCase().includes(searchQ.toLowerCase())) return false;
@@ -65,7 +67,7 @@ export default function GestionTarjetas() {
 
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', overflow:'hidden', fontFamily:F, background:'#F9F9F9' }}>
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Gestión de tarjetas">
         <BotonExportarUnico onClick={()=>setShowExportar(true)}/>
         <button onClick={()=>setShowNew(true)} style={{ height:34, padding:'0 14px', background:BRAND, color:'#FFFFFF', border:'none', borderRadius:radius.md, cursor:'pointer', fontSize:13, fontWeight:500, fontFamily:F, display:'flex', alignItems:'center', gap:6 }}>
@@ -89,13 +91,13 @@ export default function GestionTarjetas() {
         { label:'Contabilizar', onClick:()=>{ setLiqs(p=>p.map(l=>selected.has(l.id)?{...l,estado:'Contabilizada'}:l)); setSelected(new Set()); } },
       ]}/>
 
-      {/* Table */}
+      {/* Tabla */}
       <div style={{ flex:1, overflowY:'auto', background:'#FFFFFF', padding:`0 ${PAGE_PAD-12}px` }}>
         <table className="tabla" style={TABLA.table}>
           <thead style={{ position:'sticky', top:0, background:'#FFFFFF', zIndex:2 }}>
             <tr style={TABLA.headRow}>
               <th style={{ ...TABLA.th, width:36, padding:'10px 0 10px 12px' }}>
-                <input type="checkbox" checked={selected.size>0 && selected.size===paginated.length} onChange={()=>toggleSelAll(paginated.map(l=>l.id))} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
+                <input type="checkbox" aria-label="Seleccionar" checked={selected.size>0 && selected.size===paginated.length} onChange={()=>toggleSelAll(paginated.map(l=>l.id))} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
               </th>
               {['Consecutivo','Afiliado','Fecha','Cuenta en tránsito','Referencia','Moneda'].map(h=>(
                 <th key={h} style={TABLA.th}>{h}</th>
@@ -109,21 +111,20 @@ export default function GestionTarjetas() {
           <tbody>
             {paginated.map(l=>{
               const sym = l.moneda==='USD'?'$':'₡';
-              const [stColor, stBg] = ESTADO_STYLE[l.estado];
-              return (
+                            return (
                 <tr key={l.id} style={{ borderBottom:'1px solid #ECECEC', background:selected.has(l.id)?C.brandBg:'#FFFFFF', cursor:'pointer' }}
                   onClick={()=>setDetalleLiq(l)}
                   onMouseEnter={e=>{ if(!selected.has(l.id)) e.currentTarget.style.background=C.n200; }}
                   onMouseLeave={e=>{ e.currentTarget.style.background=selected.has(l.id)?'#FFFBF0':'#FFFFFF'; }}>
                   <td style={{ padding:'10px 0 10px 12px' }} onClick={e=>e.stopPropagation()}>
-                    <input type="checkbox" checked={selected.has(l.id)} onChange={()=>toggleSel(l.id)} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
+                    <input type="checkbox" aria-label="Seleccionar" checked={selected.has(l.id)} onChange={()=>toggleSel(l.id)} style={{ width:14, height:14, accentColor:BRAND, cursor:'pointer' }}/>
                   </td>
                   <td style={{ padding:'8px 12px' }}><span style={{ color:BRAND, fontFamily:F, cursor:'pointer' }}>{l.consecutivo}</span></td>
                   <td style={{ padding:'8px 12px', fontSize:12, color:'#0F0F0F' }}>{l.afiliado.split('·')[0]?.trim()}</td>
                   <td style={{ padding:'8px 12px' }}>{l.fecha}</td>
                   <td style={{ padding:'8px 12px', color:'#0F0F0F', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={l.cuentaTransito}>{l.cuentaTransito}</td>
                   <td style={{ padding:'8px 12px' }}>{l.referencia}</td>
-                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{l.moneda} {sym}</span></td>
+                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10.5, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{l.moneda} {sym}</span></td>
                   <MoneyCells sym={sym} value={fmt2(l.importe)}/>
                   <td style={{ padding:'8px 12px' }}>{l.usuario}</td>
                   <td onClick={e=>e.stopPropagation()} style={{ padding:'10px 12px', whiteSpace:'nowrap' }}>
@@ -160,7 +161,7 @@ export default function GestionTarjetas() {
         </table>
       </div>
 
-      {/* Footer */}
+      {/* Pie */}
       <div style={{ background:'#FFFFFF', borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0 }}>
         <Pagination page={paginaActual} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>
@@ -215,29 +216,11 @@ export default function GestionTarjetas() {
           #liq-print-area { display:block !important; position:absolute; left:0; top:0; width:100%; padding:32px; }
         }
       `}</style>
-      {imprimirLiq && (
-        <div id="liq-print-area">
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
-            <div>
-              <p style={{ fontSize:18, fontWeight:700, margin:0, fontFamily:F }}>Hotel Fortuna S.A.</p>
-              <p style={{ fontSize:13, color:'#757575', margin:'3px 0 0', fontFamily:F }}>Liquidación de tarjetas · {imprimirLiq.consecutivo}</p>
-            </div>
-            <p style={{ fontSize:11, color:'#757575', margin:0, fontFamily:F }}>Generado: {new Date().toLocaleDateString('es-CR')}</p>
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px 16px', fontSize:12, padding:'14px 0', borderTop:'1px solid #ECECEC', borderBottom:'1px solid #ECECEC' }}>
-            {[['Afiliado',imprimirLiq.afiliado],['Fecha',imprimirLiq.fecha],['Estado',imprimirLiq.estado],
-              ['Cuenta en tránsito',imprimirLiq.cuentaTransito],['Referencia',imprimirLiq.referencia],
-              ['Moneda',imprimirLiq.moneda],['Importe',`${imprimirLiq.moneda==='USD'?'$':'₡'} ${fmt2(imprimirLiq.importe)}`],
-              ['Usuario',imprimirLiq.usuario],['N.º Asiento',imprimirLiq.nroAsiento||'Sin asiento asociado']]
-              .map(([l,v])=>(
-              <div key={l as string}>
-                <p style={{ fontSize:10, color:'#757575', margin:'0 0 2px', fontFamily:F }}>{l as string}</p>
-                <p style={{ fontSize:12, fontWeight:500, color:'#0F0F0F', margin:0, fontFamily:F }}>{v as string}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {imprimirLiq && <ComprobanteOperacionModal titulo={`Comprobante · Liquidación ${imprimirLiq.consecutivo}`} archivo={`comprobante-liquidacion-${imprimirLiq.consecutivo}`} marca={C.brand}
+        onClose={() => setImprimirLiq(null)} comprobantes={armarComprobantes({ clase: 'Liquidación de tarjetas', numero: imprimirLiq.consecutivo, empresa: empresaDoc,
+          tercero: { nombre: imprimirLiq.afiliado, identificacion: imprimirLiq.afiliadoCode }, fecha: imprimirLiq.fecha,
+          medioPago: `Liquidación de tarjetas · ${imprimirLiq.cuentaTransito}${imprimirLiq.referencia ? ` · Ref. ${imprimirLiq.referencia}` : ''}`,
+          concepto: `Liquidación de vouchers de ${imprimirLiq.afiliado}`, simbolo: imprimirLiq.moneda === 'USD' ? '$' : '₡', importe: imprimirLiq.importe, documentos: [] })} />}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 // Filtro de rango de fechas de las pantallas de Bancos: botón con el mismo
 // estilo que FilterDropdown y un panel con «Desde» y «Hasta».
 import { useState, useRef, useEffect } from 'react';
-import { C, FONT, radius, shadow } from '../../../ui/tokens';
+import { C, FONT, radius, shadow } from '@/components/ui/tokens';
 
 const F = FONT;
 const BRAND = C.brand;
@@ -41,11 +41,11 @@ export function FechaFilterDrop({ desde, hasta, onApply, onClear }:{
           <p style={{fontSize:11,fontWeight:600,margin:'0 0 8px'}}>Rango de fechas</p>
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             <label style={{fontSize:11,color:'#757575'}}>Desde
-              <input type="date" value={ld} onChange={e=>setLd(e.target.value)}
+              <input aria-label="Desde" type="date" value={ld} onChange={e=>setLd(e.target.value)}
                 style={{ width:'100%',height:30,marginTop:3,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:radius.sm,fontSize:12,fontFamily:F,outline:'none',boxSizing:'border-box' }}/>
             </label>
             <label style={{fontSize:11,color:'#757575'}}>Hasta
-              <input type="date" value={lh} onChange={e=>setLh(e.target.value)}
+              <input aria-label="Hasta" type="date" value={lh} onChange={e=>setLh(e.target.value)}
                 style={{ width:'100%',height:30,marginTop:3,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:radius.sm,fontSize:12,fontFamily:F,outline:'none',boxSizing:'border-box' }}/>
             </label>
           </div>

@@ -2,7 +2,7 @@
 // guarda archivos reales: la vista previa y la descarga se generan a partir de
 // los datos del asiento. Con backend, aquí se pide el archivo al servidor.
 export interface ContextoDocumento { titulo: string; consecutivo: string; fecha: string; moneda: 'CRC' | 'USD'; importe: number; empresa: string; identificacion: string }
-export type TipoArchivo = 'pdf' | 'xml' | 'hoja' | 'imagen' | 'otro';
+type TipoArchivo = 'pdf' | 'xml' | 'hoja' | 'imagen' | 'otro';
 
 export function tipoDeArchivo(nombre: string): TipoArchivo {
   const ext = nombre.split('.').pop()?.toLowerCase() ?? '';

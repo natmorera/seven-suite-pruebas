@@ -1,6 +1,6 @@
 'use client';
-import { Section } from '../../ui/primitives';
-import { C, FONT } from '../../ui/tokens';
+import { Section } from '@/components/ui/primitives';
+import { C, FONT } from '@/components/ui/tokens';
 
 const F = FONT;
 
@@ -9,15 +9,11 @@ const SEPS = [
   { val:'.', label:'Punto',         ex:'100.001.0001' },
   { val:'',  label:'Sin separador', ex:'1000010001'   },
 ];
-function Divider({ label }:{label:string}) {
-  return (
-    <div style={{ padding:'14px 20px 10px', borderTop:'1px solid #ECECEC' }}>
-      <p style={{ fontSize:12, fontWeight:400, color:C.n900, margin:0, fontFamily:F }}>{label}</p>
-    </div>
-  );
-}
 
-export function TabNomenclatura({ config, patch }: { config:any; patch:(p:any)=>void }) {
+// Configuración del código de cuenta
+interface Nomenclatura { separador:string; decimalSep:string; longitudes:{ mayor:number; submajor:number; detalle:number } }
+
+export function TabNomenclatura({ config, patch }: { config:Nomenclatura; patch:(p:Partial<Nomenclatura>)=>void }) {
   const sep=config.separador; const lng=config.longitudes; const dec=config.decimalSep??'.';
   const pad=(n:number)=>'1'.padEnd(n,'0');
   const mayor=pad(lng.mayor), sub=pad(lng.submajor), det=pad(lng.detalle);
@@ -49,7 +45,7 @@ export function TabNomenclatura({ config, patch }: { config:any; patch:(p:any)=>
               <p style={{ fontSize:11, color:C.n700, marginTop:6, fontFamily:F }}>{min}–{max} dígitos</p>
               {/* Per-level preview */}
               <div style={{ marginTop:8, padding:'8px 12px', background:'#F9F9F9', borderRadius:4, border:'1px solid #ECECEC' }}>
-                <p style={{ fontSize:10, color:C.n700, margin:'0 0 3px', fontFamily:F }}>{label}</p>
+                <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 3px', fontFamily:F }}>{label}</p>
                 <span style={{ fontSize:11, color:C.n900, fontWeight:500, fontFamily:F }}>
                   {k==='mayor'?mayor:k==='submajor'?(sep?mayor+sep+sub:mayor+sub):preview}
                 </span>
@@ -62,7 +58,7 @@ export function TabNomenclatura({ config, patch }: { config:any; patch:(p:any)=>
         </p>
       </div>
 
-      {/* Separador de código - continúa sin línea divisoria (#11) */}
+      {/* Separador de código - continúa sin línea divisoria */}
       <div style={{ padding:'4px 20px 20px' }}>
         <p style={{ fontSize:14, fontWeight:500, color:C.n900, margin:'0 0 8px', fontFamily:F }}>Separador de código</p>
         <p style={{ fontSize:12, color:C.n700, marginBottom:12, fontFamily:F }}>Carácter visual que separa los niveles en el código contable.</p>
@@ -79,7 +75,7 @@ export function TabNomenclatura({ config, patch }: { config:any; patch:(p:any)=>
         </div>
       </div>
 
-      {/* Formato numérico - separador decimal (#9 mismo tamaño, #10 título 14px) */}
+      {/* Formato numérico - separador decimal ( mismo tamaño, título 14px) */}
       <div style={{ padding:'14px 20px 10px', borderTop:'1px solid #ECECEC' }}>
         <p style={{ fontSize:14, fontWeight:500, color:C.n900, margin:0, fontFamily:F }}>Formato numérico</p>
       </div>

@@ -1,5 +1,5 @@
 'use client';
-import { ReactNode, CSSProperties } from 'react';
+import { type ReactNode, type CSSProperties } from 'react';
 import { fmtNum } from './formato';
 import { C } from './tokens';
 

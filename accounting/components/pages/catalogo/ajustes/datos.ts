@@ -1,12 +1,11 @@
-import { FONT } from '../../../ui/tokens';
+import { FONT } from '@/components/ui/tokens';
 import { flattenAll } from '../datos/arbol';
-import { EnlaceAjuste } from '../datos/ajustes';
+import { type EnlaceAjuste } from '../datos/ajustes';
 import { CUENTAS_INIT } from '../datos/cuentasIniciales';
 
 export const F = FONT;
 export const BRAND = '#A77600';
 // ── Grupo de patrimonio ───────────────────────────────────────────────────────
-// Issue #6: no export button here
 
 export interface GP { id:string; codigo:string; desc:string; alt:string; activo:boolean; }
 export const GP_I: GP[] = [

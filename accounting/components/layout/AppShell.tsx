@@ -1,20 +1,18 @@
 'use client';
 // Estructura de la aplicación: menú lateral, sub-panel de Configuración
-// General, contenido de la página y pie con la fecha de operación.
+// General, contenido de la página y pie.
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Logo, IcChevronDown, IcChevronRight } from '../ui/icons';
-import { C, FONT, radius } from '../ui/tokens';
-import { fechaOperacionAlmacen, fechaCorta } from '../pages/empresa/datos/fechaOperacion';
-import { useOnboardingObligatorio, RUTA_ONBOARDING } from '../pages/onboarding/datos/obligatorio';
+import { Logo, IcChevronDown, IcChevronRight } from '@/components/ui/icons';
+import { C, FONT, radius } from '@/components/ui/tokens';
+import { useOnboardingObligatorio, RUTA_ONBOARDING } from '@/components/pages/onboarding/datos/obligatorio';
 import { NAV, COMPANIES, CONFIG_HREFS, seccionDeRuta, seccionActiva } from './navegacion';
 import { useMenuAbierto, guardarMenuAbierto } from './preferenciaMenu';
 import { filaMenu } from './estiloMenu';
 import { CollapseArrow } from './iconosMenu';
 import PieMenu from './PieMenu';
 import SubpanelConfig, { HEADER_H } from './SubpanelConfig';
-import { useAlmacen } from '@/components/pages/empresa/datos/almacen';
 
 const BRAND = C.brand;
 const F = FONT;
@@ -27,7 +25,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [expanded, setExpanded] = useState<string>(() => seccionDeRuta(pathname));
   const [company, setCompany] = useState(COMPANIES[0]);
   const [coOpen, setCoOpen] = useState(false);
-  const fecha = useAlmacen(fechaOperacionAlmacen);
   const onboarding = useOnboardingObligatorio(pathname);
 
   const isConfigSection = CONFIG_HREFS.has(pathname);
@@ -177,7 +174,6 @@ export default function AppShell({ children }: { children: ReactNode }) {
           fontSize:11, color:C.n700, fontFamily:F,
         }}>
           <span>Seven Accounting Cloud</span>
-          <span>Fecha de operación: {fechaCorta(fecha.fecha)}</span>
           <span>© {new Date().getFullYear()} · Todos los derechos reservados</span>
         </footer>
       </div>

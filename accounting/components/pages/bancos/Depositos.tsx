@@ -1,20 +1,25 @@
 'use client';
+import ComprobanteOperacionModal from '@/components/ui/documento/ComprobanteOperacion';
+import { armarComprobantes } from '@/components/ui/documento/comprobantes';
+import { useEmpresaDoc } from '@/components/ui/documento/useEmpresaDoc';
 import { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, PAGE_PAD, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '../../ui/montos';
-import { SearchInput, FilterDropdown } from '../../ui/filtros';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '@/components/ui/montos';
+import { SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { NuevoDepositoModal } from './depositos/NuevoDepositoModal';
 import { BRAND, CUENTAS_EFECTIVO, DEPOSITOS_INIT, type Deposito, ESTADO_STYLE, F, fmt2 } from './depositos/datos';
 import { FechasFilter, Pill } from './depositos/piezas';
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 export default function Depositos() {
   const [deps, setDeps]     = useState<Deposito[]>(DEPOSITOS_INIT);
   const [showNew, setShowNew] = useState(false);
+  const [comprobante, setComprobante] = useState<Deposito | null>(null);
+  const empresaDoc = useEmpresaDoc();
   const [showExportar, setShowExportar] = useState(false);
   const [searchQ, setSearch] = useState('');
   const [filtFecha, setFiltFecha] = useState({from:'',to:''});
@@ -48,7 +53,7 @@ export default function Depositos() {
 
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', overflow:'hidden', fontFamily:F, background:'#F9F9F9' }}>
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Depósitos en efectivo">
         <BotonExportarUnico onClick={()=>setShowExportar(true)}/>
         <button onClick={()=>setShowNew(true)} style={{ height:34, padding:'0 14px', background:BRAND, color:'#FFFFFF', border:'none', borderRadius:radius.md, cursor:'pointer', fontSize:13, fontWeight:500, fontFamily:F, display:'flex', alignItems:'center', gap:6 }}>
@@ -67,7 +72,7 @@ export default function Depositos() {
         <FilterDropdown label="Usuario" options={['jperez','sblandon','yader','glopez']} selected={filtUsuario} onApply={setFiltUsuario} onClear={()=>setFiltUsuario(new Set())}/>
       </div>
 
-      {/* Table */}
+      {/* Tabla */}
       <div style={{ flex:1, overflowY:'auto', background:'#FFFFFF', padding:`0 ${PAGE_PAD-12}px` }}>
         <table className="tabla" style={TABLA.table}>
           <thead style={{ position:'sticky', top:0, background:'#FFFFFF', zIndex:2 }}>
@@ -97,11 +102,12 @@ export default function Depositos() {
                   <td style={{ padding:'8px 12px', color:'#0F0F0F', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={d.cuentaOrigen}>{d.cuentaOrigen}</td>
                   <td style={{ padding:'8px 12px', color:'#0F0F0F', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={d.bancoDestino}>{d.bancoDestino}</td>
                   <td style={{ padding:'8px 12px' }}>{d.referencia}</td>
-                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{d.moneda} {sym}</span></td>
+                  <td style={{ padding:'8px 12px' }}><span style={{ fontSize:10.5, padding:'2px 7px', background:C.n200, borderRadius:4 }}>{d.moneda} {sym}</span></td>
                   <MoneyCells sym={sym} value={fmt2(d.importe)}/>
                   <td style={{ padding:'8px 12px' }}>{d.usuario}</td>
                   <td style={{ padding:'8px 12px' }}>
                     <div style={{ display:'flex', gap:5 }}>
+                      <button title="Ver comprobante" aria-label="Ver comprobante" onClick={()=>setComprobante(d)} style={{ width:26, height:26, borderRadius:5, border:'none', background:'none', cursor:'pointer', color:C.n700, display:'flex', alignItems:'center', justifyContent:'center' }}><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M4 1.5h6l3 3v10H4z"/><path d="M10 1.5v3h3M6 8h5M6 10.5h5M6 13h3"/></svg></button>
                       <button style={{ width:26, height:26, borderRadius:5, border:`1px solid ${C.n500}`, background:'#FFFFFF', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:C.n700 }}><IcEdit/></button>
                       <button style={{ width:26, height:26, borderRadius:5, border:`1px solid ${C.n500}`, background:'#FFFFFF', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:C.n700 }}><IcPrint/></button>
                     </div>
@@ -123,11 +129,15 @@ export default function Depositos() {
         </table>
       </div>
 
-      {/* Footer */}
+      {/* Pie */}
       <div style={{ background:'#FFFFFF', borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0 }}>
         <Pagination page={paginaActual} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>
 
+      {comprobante && <ComprobanteOperacionModal titulo={`Comprobante · Depósito ${comprobante.consecutivo}`} archivo={`comprobante-deposito-${comprobante.consecutivo}`} marca={C.brand}
+        onClose={() => setComprobante(null)} comprobantes={armarComprobantes({ clase: 'Depósito', numero: comprobante.consecutivo, empresa: empresaDoc,
+          tercero: { nombre: comprobante.bancoDestino }, fecha: comprobante.fecha, medioPago: `Depósito en efectivo${comprobante.referencia ? ` · Ref. ${comprobante.referencia}` : ''}`,
+          concepto: `Depósito de efectivo desde ${comprobante.cuentaOrigen}`, simbolo: comprobante.moneda === 'USD' ? '$' : '₡', importe: comprobante.importe, documentos: [] })} />}
       {showNew && <NuevoDepositoModal onClose={()=>setShowNew(false)} onSave={d=>{setDeps(p=>[d,...p]);}}/>}
       {showExportar && (
         <ExportListModal

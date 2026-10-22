@@ -2,7 +2,6 @@
 import { Section } from '@/components/ui/primitives';
 import { FormField, Input } from '@/components/ui/formulario';
 import CamposIdentificacion from './CamposIdentificacion';
-import SeccionFechaOperacion from './FechaOperacion';
 import { type DatosEmpresa } from './datos/empresa';
 
 export default function TabDatosEmpresa({ config, patch }: { config: DatosEmpresa; patch: (p: Partial<DatosEmpresa>) => void }) {
@@ -29,7 +28,6 @@ export default function TabDatosEmpresa({ config, patch }: { config: DatosEmpres
         </div>
       </Section>
 
-      <SeccionFechaOperacion />
     </div>
   );
 }

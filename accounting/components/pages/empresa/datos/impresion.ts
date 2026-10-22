@@ -4,7 +4,7 @@
 import { crearAlmacen } from './almacen';
 
 export interface Impresora { id: string; nombre: string; habilitada: boolean }
-export interface TipoDocumento { codigo: string; nombre: string }
+interface TipoDocumento { codigo: string; nombre: string }
 export interface DatosImpresion { impresoras: Impresora[]; tipos: TipoDocumento[]; asignaciones: Record<string, string> }
 
 export const impresionAlmacen = crearAlmacen<DatosImpresion>({

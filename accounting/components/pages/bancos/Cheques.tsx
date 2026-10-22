@@ -1,13 +1,16 @@
 'use client';
+import ComprobanteOperacionModal from '@/components/ui/documento/ComprobanteOperacion';
+import { armarComprobantes } from '@/components/ui/documento/comprobantes';
+import { useEmpresaDoc } from '@/components/ui/documento/useEmpresaDoc';
 import { useState } from 'react';
-import DetalleDrawer from '../asientos/DetalleDrawer';
-import { Toast, PageHeader } from '../../ui/primitives';
-import { C, PAGE_PAD, radius, TABLA } from '../../ui/tokens';
-import { Pagination } from '../../ui/tabla';
-import { fmtNum } from '../../ui/formato';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '../../ui/montos';
-import { SearchInput, FilterDropdown } from '../../ui/filtros';
+import { DetalleDrawer } from '@/components/pages/asientos/detalleDrawer/DetalleDrawer';
+import { Toast, PageHeader } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { Pagination } from '@/components/ui/tabla';
+import { fmtNum } from '@/components/ui/formato';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { MoneyHeaderCells, MoneyCells, MoneyCellsStack } from '@/components/ui/montos';
+import { SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { FechaFilterDrop, parseFechaDDMMYY } from './comun/FechaFilterDrop';
 import { ModalGenerarCheque } from './cheques/ModalGenerarCheque';
 import { ModalVerCheque } from './cheques/ModalVerCheque';
@@ -15,7 +18,7 @@ import { BRAND, type Cheque, EST_STYLE, F, MOCK, fmtN } from './cheques/datos';
 import { ModalAnular, ModalEmitir, ModalRetencionesEditor } from './cheques/modales';
 import { AccionesRow } from './cheques/piezas';
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 export default function Cheques() {
   const [cheques,    setCheques]   = useState<Cheque[]>(MOCK);
   const [busq,       setBusq]       = useState('');
@@ -30,6 +33,8 @@ export default function Cheques() {
   const [modEmitir,  setModEmitir]  = useState<Cheque|null>(null);
   const [modAnular,  setModAnular]  = useState<Cheque|null>(null);
   const [modVer,     setModVer]     = useState<Cheque|null>(null);
+  const [comprobante, setComprobante] = useState<Cheque|null>(null);
+  const empresaDoc = useEmpresaDoc();
   const [modRet,     setModRet]     = useState<Cheque|null>(null);
   const [modalAsiento, setModalAsiento] = useState<Cheque|null>(null);
   const [toast,      setToast]      = useState<string|null>(null);
@@ -67,7 +72,7 @@ export default function Cheques() {
     setToast(modGen==='new' ? 'Cheque generado correctamente' : 'Cheque actualizado correctamente');
   }
 
-  function confirmarEmision(id:string, chequeNro:string, nombre:string){
+  function confirmarEmision(id:string, chequeNro:string){
     setCheques(prev => prev.map(c => c.id===id ? { ...c, estado:'Contabilizado', chequeNro, proveedor: c.proveedor } : c));
     setModEmitir(null);
     setToast(`Cheque ${chequeNro} emitido y contabilizado`);
@@ -87,7 +92,7 @@ export default function Cheques() {
   return (
     <div style={{ display:'flex',flexDirection:'column',height:'100%',fontFamily:F,background:'#FFFFFF',overflow:'hidden' }}>
 
-      {/* ── Header ── */}
+      {/* ── Encabezado ── */}
       <PageHeader title="Cheques bancarios">
         <BotonExportarUnico onClick={()=>setShowExportar(true)}/>
         <button onClick={()=>setModGen('new')}
@@ -184,7 +189,7 @@ export default function Cheques() {
                       onAnular={()=>setModAnular(ch)}
                       onVer={()=>setModVer(ch)}
                       onContabilizar={()=>contabilizar(ch.id)}
-                      onPrint={()=>setToast(`Cheque ${ch.chequeNro ?? ch.consec} enviado a impresora`)}
+                      onPrint={()=>setComprobante(ch)}
                       onMail={()=>setToast(`Cheque ${ch.chequeNro ?? ch.consec} enviado por correo al proveedor`)}
                       />
                   </td>
@@ -207,7 +212,7 @@ export default function Cheques() {
         </table>
       </div>
 
-      {/* Footer paginación */}
+      {/* Pie con paginación */}
       <div style={{ background:'#FFFFFF', borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0 }}>
         <Pagination page={page} pageSize={pageSize} total={filtered.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>
@@ -216,13 +221,19 @@ export default function Cheques() {
       {modGen && <ModalGenerarCheque cheque={modGen==='new'?undefined:modGen} onClose={()=>setModGen(null)} onSave={guardarCheque}/>}
       {modEmitir && <ModalEmitir cheque={modEmitir} onClose={()=>setModEmitir(null)} onConfirm={confirmarEmision}/>}
       {modAnular && <ModalAnular cheque={modAnular} onClose={()=>setModAnular(null)} onConfirm={confirmarAnulacion}/>}
+      {comprobante && <ComprobanteOperacionModal titulo={`Comprobante · Cheque ${comprobante.chequeNro ?? comprobante.consec}`} archivo={`comprobante-cheque-${comprobante.chequeNro ?? comprobante.consec}`} marca={C.brand}
+        onClose={() => setComprobante(null)} comprobantes={armarComprobantes({ clase: 'Cheque', numero: comprobante.chequeNro ?? comprobante.consec, empresa: empresaDoc,
+          tercero: { nombre: comprobante.proveedor }, fecha: comprobante.fecha, medioPago: `Cheque ${comprobante.chequeNro ?? 'por emitir'} · ${comprobante.banco}`,
+          concepto: `Pago a ${comprobante.proveedor}`, simbolo: comprobante.moneda === 'USD' ? '$' : '₡', importe: comprobante.importe,
+          documentos: comprobante.totalDoc ? [{ numero: comprobante.consec, importe: comprobante.totalDoc, aplicado: comprobante.importe }] : [],
+          retenciones: comprobante.retenciones.filter(r => r.imp > 0).map(r => ({ tipo: r.tipo, documento: comprobante.consec, base: comprobante.totalDoc, monto: r.imp })) })} />}
       {modVer && <ModalVerCheque cheque={modVer} onClose={()=>setModVer(null)} onVerRetencion={()=>{setModRet(modVer);setModVer(null);}}/>}
       {modRet && <ModalRetencionesEditor cheque={modRet} onClose={()=>setModRet(null)} onSave={r=>{
         setCheques(prev=>prev.map(c=>c.id===modRet.id?{...c,retenciones:r,retencion:r.reduce((s,x)=>s+x.imp,0)}:c));
         setModRet(null);
         setToast('Retenciones actualizadas');
       }}/>}
-      {/* Modal asiento inline */}
+      {/* Modal del asiento */}
       {modalAsiento && (
         <DetalleDrawer
           asiento={{
@@ -230,7 +241,7 @@ export default function Cheques() {
             consecutivo: modalAsiento.nroAsiento ?? '',
             titulo: `Asiento de cheque ${modalAsiento.nroAsiento}`,
             fecha: modalAsiento.fecha,
-            tipo: 'A' as 'A',
+            tipo: 'A' as const,
             origen: '',
             moneda: modalAsiento.moneda,
             contabilizado: true,

@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { Toast } from '../../../ui/primitives';
-import { USUARIO_ACTUAL, radius, TABLA } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
+import { Toast } from '@/components/ui/primitives';
+import { USUARIO_ACTUAL, radius, TABLA } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
 import { BANCOS_CTA, BRAND, type Cheque, F, RED, type Retencion, fmtN, fromIsoToDDMMYY, inputStyle, selectStyle, toIsoFromDDMMYY } from './datos';
 import { ModalBuscarCuenta, ModalRetencionesEditor, ModalShell } from './modales';
 import { ChevronSelect, Field } from './piezas';
 
-// ── Modal Generar / Editar cheque ─────────────────────────────────────────────
+// ── Modal para generar o editar un cheque ─────────────────────────────────────────────
 export function ModalGenerarCheque({ cheque, onClose, onSave }:{ cheque?:Cheque; onClose:()=>void; onSave:(c:Cheque)=>void }) {
   const [beneficiario, setBeneficiario] = useState(cheque?.proveedor??'');
   const [obs, setObs] = useState('Pago de facturas varias.');
@@ -98,7 +98,7 @@ export function ModalGenerarCheque({ cheque, onClose, onSave }:{ cheque?:Cheque;
               <ChevronSelect/>
             </div>
           </Field>
-          <Field label="Tasa"><input defaultValue="1.00000000" style={inputStyle()}/></Field>
+          <Field label="Tasa"><input aria-label="$ - Dólares₡ - Colones" defaultValue="1.00000000" style={inputStyle()}/></Field>
         </div>
         {/* Fila 2 */}
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10 }}>
@@ -112,7 +112,7 @@ export function ModalGenerarCheque({ cheque, onClose, onSave }:{ cheque?:Cheque;
           <Field label="Cuenta" required>
             <div style={{ display:'flex',alignItems:'center',gap:6 }}>
               <div style={{ width:12,height:12,borderRadius:'50%',background:cuenta?BRAND:'#757575',flexShrink:0 }}/>
-              <input value={cuenta} onChange={e=>setCuenta(e.target.value)} placeholder="Número de cuenta"
+              <input value={cuenta} onChange={e=>setCuenta(e.target.value)} placeholder="Número de cuenta" aria-label="Número de cuenta"
                 style={{ ...inputStyle(),flex:1, borderColor:errores.cuenta?RED:'#ECECEC' }}/>
             </div>
           </Field>

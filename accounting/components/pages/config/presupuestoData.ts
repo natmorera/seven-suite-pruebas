@@ -1,12 +1,11 @@
-import { CUENTAS_INIT } from '../catalogo/datos/cuentasIniciales';
-import { flattenAll } from '../catalogo/datos/arbol';
+import { CUENTAS_INIT } from '@/components/pages/catalogo/datos/cuentasIniciales';
+import { flattenAll } from '@/components/pages/catalogo/datos/arbol';
 
 export const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-export const MESES_CORTOS = ['Enero','Feb.','Mar.','Abr.','Mayo','Jun.','Jul.','Ago.','Set.','Oct.','Nov.','Dic.'];
 
 // ── Tipo (Costos/Gastos/Ingresos) ────────────────────────────────────────────
 // Filtro de selección múltiple (toggle, resaltado ámbar el activo) - así lo
-// pide la spec, aunque en las capturas se veía como radio de selección única.
+// pide el diseño, aunque en las capturas se veía como radio de selección única.
 export type TipoPL = 'costos' | 'gastos' | 'ingresos';
 export const TIPOS_PL: { value: TipoPL; label: string }[] = [
   { value:'costos',   label:'Costos' },
@@ -25,7 +24,7 @@ function mayorDeCodigo(codigo: string) { return codigo.split('-')[0]; }
 const TIPO_POR_MAYOR: Record<string, TipoPL> = { '600':'ingresos', '700':'costos', '800':'gastos' };
 
 // ── Tipo de cuenta ────────────────────────────────────────────────────────────
-export interface TipoDeCuenta { codigo: string; nombre: string; tipo?: TipoPL; cuentas: number; }
+interface TipoDeCuenta { codigo: string; nombre: string; tipo?: TipoPL; cuentas: number; }
 export const TIPOS_DE_CUENTA: TipoDeCuenta[] = MAYORES.map(m => ({
   codigo: m.code,
   nombre: m.nombre,
@@ -86,7 +85,7 @@ const CENTRO_POR_CUENTA: Record<string, string> = {
   '800-003-0001': 'cc1', // Gastos financieros varios
 };
 
-import { CENTROS_COSTO_INIT } from '../catalogo/centrosCostoConfig';
+import { CENTROS_COSTO_INIT } from '@/components/pages/catalogo/centrosCostoConfig';
 
 // Reparte un total anual en 12 meses con una variación estacional leve, en vez
 // de un monto plano - solo para que los datos de ejemplo se vean creíbles.
@@ -102,7 +101,7 @@ export const INIT_ROWS: PresRow[] = POSTEABLES
   .filter(p => TIPO_POR_MAYOR[mayorDeCodigo(p.code)])
   .map((p, i) => {
     const centroCostoId = CENTRO_POR_CUENTA[p.code] ?? 'cc1';
-    // Issue: la columna "Centro" mostraba el id interno del centro de costo
+    // la columna "Centro" mostraba el id interno del centro de costo
     // ('cc1', 'cc4'...) en vez del código real ('ADM', 'MNT'...) - no tenía
     // ningún sentido para quien lo mira. Se busca el código real acá.
     const centroCodigo = CENTROS_COSTO_INIT.find(c => c.id === centroCostoId)?.codigo ?? centroCostoId;

@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
-import { radius, shadow } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
+import { radius, shadow , C } from '@/components/ui/tokens';
 import { BRAND, F, TIPO_BG, type TipoAsiento, type ToastType } from './datos';
 
 export function ActBtn({ label, onClick, danger=false, children }: { label: string; onClick: (e: React.MouseEvent)=>void; danger?: boolean; children: React.ReactNode }) {
@@ -19,7 +18,7 @@ export function ActBtn({ label, onClick, danger=false, children }: { label: stri
     </TT>
   );
 }
-// ── Filter dropdown generic ────────────────────────────────────────────────────
+// ── Desplegable de filtro ────────────────────────────────────────────────────
 
 export const IcCheck = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="6.33"/><path d="M5 8l2 2 4-4"/></svg>;
 export const IcEdit  = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg>;
@@ -30,12 +29,12 @@ export const IcChev  = ({ up=false }: { up?: boolean }) => <svg width="10" heigh
 export function TipoPill({ tipo }: { tipo: TipoAsiento }) {
   return (
     <span style={{ width:22, height:22, borderRadius:radius.sm, display:'inline-flex', alignItems:'center', justifyContent:'center',
-      background:TIPO_BG[tipo], color:'#FFFFFF', fontSize:10, fontWeight:700, fontFamily:F, flexShrink:0 }}>
+      background:TIPO_BG[tipo], color:'#FFFFFF', fontSize:10.5, fontWeight:700, fontFamily:F, flexShrink:0 }}>
       {tipo}
     </span>
   );
 }
-// ── Tooltip wrapper ────────────────────────────────────────────────────────────
+// ── Contenedor con tooltip ────────────────────────────────────────────────────────────
 export function TT({ label, children }: { label: string; children: React.ReactNode }) {
   const [show, setShow] = useState(false);
   return (
@@ -44,7 +43,7 @@ export function TT({ label, children }: { label: string; children: React.ReactNo
       {children}
       {show && (
         <div style={{ position:'absolute', bottom:'110%', left:'50%', transform:'translateX(-50%)',
-          background:'#0F0F0F', color:'#FFFFFF', fontSize:10, fontFamily:F, padding:'4px 8px',
+          background:'#0F0F0F', color:'#FFFFFF', fontSize:10.5, fontFamily:F, padding:'4px 8px',
           borderRadius:5, whiteSpace:'nowrap', pointerEvents:'none', zIndex:9999,
           boxShadow:'0 2px 8px rgba(0,0,0,.25)' }}>
           {label}
@@ -53,8 +52,8 @@ export function TT({ label, children }: { label: string; children: React.ReactNo
     </div>
   );
 }
-// ── Action icon button ─────────────────────────────────────────────────────────
-// ── Date range filter ──────────────────────────────────────────────────────────
+// ── Botón de acción con ícono ─────────────────────────────────────────────────────────
+// ── Filtro de rango de fechas ──────────────────────────────────────────────────────────
 export function DateFilter({ label, value, onChange, onClear }: { label: string; value: {from:string;to:string}; onChange: (v:{from:string;to:string})=>void; onClear:()=>void }) {
   const [open, setOpen] = useState(false);
   const [local, setLocal] = useState(value);
@@ -86,12 +85,12 @@ export function DateFilter({ label, value, onChange, onClear }: { label: string;
           </div>
           <div style={{ marginBottom:8 }}>
             <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Desde</label>
-            <input type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))}
+            <input aria-label="Desde" type="date" value={local.from} onChange={e=>setLocal(p=>({...p,from:e.target.value}))}
               style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div style={{ marginBottom:10 }}>
             <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Hasta</label>
-            <input type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))}
+            <input aria-label="Hasta" type="date" value={local.to} onChange={e=>setLocal(p=>({...p,to:e.target.value}))}
               style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div style={{ display:'flex', gap:8 }}>
@@ -111,7 +110,7 @@ export function ToastContainer({ toasts, onDismiss }: { toasts:{id:number;type:T
         const [color,bg] = COLORS[t.type];
         return (
           <div key={t.id} style={{ display:'flex', alignItems:'flex-start', gap:10, padding:'10px 14px', background:bg, border:`1px solid ${color}30`, borderRadius:10, maxWidth:340, boxShadow:'0 4px 16px rgba(0,0,0,.12)', fontFamily:F }}>
-            <span style={{ width:18,height:18,borderRadius:'50%',background:color,color:'#FFFFFF',fontSize:10,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>!</span>
+            <span style={{ width:18,height:18,borderRadius:'50%',background:color,color:'#FFFFFF',fontSize:10.5,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>!</span>
             <span style={{ fontSize:12, color:'#0F0F0F', flex:1 }}>{t.msg}</span>
             <button onClick={()=>onDismiss(t.id)} style={{ background:'none',border:'none',cursor:'pointer',color:'#757575',padding:0,fontSize:14 }}>×</button>
           </div>

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { PresenciaOperacion } from '../../../ui/primitives';
-import { C, radius, shadow } from '../../../ui/tokens';
+import { PresenciaOperacion } from '@/components/ui/primitives';
+import { C, radius, shadow } from '@/components/ui/tokens';
 import { BRAND, type Conciliacion, F, fmt2, sym, useEscClose } from './datos';
 
 // ── Modales ───────────────────────────────────────────────────────────────────
@@ -43,25 +43,25 @@ export function NuevaConciliacionModal({ onClose, onCreate }: { onClose:()=>void
         <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:14 }}>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Cuenta bancaria <span style={{ color:C.error }}>*</span></label>
-            <select value={form.cuenta} onChange={e=>sf('cuenta',e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', appearance:'none' }}>
+            <select aria-label="Cuenta bancaria" value={form.cuenta} onChange={e=>sf('cuenta',e.target.value)} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', appearance:'none' }}>
               {CUENTAS.map(c=><option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Período desde <span style={{ color:C.error }}>*</span></label>
-              <input type="date" value={form.desde} onChange={e=>{sf('desde',e.target.value);setErrores(p=>({...p,desde:false}));}}
+              <input aria-label="Período desde" type="date" value={form.desde} onChange={e=>{sf('desde',e.target.value);setErrores(p=>({...p,desde:false}));}}
                 style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.desde?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
             <div>
               <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Período hasta <span style={{ color:C.error }}>*</span></label>
-              <input type="date" value={form.hasta} onChange={e=>{sf('hasta',e.target.value);setErrores(p=>({...p,hasta:false}));}}
+              <input aria-label="Período hasta" type="date" value={form.hasta} onChange={e=>{sf('hasta',e.target.value);setErrores(p=>({...p,hasta:false}));}}
                 style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.hasta?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Saldo según banco <span style={{ color:C.error }}>*</span></label>
-            <input type="number" step="0.01" value={form.saldo} onChange={e=>{sf('saldo',e.target.value);setErrores(p=>({...p,saldo:false}));}}
+            <input aria-label="Saldo según banco" type="number" step="0.01" value={form.saldo} onChange={e=>{sf('saldo',e.target.value);setErrores(p=>({...p,saldo:false}));}}
               style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.saldo?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             <p style={{ fontSize:11, color:C.n700, margin:'5px 0 0' }}>Saldo del estado de cuenta bancario para este período. Se guardará automáticamente y no necesitarás ingresarlo de nuevo.</p>
           </div>
@@ -211,16 +211,16 @@ export function CorteSaldoModal({ con, onClose, onAplicar }: { con:Conciliacion;
         <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:14 }}>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Cuenta</label>
-            <input readOnly value={`${con.cuentaCode} – ${con.cuentaBancaria}`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', background:C.n200, boxSizing:'border-box' }}/>
+            <input aria-label="Cuenta" readOnly value={`${con.cuentaCode} – ${con.cuentaBancaria}`} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', background:C.n200, boxSizing:'border-box' }}/>
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Fecha de corte <span style={{ color:C.error }}>*</span></label>
-            <input type="date" value={fecha} onChange={e=>{setFecha(e.target.value);setErrores(p=>({...p,fecha:false}));}} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.fecha?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+            <input aria-label="Fecha de corte" type="date" value={fecha} onChange={e=>{setFecha(e.target.value);setErrores(p=>({...p,fecha:false}));}} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.fecha?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             <button onClick={usarUltimoDia} style={{ fontSize:11, color:BRAND, background:'none', border:'none', cursor:'pointer', padding:'4px 0', fontFamily:F }}>Usar el último día del período ({con.hasta})</button>
           </div>
           <div>
             <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:5 }}>Saldo en banco <span style={{ color:C.error }}>*</span></label>
-            <input type="number" step="0.01" value={saldo} onChange={e=>{setSaldo(e.target.value);setErrores(p=>({...p,saldo:false}));}} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.saldo?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+            <input aria-label="Saldo en banco" type="number" step="0.01" value={saldo} onChange={e=>{setSaldo(e.target.value);setErrores(p=>({...p,saldo:false}));}} style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${errores.saldo?C.error:C.n500}`, borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             <p style={{ fontSize:11, color:C.n700, margin:'4px 0 0' }}>Este saldo se usará como punto de partida. Los movimientos anteriores a esta fecha quedarán marcados como conciliados automáticamente.</p>
           </div>
           <div style={{ padding:'10px 12px', background:C.errorBg, border:`1px solid ${C.errorBorder}`, borderRadius:radius.md }}>

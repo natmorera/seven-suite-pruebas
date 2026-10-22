@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { C, radius } from '../../../ui/tokens';
-import { IcChevronDown, IcInfo } from '../../../ui/icons';
+import { C, radius } from '@/components/ui/tokens';
+import { IcChevronDown, IcInfo } from '@/components/ui/icons';
 import { isFirmaLeafKey, type Firmantes, type Usuario } from '../permissionsData';
 import { type PermLeaf } from '../permisos/tipos';
 import { BRAND, CATEGORY_ORDER, F, leafCategory } from './datos';
@@ -22,11 +22,11 @@ export function MarcarQuitar({ onMarcar, onQuitar }: { onMarcar:()=>void; onQuit
     </div>
   );
 }
-export function LeafRow({ label, desc, checked, onChange }: { label:string; desc?:string; checked:boolean; onChange:()=>void }) {
+function LeafRow({ label, desc, checked, onChange }: { label:string; desc?:string; checked:boolean; onChange:()=>void }) {
   return (
     <label style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'7px 10px', borderRadius:radius.sm,
       background: checked ? '#FAF7F0' : 'transparent', cursor:'pointer', breakInside:'avoid', marginBottom:2 }}>
-      <input type="checkbox" checked={checked} onChange={onChange} style={{ width:15, height:15, marginTop:1, accentColor:BRAND, cursor:'pointer', flexShrink:0 }}/>
+      <input type="checkbox" aria-label="Seleccionar" checked={checked} onChange={onChange} style={{ width:15, height:15, marginTop:1, accentColor:BRAND, cursor:'pointer', flexShrink:0 }}/>
       <span style={{ minWidth:0 }}>
         <span style={{ display:'block', fontSize:12.5, color:C.n900, fontFamily:F, lineHeight:1.3 }}>{label}</span>
         {desc && <span style={{ display:'block', fontSize:10.5, color:C.n700, fontFamily:F, lineHeight:1.3, marginTop:2 }}>{desc}</span>}
@@ -38,16 +38,14 @@ export function LeafRow({ label, desc, checked, onChange }: { label:string; desc
 // -> de cuáles orígenes; Crear cuenta -> en cuál nivel). Las opciones se ven
 // como chips debajo del permiso, siempre visibles - sin dropdown ni acordeón
 // que haya que abrir primero.
-export function LeafRowSubOptions({ leaf, perms, onSetMany }: {
+function LeafRowSubOptions({ leaf, perms, onSetMany }: {
   leaf: PermLeaf; perms: Set<string>; onSetMany:(keys:string[], value:boolean)=>void;
 }) {
   const options = leaf.subOptions!;
   const selected = options.filter(o => perms.has(`${leaf.key}:${o}`));
   const checked = selected.length > 0;
-  // Los chips solo se muestran si se abre la fila (clic en el permiso) - antes
-  // estaban siempre visibles y con muchos permisos "por tipo" en pantalla
-  // (bandeja, bancos, etc.) eso era demasiado ruido. Si ya tiene algo
-  // seleccionado arranca abierta, para no esconder lo que ya está otorgado.
+  // Los chips se muestran al abrir la fila (clic en el permiso). Si ya tiene algo seleccionado
+  // arranca abierta, para no esconder lo otorgado.
   const [open, setOpen] = useState(checked);
 
   function toggleOption(o: string) {
@@ -72,7 +70,7 @@ export function LeafRowSubOptions({ leaf, perms, onSetMany }: {
             const on = perms.has(`${leaf.key}:${o}`);
             return (
               <button key={o} onClick={()=>toggleOption(o)} style={{
-                fontSize:10, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
+                fontSize:10.5, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
                 border:`1px solid ${on?BRAND:'#ECECEC'}`, background:on?BRAND:'#FFFFFF', color:on?'#FFFFFF':C.n700,
               }}>
                 {o}
@@ -90,7 +88,7 @@ export function LeafRowSubOptions({ leaf, perms, onSetMany }: {
 // mostrarlas en un único bloque con 2 grupos de chips (Alcance / Formato) en
 // vez de 2 filas apiladas con su propio encabezado "EXPORTACIÓN" arriba.
 // Ver auditoría de permisos.
-export function LeafRowExportPair({ exportLeaf, formatoLeaf, perms, onSetMany }: {
+function LeafRowExportPair({ exportLeaf, formatoLeaf, perms, onSetMany }: {
   exportLeaf: PermLeaf; formatoLeaf: PermLeaf; perms: Set<string>; onSetMany:(keys:string[], value:boolean)=>void;
 }) {
   const alcance = exportLeaf.subOptions!;
@@ -104,16 +102,16 @@ export function LeafRowExportPair({ exportLeaf, formatoLeaf, perms, onSetMany }:
     onSetMany([`${leafKey}:${o}`], !perms.has(`${leafKey}:${o}`));
   }
 
-  function Grupo({ titulo, leafKey, options, selected }: { titulo:string; leafKey:string; options:readonly string[]; selected:string[] }) {
+  function grupo(titulo:string, leafKey:string, options:readonly string[], selected:string[]) {
     return (
       <div>
-        <p style={{ fontSize:9.5, fontWeight:600, color:C.n700, fontFamily:F, letterSpacing:'.03em', margin:'0 0 4px' }}>{titulo}</p>
+        <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, fontFamily:F, letterSpacing:'.03em', margin:'0 0 4px' }}>{titulo}</p>
         <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
           {options.map(o=>{
             const on = selected.includes(o);
             return (
               <button key={o} onClick={()=>toggle(leafKey,o)} style={{
-                fontSize:10, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
+                fontSize:10.5, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
                 border:`1px solid ${on?BRAND:'#ECECEC'}`, background:on?BRAND:'#FFFFFF', color:on?'#FFFFFF':C.n700,
               }}>
                 {o}
@@ -136,8 +134,8 @@ export function LeafRowExportPair({ exportLeaf, formatoLeaf, perms, onSetMany }:
       </button>
       {open && (
         <div style={{ display:'flex', flexWrap:'wrap', gap:'10px 20px', marginTop:7, marginLeft:23 }}>
-          <Grupo titulo="ALCANCE" leafKey={exportLeaf.key} options={alcance} selected={selAlcance}/>
-          <Grupo titulo="FORMATO" leafKey={formatoLeaf.key} options={formato} selected={selFormato}/>
+          {grupo('ALCANCE', exportLeaf.key, alcance, selAlcance)}
+          {grupo('FORMATO', formatoLeaf.key, formato, selFormato)}
         </div>
       )}
     </div>
@@ -147,14 +145,14 @@ export function LeafRowExportPair({ exportLeaf, formatoLeaf, perms, onSetMany }:
 // usuarios quedan autorizados a firmar ese reporte - una lista compartida
 // por reporte, independiente de a quién le estás editando los permisos.
 // Solo los usuarios elegidos acá van a poder ejecutar la firma.
-export function LeafRowFirmantes({ leaf, checked, onChange, usuarios, firmantesIds, onToggleFirmante }: {
+function LeafRowFirmantes({ leaf, checked, onChange, usuarios, firmantesIds, onToggleFirmante }: {
   leaf: PermLeaf; checked:boolean; onChange:()=>void;
   usuarios: Usuario[]; firmantesIds: number[]; onToggleFirmante:(usuarioId:number)=>void;
 }) {
   return (
     <div style={{ breakInside:'avoid', marginBottom:6, padding:'7px 10px', borderRadius:radius.sm, background: checked ? '#FAF7F0' : 'transparent' }}>
       <label style={{ display:'flex', alignItems:'flex-start', gap:8, cursor:'pointer' }}>
-        <input type="checkbox" checked={checked} onChange={onChange} style={{ width:15, height:15, marginTop:1, accentColor:BRAND, cursor:'pointer', flexShrink:0 }}/>
+        <input type="checkbox" aria-label="Seleccionar" checked={checked} onChange={onChange} style={{ width:15, height:15, marginTop:1, accentColor:BRAND, cursor:'pointer', flexShrink:0 }}/>
         <span style={{ minWidth:0 }}>
           <span style={{ display:'block', fontSize:12.5, color:C.n900, fontFamily:F, lineHeight:1.3 }}>{leaf.label}</span>
           {leaf.desc && <span style={{ display:'block', fontSize:10.5, color:C.n700, fontFamily:F, lineHeight:1.3, marginTop:2 }}>{leaf.desc}</span>}
@@ -162,7 +160,7 @@ export function LeafRowFirmantes({ leaf, checked, onChange, usuarios, firmantesI
       </label>
       {checked && (
         <div style={{ marginTop:8, marginLeft:23 }}>
-          <p style={{ fontSize:10, fontWeight:600, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 6px' }}>
+          <p style={{ fontSize:10.5, fontWeight:600, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:'.04em', margin:'0 0 6px' }}>
             Usuarios autorizados a firmar {firmantesIds.length>0 && `(${firmantesIds.length})`}
           </p>
           <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
@@ -170,7 +168,7 @@ export function LeafRowFirmantes({ leaf, checked, onChange, usuarios, firmantesI
               const on = firmantesIds.includes(u.id);
               return (
                 <button key={u.id} onClick={()=>onToggleFirmante(u.id)} style={{
-                  fontSize:10, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
+                  fontSize:10.5, fontFamily:F, fontWeight:on?600:400, padding:'3px 8px', borderRadius:radius.pill, cursor:'pointer',
                   border:`1px solid ${on?BRAND:'#ECECEC'}`, background:on?BRAND:'#FFFFFF', color:on?'#FFFFFF':C.n700,
                 }}>
                   {u.descripcion}
@@ -190,7 +188,7 @@ export function CountBadge({ n, total }: { n:number; total:number }) {
     <span style={{ fontSize:11, fontFamily:F, color: done ? C.success : C.n700 }}>{n}/{total}</span>
   );
 }
-export function LeafGrid({ leaves, perms, onToggleLeaf, onSetMany, usuarios, firmantes, onToggleFirmante }: {
+function LeafGrid({ leaves, perms, onToggleLeaf, onSetMany, usuarios, firmantes, onToggleFirmante }: {
   leaves: PermLeaf[]; perms: Set<string>; onToggleLeaf:(k:string)=>void; onSetMany:(keys:string[], value:boolean)=>void;
   usuarios: Usuario[]; firmantes: Firmantes; onToggleFirmante:(leafKey:string, usuarioId:number)=>void;
 }) {
@@ -274,7 +272,7 @@ export function CategorizedLeaves({ leaves, perms, onToggleLeaf, onSetMany, usua
       {bloques.map((b, i) => (
         <div key={b.cat ?? `sueltos-${i}`}>
           {mostrarSubtitulo && b.cat && (
-            <p style={{ fontSize:10, fontWeight:500, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 4px' }}>{b.cat}</p>
+            <p style={{ fontSize:10.5, fontWeight:500, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 4px' }}>{b.cat}</p>
           )}
           <LeafGrid leaves={b.leaves} perms={perms} onToggleLeaf={onToggleLeaf} onSetMany={onSetMany}
             usuarios={usuarios} firmantes={firmantes} onToggleFirmante={onToggleFirmante}/>

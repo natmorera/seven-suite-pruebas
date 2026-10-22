@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
-import { PageHeader, TabBar, Toast } from '../../ui/primitives';
-import { IcPlus } from '../../ui/icons';
-import { BotonExportarUnico } from '../../ui/exportar';
+import { PageHeader, TabBar, Toast } from '@/components/ui/primitives';
+import { IcPlus } from '@/components/ui/icons';
+import { BotonExportarUnico } from '@/components/ui/exportar';
 import { TabEjercicioFiscal } from './ejercicio/TabEjercicioFiscal';
 import { TabNomenclatura } from './TabOtros';
 import { TabConceptos, TabAsientosContables, TabLibrosContables } from './conceptosLibros/piezas';
@@ -26,13 +26,11 @@ export default function ConfiguracionContable() {
   const [tab, setTab] = useState(0);
   const [config, setConfig] = useState<Config>(INIT);
   const [toast, setToast] = useState<{message:string;type:'success'|'error'}|null>(null);
-  // Ejercicio fiscal ya no tiene sub-pestañas (era la misma complejidad de UX
-  // que veníamos corrigiendo en el resto de la app) - el estado de sus
-  // acciones de header vive acá para ponerlas junto al resto de acciones
-  // de la página.
+  // El estado de las acciones de encabezado de Ejercicio fiscal vive acá, junto al resto de
+  // acciones de la página.
   const [ejercicioModalNuevo, setEjercicioModalNuevo] = useState(false);
   const [ejercicioShowExportar, setEjercicioShowExportar] = useState(false);
-  // Issue #9: mismo patrón de señal para Conceptos / Asientos contables / Libros
+  // mismo patrón de señal para Conceptos / Asientos contables / Libros
   const [conceptoAddSignal, setConceptoAddSignal] = useState(0);
   const [asientoAddSignal, setAsientoAddSignal] = useState(0);
   const [libroAddSignal, setLibroAddSignal] = useState(0);

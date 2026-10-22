@@ -37,7 +37,7 @@ export default function MultiSelect({ value, onChange, options, placeholder = 'N
             return (
               <label key={o.value} role="option" aria-selected={activa}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', borderRadius: 4, cursor: 'pointer', fontSize: 12, color: C.n900, background: activa ? C.brandBg : 'transparent' }}>
-                <input type="checkbox" checked={activa} onChange={() => alternar(o.value)} />
+                <input type="checkbox" aria-label="Seleccionar" checked={activa} onChange={() => alternar(o.value)} />
                 {o.label}
               </label>
             );

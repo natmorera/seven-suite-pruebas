@@ -1,14 +1,15 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { PageHeader } from '../ui/primitives';
-import { fmtNum } from '../ui/formato';
-import { radius } from '../ui/tokens';
+import { useState } from 'react';
+import { useMontado } from '@/components/ui/useMontado';
+import { PageHeader } from '@/components/ui/primitives';
+import { fmtNum } from '@/components/ui/formato';
+import { radius } from '@/components/ui/tokens';
 import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend, DoughnutController, BarController } from 'chart.js';
-import { C2, C3, C4, C5 } from './dashboard/C2';
-import { BotonExportarPDF, C6 } from './dashboard/C6';
-import { DateFilterModal } from './dashboard/DateFilterModal';
-import { F } from './dashboard/datos';
-import { C1, CardUsuariosActivos, DesgloseOperacionesPendientes } from './dashboard/piezas';
+import { C2, C3, C4, C5 } from '@/components/pages/dashboard/C2';
+import { BotonExportarPDF, C6 } from '@/components/pages/dashboard/C6';
+import { DateFilterModal } from '@/components/pages/dashboard/DateFilterModal';
+import { F } from '@/components/pages/dashboard/datos';
+import { C1, CardUsuariosActivos, DesgloseOperacionesPendientes } from '@/components/pages/dashboard/piezas';
 
 Chart.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend, DoughnutController, BarController);
 // Montserrat global para todos los charts
@@ -16,11 +17,11 @@ Chart.defaults.font.family = "'Montserrat', sans-serif";
 Chart.defaults.font.size = 11;
 
 export default function DashboardPage() {
-  const [ready, setReady]     = useState(false);
+  // Los gráficos se dibujan solo en el navegador
+  const ready = useMontado();
   const [showFilter, setFilt] = useState(false);
   const [periodo, setPeriodo] = useState('Hoy');
 
-  useEffect(() => { setReady(true); }, []);
 
   const fechaHoy = new Date().toLocaleDateString('es-CR');
 
@@ -34,7 +35,7 @@ export default function DashboardPage() {
         #dashboard-print-area, #dashboard-print-area * { visibility:visible; }
         #dashboard-print-area { position:absolute; left:0; top:0; width:100%; padding:24px; background:#fff !important; }
         #dashboard-print-header { display:block !important; }
-        /* Issue: los gráficos (canvas) quedaban cortados a la mitad entre una
+        /* los gráficos (canvas) quedaban cortados a la mitad entre una
            página y la siguiente. Cada tarjeta no se debe partir entre páginas,
            y las filas de 2 columnas pasan a una sola columna para que cada
            tarjeta tenga el ancho completo y quepa entera en su página. */
@@ -43,7 +44,7 @@ export default function DashboardPage() {
         .dash-row-grid > * { margin-bottom: 12px; }
       }`}</style>
 
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Dashboard" left={
         <button onClick={()=>setFilt(true)}
           style={{ height:30, padding:'0 10px', border:'1px solid #ECECEC', borderRadius:radius.sm, background:'#fff', cursor:'pointer', fontSize:12, fontFamily:F, display:'flex', alignItems:'center', gap:6, color:'#475569' }}>
@@ -68,10 +69,8 @@ export default function DashboardPage() {
           <p style={{ fontSize:11, color:'#757575', margin:0, fontFamily:F }}>Generado: {fechaHoy}</p>
         </div>
 
-        {/* Fila 1: Asientos pendientes + Situación actual + desglose de
-            operaciones bancarias pendientes (solo lista, sin donut ni número
-            grande - esa tarjeta ya tiene su propio número), todo en una sola
-            tarjeta. A la par, Usuarios activos igual que antes. */}
+        {/* Fila 1: asientos pendientes, situación actual y desglose de operaciones bancarias
+            pendientes en una sola tarjeta; a la par, usuarios activos. */}
         <div className="dash-row-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
           <div className="dash-card" style={{ background:'#fff', border:'1px solid #ECECEC', borderRadius:10, padding:'20px 24px', display:'flex', alignItems:'flex-start', gap:24 }}>
             <div style={{ flexShrink:0 }}>

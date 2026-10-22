@@ -1,19 +1,17 @@
 'use client';
 import { useRef } from 'react';
-import { fmtNum } from '../../ui/formato';
-import { CUENTAS_INIT } from '../catalogo/datos/cuentasIniciales';
-import { flattenAll } from '../catalogo/datos/arbol';
+import { fmtNum } from '@/components/ui/formato';
+import { CUENTAS_INIT } from '@/components/pages/catalogo/datos/cuentasIniciales';
+import { flattenAll } from '@/components/pages/catalogo/datos/arbol';
 import { Chart } from 'chart.js';
 import { F, useChartJS } from './datos';
 import { Card } from './piezas';
 
-// ── C6: IVA ───────────────────────────────────────────────────────────────────
-// Antes usaba una cuenta fija de IVA hardcodeada. Ahora toma las cuentas que se
-// configuraron en el Catálogo de cuentas como "cuenta de impuestos" (rol
-// acreditable / débito fiscal) y suma su saldo actual - si el cliente usa más
-// de una cuenta para captar el impuesto, todas se contemplan.
+// ── C6: IVA ── Suma el saldo actual de las cuentas configuradas en el Catálogo de cuentas como
+// cuenta de impuestos (IVA acreditable / débito fiscal); si la empresa usa varias, se
+// contemplan todas.
 export function C6() {
-  const ref = useRef<any>(null);
+  const ref = useRef<Chart | null>(null);
   const cuentasImpuesto = flattenAll(CUENTAS_INIT).filter(c => c.configImpuesto);
   const totalAcreditable = cuentasImpuesto.filter(c => c.configImpuesto?.rol==='acreditable').reduce((s,c)=>s+(c.saldo||0),0);
   const totalDebito      = cuentasImpuesto.filter(c => c.configImpuesto?.rol==='debito').reduce((s,c)=>s+(c.saldo||0),0);
@@ -31,7 +29,7 @@ export function C6() {
     ]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
       scales:{ x:{ grid:{ display:false }, ticks:{ font:{ family:"'Montserrat', sans-serif",size:10 }, color:'#757575' } },
                y:{ grid:{ color:'#F5F5F5' }, ticks:{ font:{ family:"'Montserrat', sans-serif",size:10 }, color:'#757575',
-                 callback:(v:any)=>fmtNum(Number(v), 0) } } } } });
+                 callback:(v: string | number)=>fmtNum(Number(v), 0) } } } } });
   }, [totalAcreditable, totalDebito, sinConfigurar]);
   if (sinConfigurar) {
     return (
@@ -54,10 +52,8 @@ export function C6() {
           </span>
         ))}
       </div>
-      {/* Cuentas que alimentan el indicador - antes iba todo en una sola línea
-          (código + nombre + rol + monto) y en una tarjeta angosta se
-          amontonaba todo junto, sin espacio para leerlo. Ahora cada cuenta
-          es un bloque de 2 líneas: código + rol arriba, nombre + monto abajo. */}
+      {/* Cuentas que alimentan el indicador: cada una en dos líneas (código y rol arriba,
+          nombre y monto abajo). */}
       <div style={{ marginTop:8, paddingTop:8, borderTop:'1px solid #F5F5F5', display:'flex', flexDirection:'column', gap:6 }}>
         {cuentasImpuesto.map(c=>(
           <div key={c.id} style={{ padding:'6px 8px', background:'#FAFAFA', borderRadius:6, fontFamily:F }}>

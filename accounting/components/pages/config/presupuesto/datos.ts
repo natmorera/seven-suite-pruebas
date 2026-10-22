@@ -1,17 +1,13 @@
-import { FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
-import { MESES, TIPOS_DE_CUENTA, PresRow } from '../presupuestoData';
-import { CentroCosto } from '../../catalogo/centrosCostoConfig';
+import { FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { MESES, type PresRow } from '../presupuestoData';
+import { type CentroCosto } from '@/components/pages/catalogo/centrosCostoConfig';
 
 export const F = FONT;
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Funciones auxiliares ───────────────────────────────────────────────────────────────────
 export function fmtCelda(n: number) {
   const s = fmtNum(Math.abs(n), 2);
   return n < 0 ? `(${s})` : s;
-}
-export function labelTipoCuenta(codigo: string) {
-  const t = TIPOS_DE_CUENTA.find(x => x.codigo === codigo);
-  return t ? `${t.codigo} - ${t.nombre}` : codigo;
 }
 export function cloneRows(rows: PresRow[]): PresRow[] {
   return rows.map(r => ({ ...r, valores: [...r.valores] }));
@@ -20,11 +16,9 @@ export function labelCentro(centros: CentroCosto[], id: string) {
   const c = centros.find(x => x.id === id);
   return c ? c.descripcion : id;
 }
-// Issue: al elegir una cuenta/centro desde el buscador de "Rango de cuenta", el
-// campo quedaba mostrando solo el código ("600-002-0001"), sin el nombre - se
-// guarda "código - nombre" para que se entienda qué cuenta es, y esta función
-// extrae solo el código (la parte antes de " - ") para las comparaciones de
-// rango, sea que el usuario lo haya elegido del buscador o escrito a mano.
+// Desde el buscador de «Rango de cuenta» se guarda «código - nombre» para que se entienda qué
+// cuenta es; esta función extrae el código (lo anterior a « - ») para comparar rangos, se haya
+// elegido del buscador o escrito a mano.
 export function soloCodigo(v: string) { return v.split(' - ')[0].trim(); }
 // ── Importar presupuesto desde Excel ─────────────────────────────────────────
 export function descargarPlantilla() {

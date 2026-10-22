@@ -1,9 +1,9 @@
 'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { C, radius, TABLA } from '../../../ui/tokens';
-import { Monto } from '../../../ui/montos';
-import { useFirmasConfig, firmasParaReporte, FirmasBloque } from '../../config/firmasConfig';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { Monto } from '@/components/ui/montos';
+import { useFirmasConfig, firmasParaReporte, FirmasBloque } from '@/components/pages/config/firmasConfig';
 import { AGING_DATA, BRAND, type CuentaCP, F, bucketizeDoc, csvEscapeHistorico, fmt, fmtFechaHora, soloIdAux } from './datos';
 
 export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detallePorDocumento, onClose }: {
@@ -19,7 +19,7 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
   const firmasDelReporte = firmasParaReporte(firmas, 'historico');
   const [incluirFirmas, setIncluirFirmas] = useState(false);
 
-  // Issue: exportar reportes - faltaba la opción de Excel (CSV), solo había PDF.
+  // Exportar el reporte en PDF o Excel (CSV)
   function descargarExcel() {
     const headers = vista==='estado'
       ? ['Cuenta','Nombre','Documento','Fecha','Descripción','Debe','Haber','Saldo','Días vencido']
@@ -34,11 +34,11 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
       agingData.forEach(cl=>{
         if (!detallePorDocumento) {
           const AGE_KEYS = ['corr','d30','d60','d90','d120','mas120'] as const;
-          const monto = AGE_KEYS.reduce((s,k)=>s+cl.docs.reduce((ss:number,d:any)=>ss+d[k],0), 0);
+          const monto = AGE_KEYS.reduce((s,k)=>s+cl.docs.reduce((ss,d)=>ss+d[k],0), 0);
           lines.push([cl.id, cl.nombre, '', '', '', monto].map(v=>csvEscapeHistorico(String(v))).join(','));
           return;
         }
-        cl.docs.forEach((d:any)=>{
+        cl.docs.forEach((d)=>{
           const monto = d.corr || d.d30 || d.d60 || d.d90 || d.d120 || d.mas120;
           lines.push([cl.id, cl.nombre, d.doc, d.vence, d.diasVencidos, monto]
             .map(v=>csvEscapeHistorico(String(v))).join(','));
@@ -68,7 +68,7 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
           position:static !important; overflow:visible !important; height:auto !important;
           max-height:none !important; width:auto !important; display:block !important; box-shadow:none !important;
         }
-        /* Issue: el encabezado de columnas solo salía en la primera página del
+        /* el encabezado de columnas solo salía en la primera página del
            PDF - repetirlo en cada página con display:table-header-group. */
         #export-print-area-historico table thead { display: table-header-group; }
         #export-print-area-historico table tr { page-break-inside: avoid; }
@@ -89,7 +89,7 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
         <div style={{ padding:'10px 24px', borderBottom:`1px solid ${C.n500}` }}>
           {firmasDelReporte.length > 0 ? (
             <label style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', fontSize:12, fontFamily:F, color:'#0F0F0F' }}>
-              <input type="checkbox" checked={incluirFirmas} onChange={e=>setIncluirFirmas(e.target.checked)} style={{ accentColor:BRAND }} />
+              <input type="checkbox" aria-label="Seleccionar" checked={incluirFirmas} onChange={e=>setIncluirFirmas(e.target.checked)} style={{ accentColor:BRAND }} />
               Incluir firma{firmasDelReporte.length > 1 ? `s (${firmasDelReporte.length})` : ''}
             </label>
           ) : (
@@ -136,7 +136,7 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
                       ['Días vencido', String(cliente.diasVencido), true],
                     ].map(([l,v,neg])=>(
                       <div key={l as string}>
-                        <div style={{ color:'#757575', fontSize:'10.5px', fontWeight:300 }}>{l as string}</div>
+                        <div style={{ color:'#757575', fontSize:10.5, fontWeight:300 }}>{l as string}</div>
                         <div style={{ fontWeight:600, color: neg?'#a33':'#0F0F0F' }}>{v as string}</div>
                       </div>
                     ))}
@@ -243,7 +243,7 @@ export function VistaPreviaModal({ tipo, vista, cuentas, idsAntiguedad, detalleP
 
           {incluirFirmas && <FirmasBloque firmas={firmasDelReporte}/>}
 
-          <div style={{ marginTop:14, fontSize:'10.5px', color:'#757575', borderTop:'1px solid #ECECEC', paddingTop:8, display:'flex', justifyContent:'space-between', fontWeight:300 }}>
+          <div style={{ marginTop:14, fontSize:10.5, color:'#757575', borderTop:'1px solid #ECECEC', paddingTop:8, display:'flex', justifyContent:'space-between', fontWeight:300 }}>
             <span>Hotel Fortuna S.A. - {vista==='estado' ? 'Estado de cuenta' : 'Antigüedad de saldos'} {entidad}</span>
             <span>Pág. 1 / 1</span>
           </div>

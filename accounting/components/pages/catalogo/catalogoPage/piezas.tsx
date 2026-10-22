@@ -1,16 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { Section, RowAction } from '../../../ui/primitives';
-import { Button, Select } from '../../../ui/formulario';
-import { radius, TABLA, PAGE_PAD } from '../../../ui/tokens';
-import { SearchInput } from '../../../ui/filtros';
-import { IcPlus, IcTrash } from '../../../ui/icons';
-import { C } from '../../../ui/tokens';
-import { Cuenta, TIPOS_ESPECIAL } from '../catalogoData';
+import { Section, RowAction } from '@/components/ui/primitives';
+import { Button, Select } from '@/components/ui/formulario';
+import { radius, TABLA, PAGE_PAD , C } from '@/components/ui/tokens';
+import { SearchInput } from '@/components/ui/filtros';
+import { IcPlus, IcTrash } from '@/components/ui/icons';
+import { type Cuenta, TIPOS_ESPECIAL } from '../catalogoData';
 import { flattenTree } from '../datos/arbol';
 import { F } from './datos';
 
-// ── Cuentas especiales tab ────────────────────────────────────────────────────
+// ── Pestaña de cuentas especiales ────────────────────────────────────────────────────
 export function TabCuentasEspeciales({ cuentas, onUpdateCuenta }: { cuentas: Cuenta[]; onUpdateCuenta: (updated: Partial<Cuenta>&{id:string}) => void }) {
   const flat = flattenTree(cuentas);
   const detalle = flat.filter(n => n.nivel === 'detalle');
@@ -34,12 +33,12 @@ export function TabCuentasEspeciales({ cuentas, onUpdateCuenta }: { cuentas: Cue
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
           <div>
             <p style={{ fontSize:11, fontWeight:500, color:C.n900, margin:'0 0 4px', fontFamily:F }}>Tipo de cuenta especial</p>
-            <Select value={tipo} onChange={setTipo}
+            <Select ariaLabel="Tipo de cuenta especial" value={tipo} onChange={setTipo}
               options={[{ value:'', label:'Seleccionar tipo' }, ...TIPOS_ESPECIAL.filter(t=>t.value).map(t=>({ value:t.value, label:t.label }))]} />
           </div>
           <div>
             <p style={{ fontSize:11, fontWeight:500, color:C.n900, margin:'0 0 4px', fontFamily:F }}>Cuenta contable</p>
-            <Select value={cuentaId} onChange={setCuentaId}
+            <Select ariaLabel="Cuenta contable" value={cuentaId} onChange={setCuentaId}
               options={[{ value:'', label:'Seleccionar cuenta' }, ...detalle.map(n=>({ value:n.id, label:`${n.code} · ${n.nombre}` }))]} />
           </div>
         </div>
@@ -51,7 +50,7 @@ export function TabCuentasEspeciales({ cuentas, onUpdateCuenta }: { cuentas: Cue
           <SearchInput value={search} onChange={setSearch} placeholder="Buscar cuenta…" width="100%" />
         </div>
         <div style={{ width:180, flexShrink:0 }}>
-          <Select value={filterTipo} onChange={setFilter}
+          <Select ariaLabel="Tipo de cuenta especial" value={filterTipo} onChange={setFilter}
             options={[{ value:'all', label:'Todos los tipos' }, ...TIPOS_ESPECIAL.filter(t=>t.value).map(t=>({ value:t.value, label:t.label }))]} />
         </div>
       </div>
@@ -81,15 +80,9 @@ export function TabCuentasEspeciales({ cuentas, onUpdateCuenta }: { cuentas: Cue
   );
 }
 // ── Badges ────────────────────────────────────────────────────────────────────
-export function BadgeBank()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:9,fontWeight:500,fontFamily:F,border:'1px solid #EED89A',background:'#FFF8EC',color:'#A77600',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>Banco</span>; }
-export function BadgeCli({ label='Clientes' }: { label?: string }) { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:9,fontWeight:500,fontFamily:F,border:'1px solid #B5D4F4',background:'#E6F1FB',color:'#185FA5',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>{label}</span>; }
-export function BadgePro({ label='Proveedores' }: { label?: string }) { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:9,fontWeight:500,fontFamily:F,border:'1px solid #9FE1CB',background:'#E1F5EE',color:C.successDk,whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>{label}</span>; }
-export function BadgeIva()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:9,fontWeight:500,fontFamily:F,border:'1px solid #F5C4B3',background:'#FAECE7',color:'#993C1D',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>IVA</span>; }
-export function BadgeInv()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:9,fontWeight:500,fontFamily:F,border:'1px solid #AFA9EC',background:'#EEEDFE',color:'#534AB7',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>Inventario</span>; }
+export function BadgeBank()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:10.5,fontWeight:500,fontFamily:F,border:'1px solid #EED89A',background:'#FFF8EC',color:'#A77600',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>Banco</span>; }
+export function BadgeCli({ label='Clientes' }: { label?: string }) { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:10.5,fontWeight:500,fontFamily:F,border:'1px solid #B5D4F4',background:'#E6F1FB',color:'#185FA5',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>{label}</span>; }
+export function BadgePro({ label='Proveedores' }: { label?: string }) { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:10.5,fontWeight:500,fontFamily:F,border:'1px solid #9FE1CB',background:'#E1F5EE',color:C.successDk,whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>{label}</span>; }
+export function BadgeIva()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:10.5,fontWeight:500,fontFamily:F,border:'1px solid #F5C4B3',background:'#FAECE7',color:'#993C1D',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>IVA</span>; }
+export function BadgeInv()  { return <span style={{ display:'inline-flex',alignItems:'center',padding:'0 6px',height:16,borderRadius:radius.pill,fontSize:10.5,fontWeight:500,fontFamily:F,border:'1px solid #AFA9EC',background:'#EEEDFE',color:'#534AB7',whiteSpace:'nowrap',verticalAlign:'middle',marginLeft:4 }}>Inventario</span>; }
 export function DotPost()   { return <span style={{ display:'inline-block',width:5,height:5,borderRadius:'50%',background:'#4CAF50',marginLeft:4,verticalAlign:'middle',flexShrink:0 }}/>; }
-// ── Moneda Cta. compuesta: "₡ - COL" / "$ - USD" ─────────────────────────────
-export function MonCta({ moneda }: { moneda: string }) {
-  const sym = moneda === 'USD' ? '$' : '₡';
-  const cod = moneda === 'USD' ? 'USD' : 'COL';
-  return <span style={{ fontFamily:F, fontSize:11, color:'#757575', whiteSpace:'nowrap' }}>{sym} - {cod}</span>;
-}

@@ -1,11 +1,11 @@
 'use client';
 import React from 'react';
-import { C, radius, TABLA } from '../../../ui/tokens';
-import { Radio } from '../../../ui/formulario';
-import { Monto } from '../../../ui/montos';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { Radio } from '@/components/ui/formulario';
+import { Monto } from '@/components/ui/montos';
 import { AGING_DATA, BRAND, type CuentaCP, F, GREEN, RED, bucketizeDoc, fmt, soloIdAux } from './datos';
 
-// ── Dropdown filter button (Figma style) ──────────────────────────────────────
+// ── Botón de filtro desplegable ──────────────────────────────────────
 export function FilterBtn({ label, active, children, align='left' }: {
   label:string; active?:boolean; children?:React.ReactNode; align?:'left'|'right';
 }) {
@@ -86,7 +86,7 @@ export function EstadoCuenta({ cuentas }: { cuentas: CuentaCP[] }) {
                     {l:'Días vencido',     v:String(cli.diasVencido),         red:true},
                   ].map(k=>(
                     <div key={k.l} style={{ textAlign:'right' }}>
-                      <p style={{ fontSize:10, color:'#757575', margin:'0 0 2px', fontFamily:F }}>{k.l}</p>
+                      <p style={{ fontSize:10.5, color:'#757575', margin:'0 0 2px', fontFamily:F }}>{k.l}</p>
                       <p style={{ fontSize:12, fontWeight:600, color:'#0F0F0F',
                         fontVariantNumeric:'tabular-nums', margin:0, fontFamily:F }}>{k.v}</p>
                     </div>
@@ -170,7 +170,7 @@ export function AntiguedadSaldos({ ids, detallePorDocumento }: { ids: string[]; 
           <span>₡</span><span>{fmt(v)}</span>
         </span>
   );
-  const totalGeneral = AGE.reduce((acc,a)=>{ acc[a.key] = filaData.flatMap(cl=>cl.docs).reduce((s:number,d:any)=>s+d[a.key],0); return acc; }, {} as Record<string,number>);
+  const totalGeneral = AGE.reduce((acc,a)=>{ acc[a.key] = filaData.flatMap(cl=>cl.docs).reduce((s,d)=>s+d[a.key],0); return acc; }, {} as Record<string,number>);
   const granTotal = AGE.reduce((s,a)=>s+totalGeneral[a.key],0);
   return (
     <div style={{ flex:1, overflowY:'auto', padding:'0 24px' }}>
@@ -185,13 +185,13 @@ export function AntiguedadSaldos({ ids, detallePorDocumento }: { ids: string[]; 
         </thead>
         <tbody>
           {filaData.map((cl,ci)=>{
-            const totalGrupo = AGE.reduce((s,a)=>s+cl.docs.reduce((ss:number,d:any)=>ss+d[a.key],0),0);
-            const subtotales = AGE.reduce((acc,a)=>{ acc[a.key] = cl.docs.reduce((s:number,d:any)=>s+d[a.key],0); return acc; }, {} as Record<string,number>);
+            const totalGrupo = AGE.reduce((s,a)=>s+cl.docs.reduce((ss,d)=>ss+d[a.key],0),0);
+            const subtotales = AGE.reduce((acc,a)=>{ acc[a.key] = cl.docs.reduce((s,d)=>s+d[a.key],0); return acc; }, {} as Record<string,number>);
             return [
               <tr key={`g${ci}`} style={{ background:'#F9F9F9', borderTop:ci>0?`2px solid ${C.n500}`:'none', borderBottom:'1px solid #ECECEC' }}>
                 <td colSpan={9} style={{ padding:'8px 12px', fontSize:12, fontFamily:F }}>{soloIdAux(cl.id)} - {cl.nombre}</td>
               </tr>,
-              ...(detallePorDocumento ? cl.docs.map((doc:any,di:number)=>{
+              ...(detallePorDocumento ? cl.docs.map((doc,di)=>{
                 const totalDoc = AGE.reduce((s,a)=>s+doc[a.key],0);
                 const pct = totalGrupo!==0 ? (totalDoc/totalGrupo*100) : 0;
                 return (

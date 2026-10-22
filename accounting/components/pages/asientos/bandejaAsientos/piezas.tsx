@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { C, radius, shadow } from '../../../ui/tokens';
-import { GRUPOS_NIIF } from '../../catalogo/catalogoData';
+import { C, radius, shadow } from '@/components/ui/tokens';
+import { GRUPOS_NIIF } from '@/components/pages/catalogo/catalogoData';
 import { BRAND, CUENTAS_LINEA, type DateRange, F, FECHA_PRESETS, IMPORTE_DEFAULT, IMPORTE_MAX, type ImporteRange, MON_SYM, TIPO_BG, type TipoAsiento, computeFechaPreset, detectFechaPreset, fmtDMY, fmtInt } from './datos';
 
 // ── Selector de cuenta para líneas del asiento - nombre visible, búsqueda y filtro por grupo NIIF ──
@@ -21,7 +21,7 @@ export function CuentaLineaSelect({ value, onChange }: { value:string; onChange:
     (gruposSel.size===0 || gruposSel.has(c.grupo)));
 
   function toggleGrupo(v: string) {
-    setGruposSel(p => { const n = new Set(p); n.has(v) ? n.delete(v) : n.add(v); return n; });
+    setGruposSel(p => { const n = new Set(p); if (n.has(v)) n.delete(v); else n.add(v); return n; });
   }
 
   return (
@@ -37,7 +37,7 @@ export function CuentaLineaSelect({ value, onChange }: { value:string; onChange:
       {open && (
         <div style={{ position:'absolute', top:'calc(100% + 4px)', left:0, zIndex:400, background:'#FFFFFF', border:`1px solid #ECECEC`,
           borderRadius:radius.md, boxShadow:shadow.panel, width:300, padding:8 }}>
-          <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por código o nombre…"
+          <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por código o nombre…" aria-label="Buscar por código o nombre…"
             style={{ width:'100%', height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:5, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', marginBottom:8 }}/>
 
           {/* Filtro por grupo NIIF */}
@@ -47,7 +47,7 @@ export function CuentaLineaSelect({ value, onChange }: { value:string; onChange:
               return (
                 <button key={g.value} type="button" onClick={()=>toggleGrupo(g.value)}
                   style={{ height:22, padding:'0 8px', border:`1px solid ${active?BRAND:C.n500}`, borderRadius:radius.pill,
-                    background:active?C.brandBg:'#FFFFFF', color:active?BRAND:C.n700, fontSize:10, fontFamily:F,
+                    background:active?C.brandBg:'#FFFFFF', color:active?BRAND:C.n700, fontSize:10.5, fontFamily:F,
                     cursor:'pointer', whiteSpace:'nowrap' }}>
                   {g.label}
                 </button>
@@ -55,7 +55,7 @@ export function CuentaLineaSelect({ value, onChange }: { value:string; onChange:
             })}
             {gruposSel.size>0 && (
               <button type="button" onClick={()=>setGruposSel(new Set())}
-                style={{ height:22, padding:'0 8px', border:'none', borderRadius:radius.pill, background:'none', color:C.error, fontSize:10, fontFamily:F, cursor:'pointer' }}>
+                style={{ height:22, padding:'0 8px', border:'none', borderRadius:radius.pill, background:'none', color:C.error, fontSize:10.5, fontFamily:F, cursor:'pointer' }}>
                 × Limpiar
               </button>
             )}
@@ -76,8 +76,6 @@ export function CuentaLineaSelect({ value, onChange }: { value:string; onChange:
     </div>
   );
 }
-// ── Icons ──────────────────────────────────────────────────────────────────────
-export const IcX     = () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>;
 export const IcCheck = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="6.33"/><path d="M5 8l2 2 4-4"/></svg>;
 export const IcEdit  = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"><path d="M11 2l3 3-9 9H2v-3l9-9z"/></svg>;
 export const IcBan   = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><circle cx="8" cy="8" r="6.33"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5"/></svg>;
@@ -95,12 +93,12 @@ export const IcPlus  = () => <svg width="12" height="12" viewBox="0 0 14 14" fil
 export function TipoPill({ tipo }: { tipo: TipoAsiento }) {
   return (
     <span style={{ width:22, height:22, borderRadius:radius.sm, display:'inline-flex', alignItems:'center', justifyContent:'center',
-      background:TIPO_BG[tipo], color:'#FFFFFF', fontSize:10, fontWeight:700, fontFamily:F, flexShrink:0 }}>
+      background:TIPO_BG[tipo], color:'#FFFFFF', fontSize:10.5, fontWeight:700, fontFamily:F, flexShrink:0 }}>
       {tipo}
     </span>
   );
 }
-// ── Tooltip wrapper ────────────────────────────────────────────────────────────
+// ── Contenedor con tooltip ────────────────────────────────────────────────────────────
 export function TT({ label, children }: { label: string; children: React.ReactNode }) {
   const [show, setShow] = useState(false);
   return (
@@ -110,7 +108,7 @@ export function TT({ label, children }: { label: string; children: React.ReactNo
       {children}
       {show && (
         <div style={{ position:'absolute', bottom:'110%', left:'50%', transform:'translateX(-50%)',
-          background:'#0F0F0F', color:'#FFFFFF', fontSize:10, fontFamily:F, padding:'4px 8px',
+          background:'#0F0F0F', color:'#FFFFFF', fontSize:10.5, fontFamily:F, padding:'4px 8px',
           borderRadius:5, whiteSpace:'nowrap', pointerEvents:'none', zIndex:9999,
           boxShadow:'0 2px 8px rgba(0,0,0,.25)' }}>
           {label}
@@ -119,7 +117,7 @@ export function TT({ label, children }: { label: string; children: React.ReactNo
     </div>
   );
 }
-// ── Action icon button ─────────────────────────────────────────────────────────
+// ── Botón de acción con ícono ─────────────────────────────────────────────────────────
 export function ActBtn({ label, onClick, danger=false, children }: { label: string; onClick: (e: React.MouseEvent)=>void; danger?: boolean; children: React.ReactNode }) {
   const [hov, setHov] = useState(false);
   return (
@@ -182,15 +180,15 @@ export function DateFilter({ label, value, onChange, onClear }: { label: string;
                 </button>
               ))}
             </div>
-            <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Rango personalizado</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Rango personalizado</p>
             <div style={{ marginBottom:8 }}>
               <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Desde</label>
-              <input type="date" value={local.from} onChange={e=>editManual('from', e.target.value)}
+              <input aria-label="Desde" type="date" value={local.from} onChange={e=>editManual('from', e.target.value)}
                 style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
             <div style={{ marginBottom:12 }}>
               <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Hasta</label>
-              <input type="date" value={local.to} onChange={e=>editManual('to', e.target.value)}
+              <input aria-label="Hasta" type="date" value={local.to} onChange={e=>editManual('to', e.target.value)}
                 style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
             </div>
             {summary && (
@@ -241,7 +239,7 @@ export function ImporteFilter({ value, onChange, onClear }: { value: ImporteRang
               style={{ fontSize:12, color:C.error, background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}>Limpiar</button>
           </div>
           <div style={{ padding:14 }}>
-            <p style={{ fontSize:10, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Moneda de referencia</p>
+            <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 8px' }}>Moneda de referencia</p>
             <div style={{ display:'flex', gap:8, marginBottom:16 }}>
               {(['CRC','USD'] as const).map(mo=>(
                 <button key={mo} onClick={()=>setLocal(p=>({...p,moneda:mo}))}
@@ -262,7 +260,7 @@ export function ImporteFilter({ value, onChange, onClear }: { value: ImporteRang
               <div style={{ position:'relative', height:6, borderRadius:3, background:'#ECECEC' }}>
                 <div style={{ position:'absolute', left:0, top:0, bottom:0, width:`${pct}%`, background:BRAND, borderRadius:3 }}/>
               </div>
-              <input type="range" min={0} max={IMPORTE_MAX} step={1000} value={local.max}
+              <input aria-label="Rango de importe" type="range" min={0} max={IMPORTE_MAX} step={1000} value={local.max}
                 onChange={e=>setLocal(p=>({...p, max:Number(e.target.value)}))}
                 style={{ width:'100%', marginTop:6, accentColor:BRAND }}/>
             </div>
@@ -270,12 +268,12 @@ export function ImporteFilter({ value, onChange, onClear }: { value: ImporteRang
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
               <div>
                 <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Mínimo</label>
-                <input type="number" min={0} value={local.min} onChange={e=>setLocal(p=>({...p,min:Number(e.target.value)||0}))}
+                <input aria-label="Mínimo" type="number" min={0} value={local.min} onChange={e=>setLocal(p=>({...p,min:Number(e.target.value)||0}))}
                   style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
               <div>
                 <label style={{ fontSize:11, color:'#757575', display:'block', marginBottom:3 }}>Máximo</label>
-                <input type="number" min={0} value={local.max} onChange={e=>setLocal(p=>({...p,max:Number(e.target.value)||0}))}
+                <input aria-label="Máximo" type="number" min={0} value={local.max} onChange={e=>setLocal(p=>({...p,max:Number(e.target.value)||0}))}
                   style={{ width:'100%', height:32, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:7, fontSize:12, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
               </div>
             </div>

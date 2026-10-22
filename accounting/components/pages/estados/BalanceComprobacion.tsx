@@ -1,15 +1,15 @@
 'use client';
 import React, { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, radius, TABLA } from '../../ui/tokens';
-import { fmtNum } from '../../ui/formato';
-import { Pagination } from '../../ui/tabla';
-import { SearchInput } from '../../ui/filtros';
-import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, NivelCuentaFiltro, VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { Pagination } from '@/components/ui/tabla';
+import { SearchInput } from '@/components/ui/filtros';
+import { F, BRAND, FilterBarGroup, FilterBtn, Chip, NivelCuentaPicker, type NivelCuentaFiltro, type VistaFiltro, OptionList, BotonExportar, ModalExportarEstado } from './estadosCommon';
 
 function fmt(n: number) { return fmtNum(n, 2); }
 
-// ── Data ───────────────────────────────────────────────────────────────────
+// ── Datos de ejemplo ───────────────────────────────────────────────────────────────────
 const CENTROS_COSTO = ['Gerencia General', 'Hotel', 'Alimentos y Bebidas', 'Marina', 'Lavandería', 'Eventos'];
 interface Cuenta {
   code: string; cg?: string; desc: string; nivel: 0 | 1 | 2; saldoIni: number; debe: number; haber: number; saldoMov: number; saldoFin: number;
@@ -51,7 +51,7 @@ export default function BalanceComprobacion() {
   const [exportarOpen, setExportarOpen] = useState(false);
 
   function toggle(code: string) {
-    setExpanded(p => { const n = new Set(p); n.has(code) ? n.delete(code) : n.add(code); return n; });
+    setExpanded(p => { const n = new Set(p); if (n.has(code)) n.delete(code); else n.add(code); return n; });
   }
 
   const visibleAll = DATA.filter(r => {
@@ -125,7 +125,7 @@ export default function BalanceComprobacion() {
   const tipoLabel = tipoCuenta !== 'Todas' ? tipoCuenta : 'Tipo de cuenta';
   const comparativoLabel = comparativoOn ? 'Var. vs. saldo inicial' : 'Comparativo';
 
-  // ── Chips de filtros activos - solo los realmente aplicados (Issue: no mostrar todos por defecto) ──
+  // ── Chips de filtros activos - solo los realmente aplicados (no mostrar todos por defecto) ──
   const chips: { label: string; onClear: () => void }[] = [];
   if (search) chips.push({ label: `Búsqueda: ${search}`, onClear: () => setSearch('') });
   if (periodoModo !== 'Todo el ejercicio') {
@@ -143,7 +143,7 @@ export default function BalanceComprobacion() {
 
   return (
     <div style={{ height:'100%', display:'flex', flexDirection:'column', overflow:'hidden', fontFamily:F, background:'#FFFFFF' }}>
-      {/* Header */}
+      {/* Encabezado */}
       <PageHeader title="Balance de comprobación" left={<span style={{ fontSize:13, color:C.n700 }}>Hotel Fortuna S.A.</span>}>
         <BotonExportar onClick={()=>setExportarOpen(true)}/>
       </PageHeader>
@@ -166,8 +166,8 @@ export default function BalanceComprobacion() {
               <div>
                 <p style={{ fontSize:11, color:C.n700, margin:'0 0 4px', fontFamily:F }}>Desde - Hasta</p>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
-                  <input type="date" value={fDesde} onChange={e=>setFDesde(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
-                  <input type="date" value={fHasta} onChange={e=>setFHasta(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
+                  <input aria-label="Desde - Hasta" type="date" value={fDesde} onChange={e=>setFDesde(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
+                  <input aria-label="Desde - Hasta" type="date" value={fHasta} onChange={e=>setFHasta(e.target.value)} style={{ height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F }}/>
                 </div>
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function BalanceComprobacion() {
 
           <FilterBtn id="opciones" label="Opciones" active={!incluirSaldoCero}>
             <label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:12, fontFamily:F }}>
-              <input type="checkbox" checked={incluirSaldoCero} onChange={e=>setIncluirSaldoCero(e.target.checked)} style={{ accentColor:BRAND }}/>
+              <input type="checkbox" aria-label="Seleccionar" checked={incluirSaldoCero} onChange={e=>setIncluirSaldoCero(e.target.checked)} style={{ accentColor:BRAND }}/>
               Incluir cuentas con saldo cero
             </label>
           </FilterBtn>
@@ -277,7 +277,7 @@ export default function BalanceComprobacion() {
         </table>
       </div>
 
-      {/* Footer */}
+      {/* Pie */}
       <div style={{ background:'#FFFFFF', borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0 }}>
         <Pagination page={paginaActual} pageSize={pageSize} total={gruposNivel0.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>

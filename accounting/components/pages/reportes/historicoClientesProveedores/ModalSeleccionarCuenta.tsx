@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { C, radius } from '../../../ui/tokens';
+import { C, radius } from '@/components/ui/tokens';
 import { BRAND, CLIENTES_EC, F, PROVEEDORES_EC, type RangoCP, soloIdAux } from './datos';
 
-// ── Modal: Seleccionar cuenta (una cuenta o rango) - Issue #1 ─────────────────
+// ── Modal: Seleccionar cuenta (una cuenta o rango) ─────────────────
 // Sin selector de nivel (Detalle/Auxiliar): en este contexto todas las cuentas
 // son auxiliares de clientes o proveedores, ya diferenciados por el radio de arriba.
 export function ModalSeleccionarCuenta({ tipo, cuentaId, rango, onSelectCuenta, onSelectRango, onClose }: {
@@ -44,7 +44,7 @@ export function ModalSeleccionarCuenta({ tipo, cuentaId, rango, onSelectCuenta, 
               width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#757575" strokeWidth="1.4" strokeLinecap="round">
               <circle cx="6" cy="6" r="4"/><path d="M10.5 10.5L8.5 8.5"/>
             </svg>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={`Buscar ${entidadLabel}…`}
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={`Buscar ${entidadLabel}…`} aria-label={`Buscar ${entidadLabel}…`}
               style={{ width:'100%', height:36, paddingLeft:32, paddingRight:12, border:`1px solid ${BRAND}`, borderRadius:radius.md,
                 fontSize:13, fontFamily:F, outline:'none', boxSizing:'border-box', color:'#0F0F0F' }}/>
           </div>
@@ -88,7 +88,7 @@ export function ModalSeleccionarCuenta({ tipo, cuentaId, rango, onSelectCuenta, 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:8 }}>
                 <div>
                   <p style={{ fontSize:11, color:'#757575', margin:'0 0 4px', fontFamily:F }}>Desde</p>
-                  <select value={rDesde} onChange={e=>setRDesde(e.target.value)}
+                  <select aria-label="Desde" value={rDesde} onChange={e=>setRDesde(e.target.value)}
                     style={{ width:'100%', height:34, border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, padding:'0 8px', outline:'none' }}>
                     <option value="">Seleccionar…</option>
                     {ordenado.map(d=><option key={d.id} value={d.id}>{d.nombre}</option>)}
@@ -96,7 +96,7 @@ export function ModalSeleccionarCuenta({ tipo, cuentaId, rango, onSelectCuenta, 
                 </div>
                 <div>
                   <p style={{ fontSize:11, color:'#757575', margin:'0 0 4px', fontFamily:F }}>Hasta</p>
-                  <select value={rHasta} onChange={e=>setRHasta(e.target.value)}
+                  <select aria-label="Hasta" value={rHasta} onChange={e=>setRHasta(e.target.value)}
                     style={{ width:'100%', height:34, border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:12, fontFamily:F, padding:'0 8px', outline:'none' }}>
                     <option value="">Seleccionar…</option>
                     {ordenado.map(d=><option key={d.id} value={d.id}>{d.nombre}</option>)}

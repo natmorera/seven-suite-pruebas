@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { Modal } from '../../../ui/primitives';
-import { Button, FormField, Select, Checkbox, Radio } from '../../../ui/formulario';
-import { radius, C } from '../../../ui/tokens';
-import { IcImport, IcExport } from '../../../ui/icons';
-import { MESES, TIPOS_DE_CUENTA, PresRow } from '../presupuestoData';
-import { CentroCosto } from '../../catalogo/centrosCostoConfig';
+import { Modal } from '@/components/ui/primitives';
+import { Button, FormField, Select, Checkbox, Radio } from '@/components/ui/formulario';
+import { radius, C } from '@/components/ui/tokens';
+import { IcImport, IcExport } from '@/components/ui/icons';
+import { MESES, TIPOS_DE_CUENTA, type PresRow } from '../presupuestoData';
+import { type CentroCosto } from '@/components/pages/catalogo/centrosCostoConfig';
 import { type Comparativo, F, MESES_EN, NIVELES_DETALLE, type NivelDetalle, fmtCelda, soloCodigo } from './datos';
 import { RangoInput } from './piezas';
 
@@ -125,7 +125,7 @@ export function ModalExportar({ rows, todasLasCuentas, ejercicio, centrosCosto, 
             {usarCentro && <RangoInput inicial={cIni} final={cFin} onInicial={setCIni} onFinal={setCFin} opciones={centroOpciones} tituloBuscador="Buscar centro de costos" />}
             <Checkbox label="Tipo de cuenta" checked={usarTipo} onChange={setUsarTipo} />
             {usarTipo && (
-              <Select value={tipoCuenta} onChange={setTipoCuenta}
+              <Select ariaLabel="Filtros" value={tipoCuenta} onChange={setTipoCuenta}
                 options={TIPOS_DE_CUENTA.map(t=>({ value:t.codigo, label:`${t.codigo} - ${t.nombre}` }))} />
             )}
             <Checkbox label="Mostrar títulos en inglés" checked={titulosIngles} onChange={setTitulosIngles} />

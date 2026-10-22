@@ -1,18 +1,12 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
-// ── Firmas personalizadas + Encabezado alternativo ───────────────────────────
-// Configuración a nivel de empresa. La disponibilidad de "Incluir firmas" y
-// "Encabezado alternativo" en cada reporte (Analítico, Balance, Resultados,
-// Situación, Patrimonio) depende únicamente del permiso ".firmar" de ese
-// reporte específico (Usuarios y Permisos) - ya no hay un interruptor global
-// en Parámetros generales que las habilite/deshabilite para toda la empresa.
+// ── Firmas personalizadas y encabezado alternativo ── Configuración a nivel de empresa. Quién
+// firma qué reporte (Analítico, Balance, Resultados, Situación, Patrimonio) y en qué orden se
+// define en Parámetros generales › Firmas.
 
-// Issue #14: se quitaron los 3 reportes que no existen todavía en el
-// prototipo (estado de flujo de efectivo, informes de producción, notas de
-// estados financieros) - no tiene sentido dejarlos seleccionables si no hay
-// pantalla detrás. La lista ahora refleja exactamente lo que hay, agrupado
-// igual que en el menú (Reportes / Estados financieros).
+// Reportes que se pueden firmar, agrupados igual que en el menú (Reportes / Estados
+// financieros).
 export const REPORTES_FIRMABLES: { key:string; label:string; grupo:'reportes'|'estadosfin' }[] = [
   { key:'analitico',   label:'Analítico de cuentas',                grupo:'reportes' },
   { key:'historico',   label:'Histórico clientes / proveedores',    grupo:'reportes' },
@@ -40,7 +34,7 @@ export interface Firma {
   // emitidos por una autoridad certificadora costarricense, PKI, token/tarjeta
   // física, sellado de tiempo, etc. - un proyecto legal y técnico aparte).
   imagenFirma?: string;
-  // Issue #1: enlaza esta firma a un usuario del sistema (Usuarios y permisos /
+  // enlaza esta firma a un usuario del sistema (Usuarios y permisos /
   // Mi cuenta). Con esto cada usuario puede configurar su propia firma desde
   // "Mi cuenta" en vez de que un administrador la cargue por él a mano, y un
   // administrador puede ver/asignar esa relación desde Firmas personalizadas.
@@ -55,12 +49,10 @@ const FIRMAS_INIT: Firma[] = [
     reportes:[{reporteKey:'analitico',orden:1}] },
 ];
 
-// Datos legales de la empresa para el encabezado alternativo. Antes vivían
-// hardcodeados acá; ahora Empresa.tsx los sincroniza a este contexto cada vez
-// que cambian (nombreLegal, numeroId, numeroLegalizacion, citasPresentacion),
-// así que el reporte siempre muestra lo que está cargado en Configuración →
-// Empresa, no un valor de ejemplo fijo.
-export interface EmpresaLegal {
+// Datos legales de la empresa para el encabezado alternativo. Empresa los sincroniza a este
+// contexto cada vez que cambian (nombre legal, identificación, legalización y citas de
+// presentación).
+interface EmpresaLegal {
   nombre: string;
   cedulaJuridica: string;
   noLegalizacion: string;
@@ -104,16 +96,10 @@ export function firmasParaReporte(firmas: Firma[], reporteKey: string) {
     .map(x => x.firma);
 }
 
-// Firma enlazada a un usuario del sistema en particular (si tiene una).
-export function firmaDeUsuario(firmas: Firma[], usuarioId: number): Firma | undefined {
-  return firmas.find(f => f.usuarioId === usuarioId);
-}
-
-// ── Piezas de impresión reutilizables ────────────────────────────────────────
-// Encabezado alternativo: reemplaza el encabezado normal del reporte (nombre
-// de empresa + fecha de generación) por el formato legal exigido para libros
-// legales / EEFF en Nicaragua y Guatemala. Lee los datos de empresa desde el
-// contexto (sincronizados por Empresa.tsx), no un valor fijo.
+// ── Piezas de impresión reutilizables ── Encabezado alternativo: en lugar del encabezado
+// normal del reporte (nombre de empresa y fecha de generación) muestra el formato legal exigido
+// para libros legales y estados financieros en Nicaragua y Guatemala, con los datos de empresa
+// del contexto.
 export function EncabezadoAlternativoBloque({ titulo, rangoFecha, moneda }: { titulo: string; rangoFecha?: string; moneda?: string }) {
   const { empresaLegal } = useFirmasConfig();
   return (
@@ -136,13 +122,14 @@ function CajaFirma({ firma, orden }: { firma: Firma; orden: number }) {
   if (firma.formato.includes('puesto'))    lineas.push(firma.puesto || firma.puestoAlt || '');
   return (
     <div style={{ width:190, fontFamily:"'Montserrat', sans-serif" }}>
-      <p style={{ fontSize:9, fontWeight:600, color:'#757575', margin:'0 0 4px', textAlign:'center' }}>Firma Orden {orden}</p>
+      <p style={{ fontSize:10.5, fontWeight:600, color:'#757575', margin:'0 0 4px', textAlign:'center' }}>Firma Orden {orden}</p>
       <div style={{ height:36, display:'flex', alignItems:'flex-end', justifyContent:'center', marginBottom:2 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- imagen de la firma cargada por el usuario (data URL), no pasa por next/image */}
         {firma.imagenFirma && <img src={firma.imagenFirma} alt="" style={{ maxHeight:36, maxWidth:170, objectFit:'contain' }}/>}
       </div>
       <div style={{ borderBottom:'1px solid #0F0F0F', marginBottom:4 }}/>
       {lineas.map((l,i)=>(
-        <p key={i} style={{ fontSize:10, fontWeight:600, margin:0, textAlign:'center' }}>{l}</p>
+        <p key={i} style={{ fontSize:10.5, fontWeight:600, margin:0, textAlign:'center' }}>{l}</p>
       ))}
     </div>
   );

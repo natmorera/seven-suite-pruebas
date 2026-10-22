@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Toast, RowAction } from '../../../ui/primitives';
-import { Button, FormField, Input, Select } from '../../../ui/formulario';
-import { radius, TABLA } from '../../../ui/tokens';
-import { IcPlus, IcTrash, IcCopy } from '../../../ui/icons';
-import { C } from '../../../ui/tokens';
+import { useState } from 'react';
+import { Toast, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select } from '@/components/ui/formulario';
+import { radius, TABLA , C } from '@/components/ui/tokens';
+import { IcPlus, IcTrash, IcCopy } from '@/components/ui/icons';
 import { CUENTAS_BANCARIAS, F, FORMATOS, F_INIT, type Formulario, TIPOS_EXP } from './datos';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
   const [forms,setForms]=useState<Formulario[]>(F_INIT);
@@ -22,7 +22,7 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
   function save(){
     setForms(p=>p.map(x=>{
       if(x.id===editing.id) return editing;
-      // Solo un formulario puede ser por defecto (#13)
+      // Solo un formulario puede ser por defecto
       return editing.porDefecto ? {...x, porDefecto:false} : x;
     }));
     setDirty(false); setToast({message:'Formulario guardado.',type:'success'}); setTimeout(()=>setToast(null),3000);
@@ -40,15 +40,12 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
   function delCuenta(id:string){ patch({ cuentas:editing.cuentas.filter(c=>c.id!==id) }); }
   function updateCuenta(id:string,field:string,val:string|number){ patch({ cuentas:editing.cuentas.map(c=>c.id===id?{...c,[field]:val}:c) }); }
 
-  // Issue #10: "Nueva" (formulario) ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { addNew(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nueva» (formulario) está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { addNew(); });
 
   return (
     <div style={{ display:'flex',gap:16,height:'100%',overflow:'hidden' }}>
-      {/* Left list - más ancho para que el título no se corte (#23) */}
+      {/* Left list - más ancho para que el título no se corte */}
       <div style={{ width:260,minWidth:260,background:'#FFFFFF',border:'1px solid #ECECEC',borderRadius:10,overflow:'hidden',flexShrink:0,display:'flex',flexDirection:'column' }}>
         <div style={{ padding:'12px 16px',borderBottom:'1px solid #ECECEC',flexShrink:0 }}>
           <span style={{ fontSize:12,fontWeight:500,fontFamily:F,whiteSpace:'nowrap' }}>Formularios bancarios</span>
@@ -61,8 +58,8 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
               <div style={{ flex:1,minWidth:0 }}>
                 <p style={{ fontSize:12,fontWeight:selId===f.id?600:400,color:selId===f.id?C.brand:C.n900,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',margin:0 }}>{f.nombre}</p>
                 <div style={{ display:'flex',gap:6,marginTop:4 }}>
-                  <span style={{ fontSize:9,background:f.formato==='CSV'?'#e8f4e8':'#e3f2fd',color:f.formato==='CSV'?'#2e7d32':'#1565c0',padding:'1px 5px',borderRadius:4 }}>{f.formato}</span>
-                  {f.porDefecto&&<span style={{ fontSize:9,background:C.brandBg,color:C.brand,padding:'1px 5px',borderRadius:4 }}>Defecto</span>}
+                  <span style={{ fontSize:10.5,background:f.formato==='CSV'?'#e8f4e8':'#e3f2fd',color:f.formato==='CSV'?'#2e7d32':'#1565c0',padding:'1px 5px',borderRadius:4 }}>{f.formato}</span>
+                  {f.porDefecto&&<span style={{ fontSize:10.5,background:C.brandBg,color:C.brand,padding:'1px 5px',borderRadius:4 }}>Defecto</span>}
                 </div>
               </div>
             </button>
@@ -70,7 +67,7 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
         </div>
       </div>
 
-      {/* Right detail */}
+      {/* Detalle a la derecha */}
       <div style={{ flex:1,background:'#FFFFFF',border:'1px solid #ECECEC',borderRadius:10,overflow:'auto',display:'flex',flexDirection:'column' }}>
         <div style={{ padding:'16px 20px',borderBottom:'1px solid #ECECEC',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0 }}>
           <div style={{ display:'flex',alignItems:'center',gap:12 }}>
@@ -79,7 +76,7 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
               <input type="checkbox" id="defecto-cb" checked={editing.porDefecto} onChange={e=>patch({porDefecto:e.target.checked})}
                 style={{ accentColor:C.brand,width:14,height:14 }} />
               <label htmlFor="defecto-cb" style={{ fontSize:12,cursor:'pointer',fontFamily:F,color:C.n900 }}>Formulario por defecto</label>
-              {editing.porDefecto&&<span style={{ fontSize:9,background:C.brandBg,color:C.brand,padding:'1px 6px',borderRadius:radius.pill,border:`1px solid ${C.brandBd}` }}>Defecto</span>}
+              {editing.porDefecto&&<span style={{ fontSize:10.5,background:C.brandBg,color:C.brand,padding:'1px 6px',borderRadius:radius.pill,border:`1px solid ${C.brandBd}` }}>Defecto</span>}
             </div>
           </div>
           <Button variant="secondary" icon={<IcCopy className="w-3 h-3" />} onClick={()=>setConfirmDup(true)}>Duplicar</Button>
@@ -113,22 +110,22 @@ export function TabTransferencias({ addSignal, onAddHandled }: { addSignal?: num
                 {editing.cuentas.map(c=>(
                   <tr key={c.id} style={{ borderTop:'1px solid #ECECEC' }}>
                     <td style={{ padding:'8px 12px' }}>
-                      <select value={c.cuentaContable} onChange={e=>updateCuenta(c.id,'cuentaContable',e.target.value)}
+                      <select aria-label="Cuenta contable" value={c.cuentaContable} onChange={e=>updateCuenta(c.id,'cuentaContable',e.target.value)}
                         style={{ width:'100%',height:28,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:4,fontSize:11,fontFamily:F,outline:'none',background:'#FFFFFF',cursor:'pointer' }}>
                         <option value="">- Seleccionar cuenta -</option>
                         {CUENTAS_BANCARIAS.map(opt=><option key={opt} value={opt}>{opt}</option>)}
                       </select>
                     </td>
                     <td style={{ padding:'8px 12px' }}>
-                      <input value={c.iban} onChange={e=>updateCuenta(c.id,'iban',e.target.value)}
+                      <input aria-label="- Seleccionar cuenta -" value={c.iban} onChange={e=>updateCuenta(c.id,'iban',e.target.value)}
                         style={{ width:'100%',height:28,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:4,fontSize:11,fontFamily:F,outline:'none' }} />
                     </td>
                     <td style={{ padding:'8px 12px' }}>
-                      <input type="number" value={c.consecutivo} onChange={e=>updateCuenta(c.id,'consecutivo',Number(e.target.value))}
+                      <input aria-label="Consecutivo" type="number" value={c.consecutivo} onChange={e=>updateCuenta(c.id,'consecutivo',Number(e.target.value))}
                         style={{ width:60,height:28,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:4,fontSize:11,fontFamily:F,outline:'none',textAlign:'right' }} />
                     </td>
                     <td style={{ padding:'8px 12px' }}>
-                      <input style={{ width:60,height:28,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:4,fontSize:11,fontFamily:F,outline:'none' }} placeholder="-" />
+                      <input style={{ width:60,height:28,padding:'0 8px',border:'1px solid #ECECEC',borderRadius:4,fontSize:11,fontFamily:F,outline:'none' }} placeholder="-" aria-label="-" />
                     </td>
                     <td style={{ padding:'8px 12px', textAlign:'right' }}>
                       <RowAction title="Eliminar" danger onClick={()=>delCuenta(c.id)}><IcTrash className="w-3.5 h-3.5"/></RowAction>

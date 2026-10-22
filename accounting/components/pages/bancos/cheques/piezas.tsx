@@ -1,15 +1,16 @@
 'use client';
-import { radius } from '../../../ui/tokens';
+import { radius } from '@/components/ui/tokens';
 import { BRAND, type Cheque, F, RED } from './datos';
 
 export function Field({ label, required, children }:{ label:string; required?:boolean; children:React.ReactNode }) {
   return (
-    <div>
-      <p style={{ fontSize:11,fontWeight:500,color:'#757575',margin:'0 0 5px',fontFamily:F }}>
+    // La etiqueta envuelve el campo: queda asociada al primer control
+    <label style={{ display:'block' }}>
+      <span style={{ display:'block', fontSize:11,fontWeight:500,color:'#757575',margin:'0 0 5px',fontFamily:F }}>
         {label}{required&&<span style={{ color:RED }}> *</span>}
-      </p>
+      </span>
       {children}
-    </div>
+    </label>
   );
 }
 export function ChevronSelect() {
@@ -17,15 +18,16 @@ export function ChevronSelect() {
     width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#757575" strokeWidth="1.5" strokeLinecap="round"><path d="M3.5 5.25L7 8.75L10.5 5.25"/></svg>;
 }
 // ── Acción icons por estado ────────────────────────────────────────────────────
+const IcView = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 7C1 7 3.5 2.5 7 2.5S13 7 13 7 10.5 11.5 7 11.5 1 7 1 7z"/><circle cx="7" cy="7" r="2"/></svg>;
+const IcPrint = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3.5 5V1.5h7V5M1.5 5h11v6h-11z"/></svg>;
+const IcMail = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1.5" y="3.5" width="11" height="7" rx="1.5"/><path d="M1.5 3.5L7 7.5L12.5 3.5"/></svg>;
+const IcStar = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 1.5l1.54 3.13L12 5.13l-2.5 2.44.59 3.43L7 9.38 4.91 11 5.5 7.57 3 5.13l3.46-.5z"/></svg>;
+const IcCancel = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="7" cy="7" r="5.5"/><path d="M9.5 4.5L4.5 9.5M4.5 4.5L9.5 9.5"/></svg>;
+
 export function AccionesRow({ ch, onEmitir, onAnular, onVer, onContabilizar, onPrint, onMail }:{
   ch:Cheque; onEmitir:()=>void; onAnular:()=>void; onVer:()=>void; onContabilizar:()=>void; onPrint:()=>void; onMail:()=>void;
   onGen:()=>void;
 }) {
-  const IcView = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 7C1 7 3.5 2.5 7 2.5S13 7 13 7 10.5 11.5 7 11.5 1 7 1 7z"/><circle cx="7" cy="7" r="2"/></svg>;
-  const IcPrint = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3.5 5V1.5h7V5M1.5 5h11v6h-11z"/></svg>;
-  const IcMail = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1.5" y="3.5" width="11" height="7" rx="1.5"/><path d="M1.5 3.5L7 7.5L12.5 3.5"/></svg>;
-  const IcStar = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 1.5l1.54 3.13L12 5.13l-2.5 2.44.59 3.43L7 9.38 4.91 11 5.5 7.57 3 5.13l3.46-.5z"/></svg>;
-  const IcCancel = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="7" cy="7" r="5.5"/><path d="M9.5 4.5L4.5 9.5M4.5 4.5L9.5 9.5"/></svg>;
 
   const iconBtn = (onClick:()=>void, icon:React.ReactNode, color='#757575', title='') => (
     <button onClick={e=>{e.stopPropagation();onClick();}} title={title} aria-label={title||'acción'}

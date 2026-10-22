@@ -1,14 +1,13 @@
 'use client';
 import { useState } from 'react';
-import { radius } from '../../../ui/tokens';
-import { C } from '../../../ui/tokens';
-import { Cuenta } from '../catalogoData';
+import { radius , C } from '@/components/ui/tokens';
+import { type Cuenta } from '../catalogoData';
 import { BRAND, F, NIIF_TREE, type NiifLeaf } from './datos';
 
 // ── Selector único con búsqueda para clasificación NIIF ────────────────────────
 // Solo el número de GRUPO (1 dígito) se muestra como "código" - sub grupo y sub sub grupo
 // son puramente descriptivos (texto), para que no se confundan con el código contable.
-export function GrupoBadge({ n, size=22 }: { n:string; size?:number }) {
+function GrupoBadge({ n, size=22 }: { n:string; size?:number }) {
   return (
     <span style={{ width:size, height:size, borderRadius:'50%', background:'transparent', border:`1px solid ${C.brandBd}`,
       color:BRAND, fontSize:size*0.5, fontWeight:600, fontFamily:F, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -46,7 +45,7 @@ export function NiifSearchSelect({ selected, onSelect }: { selected: NiifLeaf|nu
               <GrupoBadge n={selected.grupo}/>
               <span style={{ minWidth:0, flex:1 }}>
                 <span style={{ display:'block', fontSize:11, fontWeight:600, color:'#0F0F0F', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{selected.ssgLabel}</span>
-                <span style={{ display:'block', fontSize:9, color:C.n700 }}>{selected.grupoLabel.split('·')[1]?.trim()??selected.grupoLabel} › {selected.sgLabel}</span>
+                <span style={{ display:'block', fontSize:10.5, color:C.n700 }}>{selected.grupoLabel.split('·')[1]?.trim()??selected.grupoLabel} › {selected.sgLabel}</span>
               </span>
             </>
           ) : <span style={{ fontSize:11, color:C.n700 }}>Buscar grupo NIIF…</span>}
@@ -57,7 +56,7 @@ export function NiifSearchSelect({ selected, onSelect }: { selected: NiifLeaf|nu
           <div style={{ position:'relative' }}>
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke={C.n700} strokeWidth="1.3" style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)' }}><circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l-2-2"/></svg>
             <input autoFocus value={query} onChange={e=>setQuery(e.target.value)} onBlur={()=>setTimeout(()=>setOpen(false),120)}
-              placeholder="Ej. activos corrientes, ingresos…"
+              placeholder="Ej. activos corrientes, ingresos…" aria-label="Ej. activos corrientes, ingresos…"
               style={{ width:'100%', height:37, padding:'0 10px 0 26px', border:`1px solid ${BRAND}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none' }}/>
           </div>
           <div style={{ position:'absolute', top:40, left:0, right:0, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:radius.md, boxShadow:'0 8px 24px rgba(0,0,0,.12)', maxHeight:280, overflowY:'auto', zIndex:30, padding:'4px 0' }}>
@@ -72,7 +71,7 @@ export function NiifSearchSelect({ selected, onSelect }: { selected: NiifLeaf|nu
                 {gr.sgs.map(sg=>(
                   <div key={sg.sgVal}>
                     {/* Sub grupo - encabezado, no seleccionable */}
-                    <div style={{ padding:'3px 10px 3px 35px', fontSize:10, fontWeight:600, color:C.n700, fontFamily:F }}>{sg.sgLabel}</div>
+                    <div style={{ padding:'3px 10px 3px 35px', fontSize:10.5, fontWeight:600, color:C.n700, fontFamily:F }}>{sg.sgLabel}</div>
                     {/* Sub sub grupo - única opción seleccionable */}
                     {sg.leaves.map(l=>(
                       <button key={l.ssg} type="button" onMouseDown={e=>{ e.preventDefault(); onSelect(l); setOpen(false); }}
@@ -132,7 +131,7 @@ export function AccountPickerSelect({ groups, selected, onSelect, placeholder, e
           <div style={{ position:'relative' }}>
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke={C.n700} strokeWidth="1.3" style={{ position:'absolute', left:11, top:'50%', transform:'translateY(-50%)' }}><circle cx="6.5" cy="6.5" r="4.5"/><path d="M11 11l-2-2"/></svg>
             <input autoFocus value={query} onChange={e=>setQuery(e.target.value)} onBlur={()=>setTimeout(()=>setOpen(false),120)}
-              placeholder="Buscar por código o nombre…"
+              placeholder="Buscar por código o nombre…" aria-label="Buscar por código o nombre…"
               style={{ width:'100%', height:37, padding:'0 10px 0 26px', border:`1px solid ${BRAND}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none' }}/>
           </div>
           <div style={{ position:'absolute', top:40, left:0, right:0, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:radius.md, boxShadow:'0 8px 24px rgba(0,0,0,.12)', maxHeight:240, overflowY:'auto', zIndex:30, padding:'4px 0' }}>
@@ -140,7 +139,7 @@ export function AccountPickerSelect({ groups, selected, onSelect, placeholder, e
             {filteredGroups.map((g,i)=>(
               <div key={g.parent?.id ?? `grp-${i}`}>
                 {showHeaders && (
-                  <div style={{ padding:'6px 10px 3px', fontSize:9, fontWeight:700, color:C.n700, textTransform:'uppercase', letterSpacing:'.04em', fontFamily:F }}>
+                  <div style={{ padding:'6px 10px 3px', fontSize:10.5, fontWeight:700, color:C.n700, textTransform:'uppercase', letterSpacing:'.04em', fontFamily:F }}>
                     {g.label ?? (g.parent ? `${g.parent.code} · ${g.parent.nombre}` : 'Otras')}
                   </div>
                 )}
@@ -167,12 +166,12 @@ export function AccountPickerSelect({ groups, selected, onSelect, placeholder, e
   );
 }
 export function Label({ children }: { children:React.ReactNode }) {
-  return <p style={{ fontSize:9, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 5px', fontFamily:F }}>{children}</p>;
+  return <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 5px', fontFamily:F }}>{children}</p>;
 }
 export function Field2({ label, value, color }: { label:string; value:React.ReactNode; color?:string }) {
   return (
     <div>
-      <p style={{ fontSize:9, color:C.n700, margin:'0 0 2px', fontFamily:F }}>{label}</p>
+      <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px', fontFamily:F }}>{label}</p>
       <p style={{ fontSize:11, fontWeight:400, color:color??C.n900, margin:0, fontFamily:F }}>{value}</p>
     </div>
   );

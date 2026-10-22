@@ -1,7 +1,7 @@
 'use client';
-import { Button } from '../../../ui/formulario';
-import { C } from '../../../ui/tokens';
-import { Firma, FirmaReporte } from '../../config/firmasConfig';
+import { Button } from '@/components/ui/formulario';
+import { C } from '@/components/ui/tokens';
+import { type Firma, type FirmaReporte } from '@/components/pages/config/firmasConfig';
 import { F } from './datos';
 
 export function ConfirmDelete({ onConfirm, onCancel, label }: { onConfirm:()=>void; onCancel:()=>void; label:string }) {
@@ -18,12 +18,9 @@ export function ConfirmDelete({ onConfirm, onCancel, label }: { onConfirm:()=>vo
     </div>
   );
 }
-// Issue: el orden de una firma dentro de un reporte podía chocar con el de
-// otra firma ya asignada a ese mismo reporte (las dos con "1°", por ejemplo).
-// Ahora, al guardar, si el orden elegido por la firma que se está editando ya
-// está tomado por otra firma en ese reporte, esa otra firma (y en cascada,
-// cualquiera que quede en su camino) se corre automáticamente al siguiente
-// número libre - el orden que el usuario acaba de escribir queda intacto.
+// Al guardar, si el orden elegido ya lo tiene otra firma en ese reporte, esa otra (y en cascada
+// las que sigan) pasa al siguiente número libre; el orden que se acaba de escribir queda
+// intacto.
 export function resolverConflictosOrden(lista: Firma[], editada: Firma): Firma[] {
   let resultado = lista;
   for (const rel of editada.reportes) {

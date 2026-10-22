@@ -1,16 +1,12 @@
 
 
-// ── Movimientos de ajuste (líneas de ajuste en Cobros / Pagos y demás
-// operaciones bancarias) ──────────────────────────────────────────────────
-// El "Tipo de movimiento" ya NO es una lista fija: cada empresa crea los suyos
-// (ej. "Retención en la fuente", "Comisión bancaria", "Redondeo") y les define
-// el efecto contable (suma/resta), a qué operaciones bancarias aplican y a qué
-// cuenta(s) del catálogo se enlazan, para que en la línea de ajuste no haya que
-// buscar en todo el catálogo ni escribir el signo a mano. "Nota administrativa"
-// es la única excepción fija: nunca se crea ni se enlaza a cuenta porque
-// siempre usa la cuenta del cliente/proveedor de la operación.
+// ── Movimientos de ajuste (líneas de ajuste en Cobros / Pagos y demás operaciones bancarias)
+// ── Cada empresa crea sus tipos de movimiento (p. ej. «Retención en la fuente», «Comisión
+// bancaria», «Redondeo») y define su efecto contable (suma/resta), a qué operaciones aplican y
+// a qué cuentas se enlazan. «Nota administrativa» es la única fija: no se enlaza a cuenta
+// porque usa la del cliente o proveedor de la operación.
 export type TipoMovimientoAjuste = string;
-export const NOTA_ADMINISTRATIVA_VALUE = 'nota_administrativa';
+const NOTA_ADMINISTRATIVA_VALUE = 'nota_administrativa';
 export const NOTA_ADMINISTRATIVA = {
   value: NOTA_ADMINISTRATIVA_VALUE,
   label: 'Nota administrativa',
@@ -34,7 +30,7 @@ export interface EnlaceAjuste {
   cuentaNombre?: string;
   signo: 1 | -1; // 1 = suma (crédito) · -1 = resta (débito)
   activo: boolean;
-  // Issue: los movimientos de ajuste siempre son un porcentaje (ej. 2% de
+  // los movimientos de ajuste siempre son un porcentaje (ej. 2% de
   // retención en la fuente) - no un monto fijo, porque el monto real se
   // calcula sobre el total de cada operación. Es opcional: si se deja en
   // blanco, el porcentaje se sigue escribiendo a mano en la línea de ajuste.

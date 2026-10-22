@@ -1,22 +1,22 @@
 'use client';
 import { useState } from 'react';
-import { Toast, PageHeader } from '../../ui/primitives';
-import { C, radius } from '../../ui/tokens';
-import { Pagination } from '../../ui/tabla';
-import { Button } from '../../ui/formulario';
+import { Toast, PageHeader } from '@/components/ui/primitives';
+import { C, radius } from '@/components/ui/tokens';
+import { Pagination } from '@/components/ui/tabla';
+import { Button } from '@/components/ui/formulario';
 import { ModalSeleccionarCuenta } from './historicoClientesProveedores/ModalSeleccionarCuenta';
 import { VistaPreviaModal } from './historicoClientesProveedores/VistaPreviaModal';
 import { BRAND, CLIENTES_EC, type CuentaCP, F, PROVEEDORES_EC, type RangoCP } from './historicoClientesProveedores/datos';
 import { EnviarCorreoModal } from './historicoClientesProveedores/modales';
 import { AntiguedadSaldos, EstadoCuenta, FilterBtn, RadioGroup } from './historicoClientesProveedores/piezas';
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 export default function HistoricoClientesProveedores() {
   const [tipo,   setTipo]   = useState<'clientes'|'proveedores'>('clientes');
   const [cuentaId, setCuentaId] = useState('');
   const [rangoCP, setRangoCP] = useState<RangoCP|null>(null);
   const [vista,  setVista]  = useState<'estado'|'antiguedad'>('estado');
-  // Issue 4.4: por defecto la Antigüedad de saldos consolida cada cliente/proveedor
+  // por defecto la Antigüedad de saldos consolida cada cliente/proveedor
   // en un solo subtotal - útil cuando se consulta un rango grande. Esta opción
   // permite mantener el detalle de cada documento en vez de que todo quede
   // consolidado, tanto en pantalla como en el PDF/Excel exportado.
@@ -69,7 +69,7 @@ export default function HistoricoClientesProveedores() {
   const dataEC = tipo==='clientes' ? CLIENTES_EC : PROVEEDORES_EC;
   const ordenadoAlpha = [...dataEC].sort((a,b)=>a.nombre.localeCompare(b.nombre));
 
-  // Issue #1: la cuenta filtra por una sola o por rango (alfabético por nombre)
+  // la cuenta filtra por una sola o por rango (alfabético por nombre)
   let cuentasBase: CuentaCP[];
   if (cuentaId) {
     cuentasBase = dataEC.filter(d=>d.id===cuentaId);
@@ -90,7 +90,7 @@ export default function HistoricoClientesProveedores() {
   const cuentasPagina = cuentasFiltradas.slice((paginaActual-1)*pageSize, paginaActual*pageSize);
   const idsAntiguedadPagina = cuentasPagina.map(d=>d.id);
 
-  // Issue #29: aplicar el período a los movimientos de cada cuenta (solo afecta
+  // aplicar el período a los movimientos de cada cuenta (solo afecta
   // la vista "Estado de cuenta"; Antigüedad de saldos se calcula sobre saldos totales)
   const conPeriodoAplicado = (lista: CuentaCP[]) =>
     vista === 'estado'
@@ -116,10 +116,10 @@ export default function HistoricoClientesProveedores() {
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', fontFamily:F, background:'#FFFFFF', overflow:'hidden' }}>
 
-      {/* ── Header ── */}
+      {/* ── Encabezado ── */}
       <PageHeader title="Históricos Clientes / Proveedores">
-        {/* Issue #4: un solo botón Exportar, con vista previa antes de imprimir/descargar */}
-        {/* Issue: esta pantalla no tenía ningún botón en color principal - las
+        {/* un solo botón Exportar, con vista previa antes de imprimir/descargar */}
+        {/* esta pantalla no tenía ningún botón en color principal - las
             dos acciones eran neutras. "Exportar" es la acción central acá (no
             hay "crear" en un reporte de solo lectura), así que pasa a ser el
             botón principal y queda al extremo derecho. */}
@@ -165,7 +165,7 @@ export default function HistoricoClientesProveedores() {
       </div>
 
       {/* ── Barra de filtros ── */}
-      {/* Issue #2 y #3: buscador primero, luego el resto de filtros reordenado
+      {/* y: buscador primero, luego el resto de filtros reordenado
           (Clientes/Proveedores, Cuenta, Período, Moneda, Ordenar por) */}
       <div style={{ background:'#FFFFFF', borderBottom:`1px solid ${C.n500}`, padding:'8px 24px',
         display:'flex', alignItems:'center', gap:8, flexShrink:0, flexWrap:'wrap' }}>
@@ -176,7 +176,7 @@ export default function HistoricoClientesProveedores() {
             width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="#757575" strokeWidth="1.4" strokeLinecap="round">
             <circle cx="6" cy="6" r="4"/><path d="M10.5 10.5L8.5 8.5"/>
           </svg>
-          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder={tipo==='clientes'?'Buscar cliente…':'Buscar proveedor…'}
+          <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder={tipo==='clientes'?'Buscar cliente…':'Buscar proveedor…'} aria-label={tipo==='clientes'?'Buscar cliente…':'Buscar proveedor…'}
             style={{ height:32, paddingLeft:28, paddingRight:10, width:200, border:`1px solid ${C.n500}`,
               borderRadius:radius.md, fontSize:12, fontFamily:F, outline:'none' }}/>
         </div>
@@ -198,7 +198,7 @@ export default function HistoricoClientesProveedores() {
 
         <div style={{ width:1, height:20, background:`${C.n500}`, flexShrink:0 }}/>
 
-        {/* Cuenta - una o rango, sin selector de nivel (Issue #1) */}
+        {/* Cuenta - una o rango, sin selector de nivel */}
         <button onClick={()=>setModalCuentaOpen(true)}
           style={{ height:32, padding:'0 12px', border:`1px solid ${(cuentaId||rangoCP)?BRAND:C.n500}`, borderRadius:4,
             background:(cuentaId||rangoCP)?'#FFF8EC':'#FFFFFF', cursor:'pointer', fontSize:12, fontFamily:F,
@@ -220,11 +220,11 @@ export default function HistoricoClientesProveedores() {
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
             <div>
               <p style={{ fontSize:11, color:'#757575', margin:'0 0 3px' }}>Desde</p>
-              <input type="date" value={periodoDesde} onChange={e=>{setPeriodoDesde(e.target.value); setPeriodoQuick('');}} style={{ width:'100%', height:30, padding:'0 8px', border:`1px solid ${BRAND}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none', color:BRAND }}/>
+              <input aria-label="Desde" type="date" value={periodoDesde} onChange={e=>{setPeriodoDesde(e.target.value); setPeriodoQuick('');}} style={{ width:'100%', height:30, padding:'0 8px', border:`1px solid ${BRAND}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none', color:BRAND }}/>
             </div>
             <div>
               <p style={{ fontSize:11, color:'#757575', margin:'0 0 3px' }}>Hasta</p>
-              <input type="date" value={periodoHasta} onChange={e=>{setPeriodoHasta(e.target.value); setPeriodoQuick('');}} style={{ width:'100%', height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
+              <input aria-label="Hasta" type="date" value={periodoHasta} onChange={e=>{setPeriodoHasta(e.target.value); setPeriodoQuick('');}} style={{ width:'100%', height:30, padding:'0 8px', border:`1px solid ${C.n500}`, borderRadius:radius.sm, fontSize:11, fontFamily:F, outline:'none' }}/>
             </div>
           </div>
         </FilterBtn>
@@ -281,7 +281,7 @@ export default function HistoricoClientesProveedores() {
         }
       </div>
 
-      {/* Footer paginación */}
+      {/* Pie con paginación */}
       <div style={{ borderTop:`1px solid ${C.n500}`, padding:'8px 24px', flexShrink:0, background:'#FFFFFF' }}>
         <Pagination page={paginaActual} pageSize={pageSize} total={cuentasFiltradas.length} onPageChange={setPage} onPageSizeChange={setPageSize}/>
       </div>

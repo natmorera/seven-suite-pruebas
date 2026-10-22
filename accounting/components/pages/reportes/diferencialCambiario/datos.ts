@@ -1,6 +1,6 @@
 'use client';
-import { C, FONT } from '../../../ui/tokens';
-import { fmtNum } from '../../../ui/formato';
+import { C, FONT } from '@/components/ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
 
 export const F = FONT;
 export const BRAND = '#A77600';
@@ -12,15 +12,15 @@ export function fmt(n: number) {
   return n < 0 ? `(${s})` : s;
 }
 export type TipoCuenta = 'cobrar'|'pagar'|'bancos';
-export type EstadoDC = 'Pendiente'|'Contabilizado'|'Anulado';
+type EstadoDC = 'Pendiente'|'Contabilizado'|'Anulado';
 export interface AsientoDC {
   id:number; tipo:'G'|'O'; nroAsiento:string; fecha:string; libro:'G'|'O';
   titulo:string; cuenta:string; cuentaNombre:string; descripcion:string;
   debe:number; haber:number; tipoCuenta:TipoCuenta; estado:EstadoDC;
 }
-// Issue #26: cada tipo de cuenta (cobrar/pagar/bancos) tiene su propio asiento
+// cada tipo de cuenta (cobrar/pagar/bancos) tiene su propio asiento
 // balanceado (debe = haber), para que el filtro "Aplicar a cuentas por" tenga
-// datos reales que mostrar. Issue #24: cada línea incluye el nombre de la
+// datos reales que mostrar. cada línea incluye el nombre de la
 // cuenta, para que quede claro qué se debita y qué se acredita.
 export const MOCK: AsientoDC[] = [
   // ── Cuentas por cobrar ──

@@ -1,5 +1,5 @@
 'use client';
-import { C, radius } from '../../../ui/tokens';
+import { C, radius } from '@/components/ui/tokens';
 import { BRAND, type Conciliacion, ESTADO_CON_STYLE, F, fmt2, sym, useEscClose } from './datos';
 import { ESTADO_MOV_ICON, Pill } from './piezas';
 
@@ -122,7 +122,7 @@ export function VistaPreviaModal({ con, onClose }: { con:Conciliacion; onClose:(
               <div key={label} style={{ textAlign:'center' }}>
                 {name && <p style={{ fontSize:11, margin:'0 0 4px' }}>{name}</p>}
                 <div style={{ borderTop:`1px solid ${C.n700}`, paddingTop:6 }}>
-                  <p style={{ fontSize:10, color:C.n700, margin:0 }}>{label}</p>
+                  <p style={{ fontSize:10.5, color:C.n700, margin:0 }}>{label}</p>
                 </div>
               </div>
             ))}

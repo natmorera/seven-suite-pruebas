@@ -1,22 +1,21 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Section, InfoBox, Toast, RowAction } from '../../ui/primitives';
-import { Button, FormField, Input, Select } from '../../ui/formulario';
-import { DataTable, DataRow, Td } from '../../ui/tabla';
-import { radius, TABLA } from '../../ui/tokens';
-import { IcPlus, IcTrash } from '../../ui/icons';
-import { C, FONT } from '../../ui/tokens';
+import { Section, InfoBox, Toast, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input, Select } from '@/components/ui/formulario';
+import { radius, TABLA , C, FONT } from '@/components/ui/tokens';
+import { IcTrash } from '@/components/ui/icons';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 const F = FONT;
 const MONEDAS_NAC=[{value:'CRC',label:'¢ Colón costarricense'},{value:'NIO',label:'C$ Córdoba nicaragüense'},{value:'GTQ',label:'Q Quetzal guatemalteco'},{value:'HNL',label:'L Lempira hondureña'}];
-// Issue: se permitía agregar cualquier divisa (USD, EUR, GBP, CAD, JPY) - el
+// se permitía agregar cualquier divisa (USD, EUR, GBP, CAD, JPY) - el
 // sistema solo debe manejar dólares y euros como divisa extranjera.
 const DIVISAS_ALL=[{value:'USD',label:'$ Dólar estadounidense'},{value:'EUR',label:'€ Euro'}];
 const SIMBOLOS: Record<string,string>={CRC:'¢',NIO:'C$',GTQ:'Q',HNL:'L',USD:'$',EUR:'€',GBP:'£',CAD:'CA$',JPY:'¥'};
 
 interface Divisa { id:string; code:string; enabled:boolean; tasa:string; }
 
-export function TabMonedas({ config, patch, addSignal, onAddHandled, onAvailabilidadChange }: { config:any; patch:(p:any)=>void; addSignal?: number; onAddHandled?: () => void; onAvailabilidadChange?: (hayDisponibles:boolean) => void }) {
+export function TabMonedas({ config, patch, addSignal, onAddHandled, onAvailabilidadChange }: { config:{ monedaPrincipal:string }; patch:(p:{ monedaPrincipal?:string })=>void; addSignal?: number; onAddHandled?: () => void; onAvailabilidadChange?: (hayDisponibles:boolean) => void }) {
   const [divisas,setDivisas]=useState<Divisa[]>([
     { id:'d1', code:'USD', enabled:true,  tasa:'498.50' },
     { id:'d2', code:'EUR', enabled:false, tasa:'541.20' },
@@ -24,20 +23,16 @@ export function TabMonedas({ config, patch, addSignal, onAddHandled, onAvailabil
   const usedCodes=new Set(divisas.map((d:Divisa)=>d.code));
   const availDivisas=DIVISAS_ALL.filter((d:{value:string;label:string})=>!usedCodes.has(d.value));
 
-  // Issue: con solo USD/EUR permitidas y las dos ya precargadas por defecto,
-  // "Agregar divisa" (en el header) quedaba siempre sin nada para agregar -
-  // se avisa al padre para que lo deshabilite en vez de dejarlo ahí sin uso.
-  useEffect(() => { onAvailabilidadChange?.(availDivisas.length > 0); }, [availDivisas.length]);
+  // Se avisa al padre si quedan divisas por agregar, para deshabilitar «Agregar divisa» cuando
+  // no hay ninguna.
+  useEffect(() => { onAvailabilidadChange?.(availDivisas.length > 0); }, [availDivisas.length, onAvailabilidadChange]);
 
   function toggleDivisa(id:string){ setDivisas(p=>p.map(d=>d.id===id?{...d,enabled:!d.enabled}:d)); patch({}); }
   function removeDivisa(id:string){ setDivisas(p=>p.filter(d=>d.id!==id)); patch({}); }
   function addDivisa(){ if(!availDivisas.length) return; setDivisas(p=>[...p,{id:`d${Date.now()}`,code:availDivisas[0].value,enabled:false,tasa:''}]); patch({}); }
 
-  // Issue #10: "Agregar divisa" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { addDivisa(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Agregar divisa» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { addDivisa(); });
 
   return (
     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
@@ -66,7 +61,7 @@ export function TabMonedas({ config, patch, addSignal, onAddHandled, onAvailabil
                 <p style={{ fontSize:12,fontWeight:500,color:C.n900,margin:0,fontFamily:F }}>Divisa {idx+1}</p>
                 <div style={{ display:'flex',gap:8,alignItems:'center' }}>
                   <button onClick={()=>toggleDivisa(d.id)}
-                    style={{ fontSize:10,padding:'2px 10px',borderRadius:radius.pill,cursor:'pointer',
+                    style={{ fontSize:10.5,padding:'2px 10px',borderRadius:radius.pill,cursor:'pointer',
                       border:`1px solid ${d.enabled?C.brand:C.n500}`,
                       background:d.enabled?C.brandBg:C.n200,
                       color:d.enabled?C.brand:C.n700,fontFamily:F }}>
@@ -88,7 +83,6 @@ export function TabMonedas({ config, patch, addSignal, onAddHandled, onAvailabil
               {d.enabled&&<p style={{ fontSize:11,color:C.n700,marginTop:6,fontFamily:F }}>Tasa actual (BCCR): <strong style={{ color:C.n900 }}>{d.tasa}</strong> · Se actualiza en Tipo de cambio</p>}
             </div>
           ))}
-          {/* Issue #10: "Agregar divisa" se movió al header */}
         </div>
       </Section>
     </div>
@@ -111,13 +105,10 @@ export function TabTipoCambio({ addSignal, onAddHandled }: { addSignal?: number;
   const today=new Date().toISOString().split('T')[0];
 
   function add(){ if(!form.fecha||!form.tasa) return; setRows(p=>[{id:Date.now(),...form,fuente:'Manual'},...p]); setForm({fecha:'',divisa:'USD',tasa:''}); setAdding(false); setToast({message:'Tipo de cambio registrado.',type:'success'}); setTimeout(()=>setToast(null),3000); }
-  function saveTasa(id:number){ setEditingId(null); setToast({message:'Tipo de cambio actualizado.',type:'success'}); setTimeout(()=>setToast(null),3000); }
+  function saveTasa(){ setEditingId(null); setToast({message:'Tipo de cambio actualizado.',type:'success'}); setTimeout(()=>setToast(null),3000); }
 
-  // Issue #10: "Nuevo registro" ahora vive en el header de la página
-  useEffect(() => {
-    if (addSignal) { setAdding(v=>!v); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo registro» está en el encabezado de la página
+  useSenalAgregar(addSignal, onAddHandled, () => { setAdding(v=>!v); });
 
   return (
     <div style={{ display:'flex',flexDirection:'column',gap:16 }}>
@@ -136,7 +127,7 @@ export function TabTipoCambio({ addSignal, onAddHandled }: { addSignal?: number;
           </div>
         )}
 
-        {/* Table - all Montserrat, black text */}
+        {/* Tabla */}
         <div style={TABLA.wrap}>
           <table className="tabla" style={TABLA.table}>
             <thead><tr style={TABLA.headRow}>
@@ -149,16 +140,16 @@ export function TabTipoCambio({ addSignal, onAddHandled }: { addSignal?: number;
                 <tr key={r.id} style={{ borderBottom:'1px solid #ECECEC' }}>
                   <td style={{ padding:'8px 12px', fontFamily:F, color:C.n900 }}>
                     {r.fecha}
-                    {r.fecha===today&&<span style={{ marginLeft:8,fontSize:9,background:C.brandBg,color:C.brand,padding:'1px 6px',borderRadius:10,border:`1px solid ${C.brandBd}` }}>Hoy</span>}
+                    {r.fecha===today&&<span style={{ marginLeft:8,fontSize:10.5,background:C.brandBg,color:C.brand,padding:'1px 6px',borderRadius:10,border:`1px solid ${C.brandBd}` }}>Hoy</span>}
                   </td>
                   <td style={{ padding:'8px 12px', fontFamily:F, color:C.n900 }}>{r.divisa}</td>
                   <td style={{ padding:'8px 12px', fontFamily:F, color:C.n900 }}>
                     {r.fecha>=today?(
                       editingId===r.id?(
                         <div style={{ display:'flex',alignItems:'center',gap:6 }}>
-                          <input type="number" value={r.tasa} step="0.01" onChange={e=>setRows(p=>p.map(x=>x.id===r.id?{...x,tasa:e.target.value}:x))}
+                          <input aria-label="Tipo de cambio" type="number" value={r.tasa} step="0.01" onChange={e=>setRows(p=>p.map(x=>x.id===r.id?{...x,tasa:e.target.value}:x))}
                             style={{ width:90,height:28,padding:'0 8px',fontSize:12,fontFamily:F,border:'1px solid #ECECEC',borderRadius:4,outline:'none',color:C.n900 }} />
-                          <button onClick={()=>saveTasa(r.id)} style={{ height:28,padding:'0 8px',fontSize:11,background:C.brand,color:'#FFFFFF',border:'none',borderRadius:4,cursor:'pointer',fontFamily:F }}>Guardar</button>
+                          <button onClick={()=>saveTasa()} style={{ height:28,padding:'0 8px',fontSize:11,background:C.brand,color:'#FFFFFF',border:'none',borderRadius:4,cursor:'pointer',fontFamily:F }}>Guardar</button>
                           <button onClick={()=>setEditingId(null)} style={{ height:28,padding:'0 8px',fontSize:11,background:'#FFFFFF',color:C.n700,border:'1px solid #ECECEC',borderRadius:4,cursor:'pointer',fontFamily:F }}>Cancelar</button>
                         </div>
                       ):(
@@ -170,10 +161,8 @@ export function TabTipoCambio({ addSignal, onAddHandled }: { addSignal?: number;
                   </td>
                   <td style={{ padding:'8px 12px', fontFamily:F }}>{r.fuente}</td>
                   <td style={{ padding:'8px 12px', textAlign:'right' }}>
-                    {/* Issue: antes se podía borrar cualquier tasa con fecha de
-                        hoy en adelante (incluidas las futuras) - ahora solo la
-                        de hoy es borrable; una tasa futura ya programada o una
-                        pasada no se tocan. */}
+                    {/* Solo se puede borrar la tasa de hoy; las futuras ya programadas y las
+                        pasadas no se tocan. */}
                     {r.fecha===today&&<RowAction title="Eliminar" danger onClick={()=>setRows(p=>p.filter(x=>x.id!==r.id))}><IcTrash className="w-3.5 h-3.5"/></RowAction>}
                   </td>
                 </tr>

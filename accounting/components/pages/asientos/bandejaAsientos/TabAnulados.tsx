@@ -1,7 +1,7 @@
 'use client';
-import { RowAction } from '../../../ui/primitives';
-import { C, PAGE_PAD, radius, TABLA } from '../../../ui/tokens';
-import { SearchInput, FilterDropdown } from '../../../ui/filtros';
+import { RowAction } from '@/components/ui/primitives';
+import { C, PAGE_PAD, radius, TABLA } from '@/components/ui/tokens';
+import { SearchInput, FilterDropdown } from '@/components/ui/filtros';
 import { PaginationFooter } from './PaginationFooter';
 import { BRAND, F, IMPORTE_DEFAULT, IMPORTE_MAX, MONEDAS, MON_SYM, ORIGENES, TIPOS_LABEL, USUARIOS, fmt2 } from './datos';
 import { DateFilter, IcRestaurar, ImporteFilter, TipoPill } from './piezas';

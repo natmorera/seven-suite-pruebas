@@ -1,8 +1,8 @@
 'use client';
 import { useRef } from 'react';
-import { fmtNum } from '../../ui/formato';
-import { MoneyCell } from '../../ui/montos';
-import { C, radius } from '../../ui/tokens';
+import { fmtNum } from '@/components/ui/formato';
+import { MoneyCell } from '@/components/ui/montos';
+import { C, radius } from '@/components/ui/tokens';
 import { Chart } from 'chart.js';
 import { F, agingBg, agingColor, agingLabel, useChartJS } from './datos';
 import { Card, MoneyAmt } from './piezas';
@@ -159,7 +159,7 @@ export function C3() {
 }
 // ── C4: Ingresos / costos / gastos ────────────────────────────────────────────
 export function C4() {
-  const ref = useRef<any>(null);
+  const ref = useRef<Chart | null>(null);
   const days = ['26/5','27/5','28/5','29/5','30/5','31/5','1/6','2/6'];
   useChartJS(() => {
     const el = document.getElementById('c4') as HTMLCanvasElement; if(!el) return;
@@ -171,7 +171,7 @@ export function C4() {
     ]}, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
       scales:{ x:{ grid:{ display:false }, ticks:{ font:{ family:"'Montserrat', sans-serif",size:10 }, color:'#757575' } },
                y:{ grid:{ color:'#F5F5F5' }, ticks:{ font:{ family:"'Montserrat', sans-serif",size:10 }, color:'#757575',
-                 callback:(v:any)=>fmtNum(Number(v), 0) } } } } });
+                 callback:(v: string | number)=>fmtNum(Number(v), 0) } } } } });
   });
   return (
     <Card title="Ingresos, costos y gastos" sub="Últimos 8 días al día de operación">

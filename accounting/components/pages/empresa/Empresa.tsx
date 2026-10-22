@@ -1,11 +1,13 @@
 'use client';
 // Configuración › Empresa: datos de la empresa, consecutivos de documentos e impresión
+import SeccionApiKey from '@/components/ui/integracion/SeccionApiKey';
+import { obtenerApiKey, regenerarApiKey } from './datos/apiKey';
 import { useState, useEffect } from 'react';
 import { PageHeader, TabBar, Section, Toast } from '@/components/ui/primitives';
 import { Button } from '@/components/ui/formulario';
-import { PAGE_PAD } from '@/components/ui/tokens';
+import { C, PAGE_PAD } from '@/components/ui/tokens';
 import { IcCheck, IcPlus } from '@/components/ui/icons';
-import { useFirmasConfig } from '../config/firmasConfig';
+import { useFirmasConfig } from '@/components/pages/config/firmasConfig';
 import TabDatosEmpresa from './TabDatosEmpresa';
 import ConsecutivosDocumentos from './ConsecutivosDocumentos';
 import TabAsignacion from './impresion/TabAsignacion';
@@ -20,6 +22,7 @@ const TABS = [
   { id: 'asignacion', label: 'Asignación de impresoras' },
   { id: 'impresoras', label: 'Impresoras' },
   { id: 'tipos', label: 'Tipos de documento' },
+  { id: 'apikey', label: 'API Key' },
 ] as const;
 
 export default function EmpresaPage() {
@@ -78,6 +81,11 @@ export default function EmpresaPage() {
           </div>
         )}
         {id === 'asignacion' && <TabAsignacion />}
+        {id === 'apikey' && (
+          <div style={{ flex: 1, overflowY: 'auto', padding: PAGE_PAD }}>
+            <SeccionApiKey obtener={obtenerApiKey} regenerar={regenerarApiKey} marca={C.brand} />
+          </div>
+        )}
         {id === 'impresoras' && <TabImpresoras nueva={nuevaImpresora} onCerrarNueva={() => setNuevaImpresora(false)} />}
         {id === 'tipos' && <TabTiposDocumento nuevo={nuevoTipo} onCerrarNuevo={() => setNuevoTipo(false)} />}
       </div>

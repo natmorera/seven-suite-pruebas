@@ -1,16 +1,16 @@
 'use client';
 import { useState } from 'react';
-import { PresenciaOperacion } from '../../../ui/primitives';
-import { C, radius, shadow, TABLA } from '../../../ui/tokens';
+import { PresenciaOperacion } from '@/components/ui/primitives';
+import { C, radius, shadow, TABLA } from '@/components/ui/tokens';
 import { BANCOS_DESTINO, BRAND, CUENTAS_EFECTIVO, type Deposito, ESTADO_STYLE, F, PARTIDAS_MOCK, type Partida, fmt2 } from './datos';
 import { Btn, Pill } from './piezas';
 
-// ── Modal: Nuevo depósito ─────────────────────────────────────────────────────
+// ── Modal: nuevo depósito ─────────────────────────────────────────────────────
 export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onSave: (d: Deposito)=>void }) {
   const [partidas, setPartidas] = useState<Partida[]>(PARTIDAS_MOCK);
   const [partidasOpen, setPartidasOpen] = useState(true);
   const [importe, setImporte] = useState(55500);
-  const [guardado, setGuardado] = useState(false); // simula estado contabilizado
+  const [guardado] = useState(false); // simula estado contabilizado
 
   const incluidas    = partidas.filter(p=>p.incluida);
   const totalIncluidas = incluidas.reduce((s,p)=>s+p.importe, 0);
@@ -21,7 +21,6 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
     setPartidas(p => p.map(x => x.id===id ? { ...x, incluida:!x.incluida } : x));
   }
 
-  const IcCheck = () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="8" cy="8" r="6.33"/><path d="M5 8l2 2 4-4"/></svg>;
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.4)', zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', padding:20, overflowY:'auto' }}
@@ -29,7 +28,7 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
       <div style={{ background:'#FFFFFF', borderRadius:radius.lg, width:'100%', maxWidth:1240, boxShadow:shadow.modal, fontFamily:F, display:'flex', flexDirection:'column' }}
         onClick={e=>e.stopPropagation()}>
 
-        {/* Title */}
+        {/* Título */}
         <div style={{ padding:'14px 24px', borderBottom:`1px solid ${C.n500}`, display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:14, fontWeight:600 }}>Nuevo depósito en efectivo</span>
           <span style={{ fontSize:13, color:C.n700 }}>4340</span>
@@ -41,27 +40,27 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
         </div>
 
         <div style={{ display:'flex', flex:1 }}>
-          {/* Main */}
+          {/* Pantalla principal */}
           <div style={{ flex:1, padding:'16px 20px', overflowY:'auto', display:'flex', flexDirection:'column', gap:16 }}>
             {/* Origen y destino */}
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN Y DESTINO</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>ORIGEN Y DESTINO</p>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'8px 16px' }}>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Cuenta origen (efectivo) <span style={{ color:C.error }}>*</span></label>
-                  <select style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
+                  <select aria-label="Cuenta origen (efectivo)" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
                     {CUENTAS_EFECTIVO.map(c=><option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Banco y cuenta destino <span style={{ color:C.error }}>*</span></label>
-                  <select style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
+                  <select aria-label="Banco y cuenta destino" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none' }}>
                     {BANCOS_DESTINO.map(b=><option key={b}>{b}</option>)}
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Título / Leyenda</label>
-                  <input defaultValue="Depósito en efectivo - 4340" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+                  <input aria-label="Título / Leyenda" defaultValue="Depósito en efectivo - 4340" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                   <p style={{ fontSize:11, color:BRAND, margin:'3px 0 0' }}>Auto-propuesto.</p>
                 </div>
               </div>
@@ -69,11 +68,11 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
 
             {/* Detalle del pago */}
             <div>
-              <p style={{ fontSize:10, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DETALLE DEL PAGO</p>
+              <p style={{ fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.05em', margin:'0 0 10px' }}>DETALLE DEL PAGO</p>
               <div style={{ display:'grid', gridTemplateColumns:'155px 155px 140px 190px 1fr', gap:'8px 14px', alignItems:'end' }}>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Fecha <span style={{ color:C.error }}>*</span></label>
-                  <input type="date" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+                  <input aria-label="Fecha" type="date" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Moneda <span style={{ color:C.error }}>*</span></label>
@@ -84,18 +83,18 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Tipo de cambio</label>
-                  <input defaultValue="1.00" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
+                  <input aria-label="Tipo de cambio" defaultValue="1.00" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Importe <span style={{ color:C.error }}>*</span></label>
                   <div style={{ display:'flex', alignItems:'center', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, gap:6 }}>
                     <span style={{ color:C.n700, fontSize:11 }}>₡</span>
-                    <input type="number" value={importe} onChange={e=>setImporte(+e.target.value)} style={{ flex:1, border:'none', outline:'none', fontSize:12, fontFamily:F }}/>
+                    <input aria-label="Monto" type="number" value={importe} onChange={e=>setImporte(+e.target.value)} style={{ flex:1, border:'none', outline:'none', fontSize:12, fontFamily:F }}/>
                   </div>
                 </div>
                 <div>
                   <label style={{ fontSize:11, fontWeight:500, display:'block', marginBottom:3, whiteSpace:'nowrap' }}>Referencia bancaria</label>
-                  <input placeholder="Nro. transacción del banco" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
+                  <input placeholder="Nro. transacción del banco" aria-label="Nro. transacción del banco" style={{ width:'100%', height:36, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box', color:C.n700 }}/>
                 </div>
               </div>
             </div>
@@ -112,22 +111,22 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
               </div>
               {partidasOpen && (
                 <>
-                  {/* Summary row */}
+                  {/* Fila de resumen */}
                   <div style={{ display:'grid', gridTemplateColumns:'auto 1fr 1fr 1fr', gap:'4px 20px', padding:'10px 14px', background:'#F9F9F9', borderBottom:`1px solid ${C.n500}`, fontSize:12 }}>
                     <div>
-                      <p style={{ fontSize:10, color:C.n700, margin:'0 0 2px' }}>Partidas</p>
+                      <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px' }}>Partidas</p>
                       <p style={{ fontSize:14, fontWeight:700, color:'#0F0F0F', margin:0 }}>{partidas.length}</p>
                     </div>
                     <div>
-                      <p style={{ fontSize:10, color:C.n700, margin:'0 0 2px' }}>Total pendiente</p>
+                      <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px' }}>Total pendiente</p>
                       <p style={{ fontSize:12, fontWeight:600, color:'#0F0F0F', margin:0 }}>₡ {fmt2(partidas.reduce((s,p)=>s+p.importe,0))}</p>
                     </div>
                     <div>
-                      <p style={{ fontSize:10, color:C.n700, margin:'0 0 2px' }}>Incluidas</p>
+                      <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px' }}>Incluidas</p>
                       <p style={{ fontSize:12, fontWeight:600, color:BRAND, margin:0 }}>₡ {fmt2(totalIncluidas)}</p>
                     </div>
                     <div>
-                      <p style={{ fontSize:10, color:C.n700, margin:'0 0 2px' }}>Diferencia</p>
+                      <p style={{ fontSize:10.5, color:C.n700, margin:'0 0 2px' }}>Diferencia</p>
                       <p style={{ fontSize:12, fontWeight:600, color: ajusteDif>0 ? C.error : C.success, margin:0 }}>₡ {fmt2(ajusteDif)}</p>
                     </div>
                   </div>
@@ -143,7 +142,7 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
                         <tr key={p.id} style={{ borderBottom:'1px solid #ECECEC', background:p.incluida ? C.brandBg : '#FFFFFF' }}>
                           <td style={{ padding:'8px 12px' }}>
                             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                              <input type="checkbox" checked={p.incluida} onChange={()=>togglePartida(p.id)} style={{ width:14, height:14, accentColor:BRAND }}/>
+                              <input type="checkbox" aria-label="Seleccionar" checked={p.incluida} onChange={()=>togglePartida(p.id)} style={{ width:14, height:14, accentColor:BRAND }}/>
                               <span style={{ color: p.incluida ? BRAND : '#0F0F0F', fontFamily:F, fontWeight: p.incluida ? 600 : 400 }}>{p.comprobante}</span>
                             </div>
                           </td>
@@ -176,7 +175,7 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
             </div>
             <div>
               <p style={{ fontSize:11, color:'#0F0F0F', fontWeight:500, margin:'0 0 6px' }}>Cuenta para depositar el diferencial (opcional)</p>
-              <select style={{ width:'100%', height:34, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none', background:'#FFFFFF' }}>
+              <select aria-label="Ajuste diferencial₡" style={{ width:'100%', height:34, padding:'0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md, fontSize:11, fontFamily:F, outline:'none', appearance:'none', background:'#FFFFFF' }}>
                 <option>Seleccionar</option>
                 <option>600-002-0001 – Diferencias</option>
               </select>
@@ -185,7 +184,7 @@ export function NuevoDepositoModal({ onClose, onSave }: { onClose: ()=>void; onS
           </div>
         </div>
 
-        {/* Footer - cambia según estado */}
+        {/* Pie: cambia según el estado */}
         <div style={{ borderTop:`1px solid ${C.n500}`, padding:'12px 24px', display:'flex', justifyContent:'flex-end', gap:8 }}>
           {guardado ? (
             <>

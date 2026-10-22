@@ -1,14 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { PageHeader } from '../../ui/primitives';
-import { C, radius, TABLA } from '../../ui/tokens';
-import { BotonExportarUnico, ExportListModal } from '../../ui/exportar';
-import { SearchInput } from '../../ui/filtros';
-import { Monto } from '../../ui/montos';
+import { PageHeader } from '@/components/ui/primitives';
+import { C, radius, TABLA } from '@/components/ui/tokens';
+import { BotonExportarUnico, ExportListModal } from '@/components/ui/exportar';
+import { SearchInput } from '@/components/ui/filtros';
+import { Monto } from '@/components/ui/montos';
 import { type AsientoDC, BRAND, ESTADO_STYLE, F, GREEN, MOCK, RED, type TipoCuenta, fmt } from './diferencialCambiario/datos';
 import { ModalCrearMovimiento, ModalDetalleAsiento } from './diferencialCambiario/modales';
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Pantalla principal ──────────────────────────────────────────────────────────────────────
 export default function DiferencialCambiario() {
   const [movs, setMovs] = useState<AsientoDC[]>(MOCK);
   const [tipoCuenta, setTipoCuenta] = useState<TipoCuenta>('cobrar');
@@ -32,8 +32,7 @@ export default function DiferencialCambiario() {
     { value:'G', label:'General (G)' },
   ];
 
-  // Issue #26: el filtro "Aplicar a cuentas por" ahora sí filtra los datos;
-  // antes el estado existía pero nunca se aplicaba sobre MOCK.
+  // El filtro «Aplicar a cuentas por» filtra los datos.
   const filtrados = movs.filter(a =>
     a.tipoCuenta === tipoCuenta &&
     (!libro || a.libro === libro) &&
@@ -43,7 +42,7 @@ export default function DiferencialCambiario() {
   const totalHaber = filtrados.reduce((s,a)=>s+a.haber,0);
   const cuadra = Math.abs(totalDebe-totalHaber) < 0.005;
 
-  // Issue #25: acciones Contabilizar / Anular por asiento completo (todas sus líneas)
+  // acciones Contabilizar / Anular por asiento completo (todas sus líneas)
   function contabilizarAsiento(nro:string) {
     setMovs(p=>p.map(m=>m.nroAsiento===nro && m.estado==='Pendiente' ? {...m, estado:'Contabilizado'} : m));
     setToast(`Asiento ${nro} contabilizado`);
@@ -58,7 +57,7 @@ export default function DiferencialCambiario() {
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', fontFamily:F, background:'#FFFFFF', overflow:'hidden' }}>
 
-      {/* ── Header ── */}
+      {/* ── Encabezado ── */}
       <PageHeader title="Diferencial cambiario">
         <BotonExportarUnico onClick={()=>setShowExportar(true)}/>
         {/* Crear movimiento */}
@@ -82,7 +81,7 @@ export default function DiferencialCambiario() {
 
         {/* Libros dropdown */}
         <div style={{ position:'relative' }}>
-          <select value={libro} onChange={e=>setLibro(e.target.value)}
+          <select aria-label="Libro" value={libro} onChange={e=>setLibro(e.target.value)}
             style={{ height:32, padding:'0 28px 0 10px', border:`1px solid ${C.n500}`, borderRadius:radius.md,
               fontSize:12, fontFamily:F, outline:'none', appearance:'none', background:'#FFFFFF', cursor:'pointer', color:libro?BRAND:'#757575' }}>
             {LIBROS.map(l=><option key={l.value} value={l.value}>{l.label}</option>)}
@@ -93,7 +92,7 @@ export default function DiferencialCambiario() {
           </svg>
         </div>
 
-        {/* Aplicar a cuentas por: radios - Issue #26: ahora sí filtra */}
+        {/* Aplicar a cuentas por (radios) */}
         <div style={{ display:'flex', alignItems:'center', gap:8, marginLeft:8 }}>
           <span style={{ fontSize:12, color:'#757575', whiteSpace:'nowrap', fontFamily:F }}>Aplicar a cuentas por:</span>
           {TIPOS.map(opt=>(
@@ -111,14 +110,8 @@ export default function DiferencialCambiario() {
       </div>
 
       {/* ── Tabla ── */}
-      {/* Ancho de columna fijo vía <colgroup> + tableLayout:'fixed': antes el
-          ancho solo se declaraba en el <th> y el navegador igual recalculaba
-          las columnas según el contenido de cada fila (auto layout) - si en
-          una página el texto de una columna del medio (p.ej. "Cuenta" o
-          "Descripción") era más corto, esa columna se achicaba y las demás se
-          reacomodaban, desordenando la tabla entre pantallas/filtros
-          distintos. Con layout fijo, el ancho queda estable siempre y el
-          contenido largo se trunca con "…" en vez de descuadrar todo. */}
+      {/* Ancho de columna fijo con <colgroup> y tableLayout fixed: las columnas no cambian de
+          ancho según el contenido de cada página o filtro, y el texto largo se trunca con «…». */}
       <div style={{ flex:1, overflowY:'auto', padding:'0 24px' }}>
         <table className="tabla" style={{ ...TABLA.table, tableLayout:'fixed' }}>
           <colgroup>
@@ -153,8 +146,7 @@ export default function DiferencialCambiario() {
                 <td title={a.titulo} style={{ padding:'8px 12px', color:'#0F0F0F', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:F }}>{a.titulo}</td>
                 <td style={{ padding:'8px 12px', fontFamily:F, overflow:'hidden' }}>
                   <span style={{ display:'block', color:'#757575', fontVariantNumeric:'tabular-nums' }}>{a.cuenta}</span>
-                  {/* Issue: el nombre de la cuenta/cliente se cortaba a una sola línea con "...";
-                      ahora permite 2 líneas antes de truncar, para que nombres largos se lean completos. */}
+                  {/* El nombre de la cuenta o cliente ocupa hasta 2 líneas antes de truncarse. */}
                   <span title={a.cuentaNombre} style={{ display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden',
                     color:'#0F0F0F', whiteSpace:'normal', lineHeight:1.3 }}>{a.cuentaNombre}</span>
                 </td>

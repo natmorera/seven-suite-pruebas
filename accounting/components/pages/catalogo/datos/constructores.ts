@@ -8,7 +8,7 @@ export const G = (id: string, nombre: string, grupo: string, nat: Naturaleza, ch
   tipoEspecial: null, descripcion: `Grupo NIIF ${grupo} - ${nombre}`,
   expanded: false, children,
 });
-// Sub grupo NIIF (fijo, no configurable por el usuario). Issue #10: siempre
+// Sub grupo NIIF (fijo, no configurable por el usuario). siempre
 // expandido por defecto - es un nivel de clasificación fija, no algo que el
 // usuario gestione, así que no debería exigir un clic de más para verlo.
 export const SG = (id: string, code: string, nombre: string, grupo: string, nat: Naturaleza, children: Cuenta[]): Cuenta => ({
@@ -17,7 +17,7 @@ export const SG = (id: string, code: string, nombre: string, grupo: string, nat:
   posteable: false, centroCostoObligatorio: false, saldo: 0,
   tipoEspecial: null, expanded: true, children,
 });
-// Sub sub grupo NIIF (fijo, no configurable por el usuario). Issue #10: idem - siempre expandido.
+// Sub sub grupo NIIF (fijo, no configurable por el usuario). idem - siempre expandido.
 export const SSG = (id: string, code: string, nombre: string, grupo: string, nat: Naturaleza, children: Cuenta[]): Cuenta => ({
   id, code, nombre,
   nivel: 'subsubgrupo', grupo, naturaleza: nat,
@@ -38,12 +38,12 @@ export const S = (id: string, code: string, nombre: string, grupo: string, nat: 
   tipoEspecial: null, expanded: true, children,
   ...extra,
 });
-// Issue #7: fecha del último asiento contabilizado, usada en el saldo de la
+// fecha del último asiento contabilizado, usada en el saldo de la
 // cuenta. Se deriva de forma estable a partir del código (no aleatoria en cada
 // render), dentro de los últimos ~45 días antes del "hoy" de referencia del
 // mock (02/06/2026). Cuando el sistema tenga movimientos reales, esta fecha
 // debe venir del último asiento contabilizado que afectó la cuenta.
-export function fechaUltimoAsientoAuto(code: string, saldo: number): string | undefined {
+function fechaUltimoAsientoAuto(code: string, saldo: number): string | undefined {
   if (!saldo) return undefined;
   let hash = 0;
   for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;

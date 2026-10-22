@@ -1,6 +1,6 @@
 // Países disponibles para la empresa: su moneda (la moneda funcional de la
 // contabilidad) y la zona horaria que se propone al elegirlos.
-export interface Pais { value: string; label: string; moneda: string; monedaNombre: string; simbolo: string; zona: string }
+interface Pais { value: string; label: string; moneda: string; monedaNombre: string; simbolo: string; zona: string }
 
 export const PAISES: Pais[] = [
   { value: 'CR', label: 'Costa Rica', moneda: 'CRC', monedaNombre: 'Colón costarricense', simbolo: '¢', zona: 'America/Costa_Rica' },

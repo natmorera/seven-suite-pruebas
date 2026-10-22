@@ -1,14 +1,14 @@
 'use client';
 import { useState } from 'react';
-import { C, PERMISOS_ACTUAL, radius, TABLA } from '../../../ui/tokens';
-import { useVisualizacionAsientosDefault } from '../../config/visualizacionAsientos';
+import { C, PERMISOS_ACTUAL, radius, TABLA } from '@/components/ui/tokens';
+import { useVisualizacionAsientosDefault } from '@/components/pages/config/visualizacionAsientos';
 import ModalDescontabilizar, { IcDescontabilizar } from '../DescontabilizarModal';
 import ArchivosAdjuntos from '../adjuntos/ArchivosAdjuntos';
 import { type Asiento, BRAND, F, MON_SYM, TIPOS_LABEL, consolidarLineas, fmt2 } from './datos';
 import { ModalAdjuntos } from './modales';
 import { IcChev, TipoPill } from './piezas';
 
-// ── Right drawer: detalle asiento ──────────────────────────────────────────────
+// ── Panel lateral: detalle del asiento ──────────────────────────────────────────────
 export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDuplicar, onContabilizar, onRestaurar, onUpdateArchivos, tienePermisoDescontabilizar = PERMISOS_ACTUAL.descontabilizarAsientos }: {
   asiento: Asiento; anulado?: boolean; onClose:()=>void;
   onAnular?:()=>void; onDuplicar?:()=>void;
@@ -30,10 +30,8 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
 
   return (
     <>
-      {/* Imprimir = comprobante de asiento en PDF, sin el historial ni los
-          archivos adjuntos del panel - antes "Imprimir" hacía window.print()
-          de la pantalla completa (bandeja + panel), que es justo lo que no
-          se quería. Ahora imprime solo el área #asiento-print-area. */}
+      {/* Imprimir genera el comprobante del asiento en PDF con solo el área #asiento-print-
+          area, sin el historial ni los adjuntos del panel. */}
       <style>{`
         #asiento-print-area { display:none; }
         @media print {
@@ -58,7 +56,7 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
             ['Estado',anulado?'Anulado':asiento.contabilizado?'Contabilizado':'Pendiente'],['Libro','General']]
             .map(([l,v])=>(
             <div key={l as string}>
-              <p style={{ fontSize:10, color:'#757575', margin:'0 0 2px', fontFamily:F }}>{l as string}</p>
+              <p style={{ fontSize:10.5, color:'#757575', margin:'0 0 2px', fontFamily:F }}>{l as string}</p>
               <p style={{ fontSize:12, fontWeight:500, color:'#0F0F0F', margin:0, fontFamily:F }}>{v as string}</p>
             </div>
           ))}
@@ -104,14 +102,14 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
         )}
       </div>
 
-      {/* Overlay semi-transparente */}
+      {/* Fondo semitransparente */}
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.2)', zIndex:998 }}/>
       {/* Panel derecho */}
       <div style={{ position:'fixed', top:0, right:0, bottom:0, width:640, background:'#FFFFFF',
         boxShadow:'-8px 0 32px rgba(0,0,0,.14)', zIndex:999, display:'flex', flexDirection:'column',
         fontFamily:F, overflow:'hidden' }}>
 
-        {/* Header */}
+        {/* Encabezado */}
         <div style={{ padding:'16px 24px', borderBottom:`1px solid ${C.n500}`, flexShrink:0 }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
             <div>
@@ -137,18 +135,16 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'10px 16px', fontSize:12 }}>
             {[['N.º Asiento',asiento.consecutivo,true],['Fecha',asiento.fecha.split('-').reverse().join('/'),false],
               ['Moneda',`${asiento.moneda} ${sym}`,false],['Tasa','516.54000000',false],['Libro','General',false],['Empresa','Hotel Fortuna S.A.',false]]
-              .map(([l,v,mono])=>(
+              .map(([l,v])=>(
               <div key={l as string}>
-                <p style={{ fontSize:10, color:'#757575', margin:'0 0 2px' }}>{l as string}</p>
+                <p style={{ fontSize:10.5, color:'#757575', margin:'0 0 2px' }}>{l as string}</p>
                 <p style={{ fontSize:12, fontWeight:500, color:'#0F0F0F', margin:0, fontFamily: F }}>{v as string}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Contenido scrolleable - antes todo el panel (header + botones
-            incluidos) scrolleaba junto, así que al bajar se perdían de vista
-            el título y las acciones. Ahora solo esta zona hace scroll. */}
+        {/* Zona con scroll: el título y las acciones del panel quedan siempre visibles. */}
         <div style={{ flex:1, overflowY:'auto', minHeight:0 }}>
 
         {/* Líneas */}
@@ -251,7 +247,7 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
                 <span style={{ width:10, height:10, borderRadius:'50%', background:h.color, flexShrink:0, marginTop:2 }}/>
                 <div>
                   <p style={{ margin:0, fontSize:12, color:'#0F0F0F' }}>{h.texto}</p>
-                  <p style={{ margin:0, fontSize:10, color:'#757575' }}>{h.fecha} - {h.usuario}</p>
+                  <p style={{ margin:0, fontSize:10.5, color:'#757575' }}>{h.fecha} - {h.usuario}</p>
                 </div>
               </div>
             ))}
@@ -260,7 +256,7 @@ export function DetalleDrawer({ asiento, anulado=false, onClose, onAnular, onDup
 
         </div>
 
-        {/* Footer actions */}
+        {/* Acciones del pie */}
         <div style={{ borderTop:`1px solid ${C.n500}`, padding:'14px 24px', display:'flex', gap:8, justifyContent:'flex-end', flexShrink:0 }}>
           {anulado ? (
             <button onClick={onRestaurar} style={{ height:34, padding:'0 16px', background:BRAND, color:'#FFFFFF', border:'none', borderRadius:radius.md, cursor:'pointer', fontSize:13, fontWeight:500, fontFamily:F }}>

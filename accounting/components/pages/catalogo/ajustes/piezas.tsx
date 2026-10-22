@@ -1,14 +1,14 @@
 'use client';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Modal, Section, InfoBox, RowAction } from '../../../ui/primitives';
-import { Button, FormField, Input, Checkbox } from '../../../ui/formulario';
-import { TABLA, PAGE_PAD } from '../../../ui/tokens';
-import { IcEdit, IcTrash, IcSearch, IcChevronDown } from '../../../ui/icons';
-import { C } from '../../../ui/tokens';
-import { Cuenta, NIVEL_LABELS } from '../catalogoData';
+import { Modal, Section, InfoBox, RowAction } from '@/components/ui/primitives';
+import { Button, FormField, Input, Checkbox } from '@/components/ui/formulario';
+import { TABLA, PAGE_PAD , C } from '@/components/ui/tokens';
+import { IcEdit, IcTrash, IcSearch, IcChevronDown } from '@/components/ui/icons';
+import { type Cuenta, NIVEL_LABELS } from '../catalogoData';
 import { OPERACIONES_AJUSTE } from '../datos/ajustes';
 import { TBL } from '../catalogoTableStyles';
 import { BRAND, F, type GP, GP_I } from './datos';
+import { useSenalAgregar } from '@/components/ui/useSenalAgregar';
 
 export function TabGrupoPatrimonio({ addSignal, onAddHandled }: { addSignal?: number; onAddHandled?: () => void }) {
   const [rows, setRows] = useState<GP[]>(GP_I);
@@ -26,13 +26,9 @@ export function TabGrupoPatrimonio({ addSignal, onAddHandled }: { addSignal?: nu
     setMod(false);
   }
 
-  // Issue #6: el botón "Nuevo" ahora vive en el header de la página, no
-  // arriba de la tabla - esta pestaña reacciona a la señal igual que
-  // Movimientos de ajuste.
-  useEffect(() => {
-    if (addSignal) { openNew(); onAddHandled?.(); }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addSignal]);
+  // El botón «Nuevo» está en el encabezado de la página; esta pestaña responde a la señal igual
+  // que Movimientos de ajuste.
+  useSenalAgregar(addSignal, onAddHandled, () => { openNew(); });
 
   return (
     <div style={{ flex:1, overflowY:'auto', padding:PAGE_PAD }}><Section title="Grupos de patrimonio" hint="Agrupan las cuentas de patrimonio para el estado de cambios en el patrimonio.">
@@ -101,8 +97,8 @@ export function TabGrupoPatrimonio({ addSignal, onAddHandled }: { addSignal?: nu
   );
 }
 // ── Cheques ───────────────────────────────────────────────────────────────────
-// Issue #12: only show accounts with tipoEspecial '05' and nivel 'detalle'
-// Those accounts must exist in the catalog for cheques to be configurable
+// Solo cuentas con tipo especial '05' y nivel detalle
+// Esas cuentas deben existir en el catálogo para configurar chequeras
 
 
 
@@ -137,18 +133,18 @@ export function TabCheques() {
               <tr key={r.id} style={{ borderBottom:'1px solid #ECECEC', background:'#FFFFFF' }}>
               <td style={{ padding:'8px 12px' }}>
                 <p style={{ fontWeight:500, color:C.n900 }}>{r.nombre}</p>
-                <p style={{ fontSize:10, color:C.n700, fontFamily:F }}>{r.cuenta}</p>
+                <p style={{ fontSize:10.5, color:C.n700, fontFamily:F }}>{r.cuenta}</p>
               </td>
               <td style={{ padding:'7px 12px' }}>
-                <input value={r.prefijo} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,prefijo:e.target.value}:x))}
+                <input aria-label="Prefijo" value={r.prefijo} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,prefijo:e.target.value}:x))}
                   style={{ height:24, width:60, padding:'0 7px', border:`1px solid ${C.n500}`, borderRadius:4, fontSize:11, fontFamily:F, textAlign:'center', fontWeight:600, color:BRAND }}/>
               </td>
               <td style={{ padding:'7px 12px' }}>
-                <input value={r.consec} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,consec:e.target.value}:x))}
+                <input aria-label="Consecutivo" value={r.consec} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,consec:e.target.value}:x))}
                   style={{ height:24, width:100, padding:'0 7px', border:`1px solid ${C.n500}`, borderRadius:4, fontSize:11, fontFamily:F, textAlign:'right' }}/>
               </td>
               <td style={{ padding:'7px 12px' }}>
-                <input value={r.formato} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,formato:e.target.value}:x))}
+                <input aria-label="Formato" value={r.formato} onChange={e => setRows(prev => prev.map((x,j)=>j===i?{...x,formato:e.target.value}:x))}
                   style={{ height:24, width:'100%', padding:'0 7px', border:`1px solid ${C.n500}`, borderRadius:4, fontSize:11, fontFamily:F }}/>
               </td>
               <td style={{ padding:'8px 12px', textAlign:'center' }}>
@@ -175,10 +171,8 @@ export function TabCheques() {
     </Section>
   );
 }
-// ── Selector de cuenta con búsqueda, agrupado por nivel (Issue #10) ──────────
-// Antes era un <select> plano con 100+ opciones en un solo bloque; ahora se
-// puede buscar por nombre, código o naturaleza, y las cuentas aparecen
-// agrupadas por nivel (Detalle / Auxiliar) para ubicarlas más rápido.
+// ── Selector de cuenta con búsqueda, agrupado por nivel ── Busca por nombre, código o
+// naturaleza y agrupa las cuentas por nivel (Detalle / Auxiliar).
 export function AccountPicker({ value, onChange, options }: {
   value?: string; onChange: (code:string, nombre:string)=>void;
   options: (Cuenta & { depth:number })[];
@@ -227,7 +221,7 @@ export function AccountPicker({ value, onChange, options }: {
         <div style={{ position:'absolute', zIndex:50, top:'calc(100% + 4px)', left:0, width:'100%', minWidth:340, maxWidth:420, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:6, boxShadow:'0 8px 24px rgba(0,0,0,.14)', display:'flex', flexDirection:'column' }}>
           <div style={{ padding:7, borderBottom:`1px solid ${C.n500}`, position:'relative' }}>
             <span style={{ position:'absolute', left:15, top:'50%', transform:'translateY(-50%)', color:C.n700 }}><IcSearch className="w-3.5 h-3.5"/></span>
-            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por nivel, nombre, naturaleza o código…"
+            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por nivel, nombre, naturaleza o código…" aria-label="Buscar por nivel, nombre, naturaleza o código…"
               style={{ width:'100%', height:26, padding:'0 8px 0 26px', border:`1px solid ${C.n500}`, borderRadius:4, fontSize:11, fontFamily:F, outline:'none', boxSizing:'border-box' }}/>
           </div>
           <div style={{ maxHeight:260, overflowY:'auto' }}>
@@ -240,7 +234,7 @@ export function AccountPicker({ value, onChange, options }: {
             {grouped.length===0 && <p style={{ padding:12, fontSize:11, color:C.n700, textAlign:'center' }}>Sin resultados.</p>}
             {grouped.map(([nivel, cuentas]) => (
               <div key={nivel}>
-                <div style={{ position:'sticky', top:0, background:'#F9F9F9', padding:'4px 9px', fontSize:9, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.03em' }}>
+                <div style={{ position:'sticky', top:0, background:'#F9F9F9', padding:'4px 9px', fontSize:10.5, fontWeight:600, color:C.n700, textTransform:'uppercase', letterSpacing:'.03em' }}>
                   {NIVEL_LABELS[nivel] ?? nivel} · {cuentas.length}
                 </div>
                 {cuentas.map(c=>(
@@ -249,7 +243,7 @@ export function AccountPicker({ value, onChange, options }: {
                     onMouseEnter={e=>{ if(c.code!==value)(e.currentTarget as HTMLElement).style.background='#F9F9F9'; }}
                     onMouseLeave={e=>{ if(c.code!==value)(e.currentTarget as HTMLElement).style.background='#FFFFFF'; }}>
                     <span style={{ fontSize:11, color:C.n900, fontFamily:F }}>{c.nombre}</span>
-                    <span style={{ fontSize:9, color:C.n700, fontFamily:F }}>{c.code} · {c.naturaleza}</span>
+                    <span style={{ fontSize:10.5, color:C.n700, fontFamily:F }}>{c.code} · {c.naturaleza}</span>
                   </button>
                 ))}
               </div>
@@ -287,14 +281,14 @@ export function OperacionesPicker({ value, onChange }: { value:string[]; onChang
       {open && (
         <div style={{ position:'absolute', zIndex:50, top:'calc(100% + 4px)', left:0, width:220, background:'#FFFFFF', border:`1px solid ${C.n500}`, borderRadius:6, boxShadow:'0 8px 24px rgba(0,0,0,.14)', padding:6 }}>
           <button type="button" onClick={()=>onChange(todas?[]:OPERACIONES_AJUSTE.map(o=>o.value))}
-            style={{ width:'100%', textAlign:'left', padding:'5px 7px', fontSize:10, fontWeight:500, color:BRAND, background:'none', border:'none', cursor:'pointer', borderBottom:`1px solid ${C.n500}`, marginBottom:4 }}>
+            style={{ width:'100%', textAlign:'left', padding:'5px 7px', fontSize:10.5, fontWeight:500, color:BRAND, background:'none', border:'none', cursor:'pointer', borderBottom:`1px solid ${C.n500}`, marginBottom:4 }}>
             {todas ? 'Quitar todas' : 'Seleccionar todas'}
           </button>
           {OPERACIONES_AJUSTE.map(o=>(
             <label key={o.value} style={{ display:'flex', alignItems:'center', gap:7, padding:'4px 7px', cursor:'pointer', borderRadius:4 }}
               onMouseEnter={e=>(e.currentTarget as HTMLElement).style.background='#F9F9F9'}
               onMouseLeave={e=>(e.currentTarget as HTMLElement).style.background='transparent'}>
-              <input type="checkbox" checked={value.includes(o.value)} onChange={()=>toggle(o.value)}/>
+              <input type="checkbox" aria-label="Seleccionar" checked={value.includes(o.value)} onChange={()=>toggle(o.value)}/>
               <span style={{ fontSize:11, color:C.n900, fontFamily:F }}>{o.label}</span>
             </label>
           ))}
