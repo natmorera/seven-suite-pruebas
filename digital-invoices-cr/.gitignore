@@ -1,8 +1,0 @@
-node_modules/
-.next/
-out/
-data-runtime/
-.env*
-!.env.example
-*.tsbuildinfo
-.vercel
